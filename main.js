@@ -181,14 +181,16 @@ class Parcel extends utils.Adapter {
                         },
                         native: {},
                     });
-                    this.setState("auth.mfaToken", res.data.intermediateMfaToken, true);
-                    this.log.warn("Please enter SMS/Mail code in instance settings and press save");
+                    this.setState("auth.dhlMfaToken", res.data.intermediateMfaToken, true);
+                    this.log.warn("Please enter " + res.data.secondFactorChannel + " code in instance settings and press save");
                 })
                 .catch((error) => {
                     this.log.error(error);
                     if (error.response) {
                         if (error.response.status === 409) {
-                            this.log.error("Too many MFA requests, please try in 10min again");
+                            this.log.error("Please enter code in instance settings and press save or wait 30min and let the code expire");
+
+                            this.setState("auth.dhlMfaToken", error.response.data.intermediateMfaToken, true);
                         }
                         this.log.error(JSON.stringify(error.response.data));
                     }
@@ -234,8 +236,15 @@ class Parcel extends utils.Adapter {
                     this.log.error(error);
                     if (error.response) {
                         this.log.error(JSON.stringify(error.response.data));
-                        await this.setStateAsync("auth.mfaToken", "", true);
-                        this.log.error("Wrong code please restart adapter and try again");
+                        const adapterConfig = "system.adapter." + this.name + "." + this.instance;
+                        this.log.error("MFA incorrect");
+                        this.getForeignObject(adapterConfig, (error, obj) => {
+                            if (obj && obj.native && obj.native.dhlMfa) {
+                                obj.native.dhlMfa = "";
+                                this.setForeignObject(adapterConfig, obj);
+                            }
+                        });
+                        return;
                     }
                 });
         }
