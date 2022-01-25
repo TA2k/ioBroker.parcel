@@ -261,6 +261,16 @@ class Parcel extends utils.Adapter {
                         "accept-language": "de-de",
                     },
                 },
+                {
+                    path: "dhl.briefe",
+                    url: "https://www.dhl.de/int-aviseanzeigen/advices?width=414",
+                    header: {
+                        accept: "application/json",
+                        "content-type": "application/json",
+                        "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                        "accept-language": "de-de",
+                    },
+                },
             ],
         };
 
@@ -335,7 +345,8 @@ class Parcel extends utils.Adapter {
                 })
                     .then((res) => {
                         this.log.debug(JSON.stringify(res.data));
-                        this.sessions["id"] = res.data;
+                        this.sessions["dhl"] = res.data;
+                        this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
                         this.setState("info.connection", true, true);
                     })
                     .catch((error) => {
