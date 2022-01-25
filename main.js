@@ -49,6 +49,11 @@ class Parcel extends utils.Adapter {
             }),
         });
 
+        const cookieState = await this.getStateAsync("auth.cookie");
+        if (cookieState && cookieState.val) {
+            this.cookieJar = tough.CookieJar.fromJSON(cookieState.val);
+        }
+
         this.updateInterval = null;
         this.reLoginTimeout = null;
         this.refreshTokenTimeout = null;
@@ -174,13 +179,7 @@ class Parcel extends utils.Adapter {
             })
                 .then(async (res) => {
                     this.log.debug(JSON.stringify(res.data));
-                    await this.setObjectNotExistsAsync("dhl", {
-                        type: "device",
-                        common: {
-                            name: "DHL Tracking",
-                        },
-                        native: {},
-                    });
+
                     this.setState("auth.dhlMfaToken", res.data.intermediateMfaToken, true);
                     this.log.warn("Please enter " + res.data.secondFactorChannel + " code in instance settings and press save");
                 })
@@ -197,6 +196,7 @@ class Parcel extends utils.Adapter {
                 });
         } else {
             this.log.info("Login to DHL with MFA token");
+            this.log.debug("MFA: " + this.config.dhlMfa);
             await this.requestClient({
                 method: "post",
                 url: "https://www.dhl.de/int-erkennen/2fa",
@@ -215,15 +215,17 @@ class Parcel extends utils.Adapter {
                     value: this.config.dhlMfa,
                     remember2fa: true,
                     language: "de",
-                    context: "web",
+                    context: "app",
                     meta: "",
                     intermediateMfaToken: mfaToken,
                 }),
             })
                 .then(async (res) => {
                     this.log.debug(JSON.stringify(res.data));
+                    this.log.info("Login to DHL successful");
                     this.sessions["dhl"] = res.data;
                     this.setState("info.connection", true, true);
+                    this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
                     await this.setObjectNotExistsAsync("dhl", {
                         type: "device",
                         common: {
@@ -254,7 +256,7 @@ class Parcel extends utils.Adapter {
         const statusArrays = {
             dhl: [
                 {
-                    path: ".dhl",
+                    path: "dhl",
                     url: "https://www.dhl.de/int-verfolgen/data/search?merge=false&noRedirect=true&language=de&cid=app",
                     header: {
                         accept: "application/json",
@@ -284,7 +286,7 @@ class Parcel extends utils.Adapter {
                         }
                         const data = res.data;
 
-                        const forceIndex = null;
+                        const forceIndex = true;
                         const preferedArrayName = null;
 
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });

@@ -111,6 +111,32 @@
             "native": {}
         },
         {
+            "_id": "auth.dhlMfaToken",
+            "type": "state",
+            "common": {
+                "role": "state",
+                "name": "DHL Mfa Token",
+                "type": "string",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "auth.cookie",
+            "type": "state",
+            "common": {
+                "role": "state",
+                "name": "Cookie state",
+                "type": "string",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        },
+        {
             "_id": "info.connection",
             "type": "state",
             "common": {
