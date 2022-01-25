@@ -58,6 +58,10 @@ class Parcel extends utils.Adapter {
             await this.loginDHL();
         }
 
+        if (this.config["17trackKey"]) {
+            this.sessions["17track"] = this.config["17trackKey"];
+        }
+
         this.updateInterval = null;
         this.reLoginTimeout = null;
         this.refreshTokenTimeout = null;
@@ -249,6 +253,15 @@ class Parcel extends utils.Adapter {
     }
 
     async updateProvider() {
+        let data17Track;
+        if (this.sessions["17track"]) {
+            const trackList = await this.getStateAsync("17t.trackList");
+            if (trackList && trackList.val) {
+                data17Track = trackList.val.map((track) => {
+                    return { number: track };
+                });
+            }
+        }
         const statusArrays = {
             dhl: [
                 {
@@ -272,16 +285,29 @@ class Parcel extends utils.Adapter {
                     },
                 },
             ],
+            "17track": [
+                {
+                    method: "post",
+                    path: "17t.trackinginfo",
+                    url: "https://api.17track.net/track/v1/gettrackinfo",
+                    headers: {
+                        "17token": this.config["17trackKey"],
+                        "Content-Type": "application/json",
+                    },
+                    data: data17Track,
+                },
+            ],
         };
 
         for (const id of Object.keys(this.sessions)) {
             for (const element of statusArrays[id]) {
                 await this.requestClient({
-                    method: "get",
+                    method: element.method ? element.method : "get",
                     url: element.url,
                     headers: element.header,
                     jar: this.cookieJar,
                     withCredentials: true,
+                    data: element.data,
                 })
                     .then((res) => {
                         this.log.debug(JSON.stringify(res.data));
@@ -298,12 +324,16 @@ class Parcel extends utils.Adapter {
                     .catch((error) => {
                         if (error.response) {
                             if (error.response.status === 401) {
+                                if (element.path === "dhl.briefe") {
+                                    return;
+                                }
                                 error.response && this.log.debug(JSON.stringify(error.response.data));
+
                                 this.log.info(element.path + " receive 401 error. Refresh Token in 60 seconds");
                                 if (!this.refreshTokenTimeout) {
                                     this.refreshTokenTimeout = setTimeout(() => {
                                         this.refreshTokenTimeout = null;
-                                        this.refreshToken(id);
+                                        this.refreshToken();
                                     }, 1000 * 60);
                                 }
                                 return;
@@ -316,10 +346,9 @@ class Parcel extends utils.Adapter {
             }
         }
     }
-    async refreshToken(id) {
-        if (this.sessions[id]) {
+    async refreshToken() {
+        if (Object.keys(this.sessions).length === 0) {
             this.log.error("No session found relogin");
-
             return;
         }
         for (const id of Object.keys(this.sessions)) {
@@ -392,6 +421,63 @@ class Parcel extends utils.Adapter {
             if (!state.ack) {
                 if (id.split(".")[2] !== "refresh") {
                     this.updateProvider();
+                    return;
+                }
+                if (id.split(".")[2] !== "17t") {
+                    if (!this.config["17trackKey"]) {
+                        this.log.error("Missing 17Track Security Key");
+                        return;
+                    }
+                    const command = id.split(".")[3];
+                    await this.requestClient({
+                        method: "post",
+                        url: "https://api.17track.net/track/v1/" + command,
+                        headers: {
+                            "17token": this.config["17trackKey"],
+                            "Content-Type": "application/json",
+                        },
+                        data: {
+                            number: state.val,
+                            auto_detection: true,
+                        },
+                    })
+                        .then(async (res) => {
+                            this.log.info(JSON.stringify(res.data));
+                            await this.requestClient({
+                                method: "post",
+                                url: "https://api.17track.net/track/v1/gettracklist",
+                                headers: {
+                                    "17token": this.config["17trackKey"],
+                                    "Content-Type": "application/json",
+                                },
+                                data: {
+                                    number: state.val,
+                                    auto_detection: true,
+                                },
+                            })
+                                .then(async (res) => {
+                                    this.log.info(JSON.stringify(res.data));
+                                    if (res.data && res.data.data && res.data.data.accepted) {
+                                        const trackArray = [];
+                                        for (const track of res.data.data.accepted) {
+                                            trackArray.push(track.number);
+                                        }
+                                        this.setState("17t.trackList", trackArray, true);
+                                    }
+                                })
+                                .catch((error) => {
+                                    this.log.error(error);
+                                    if (error.response) {
+                                        this.log.error(JSON.stringify(error.response.data));
+                                    }
+                                });
+                        })
+                        .catch((error) => {
+                            this.log.error(error);
+                            if (error.response) {
+                                this.log.error(JSON.stringify(error.response.data));
+                            }
+                        });
                 }
             }
         }
