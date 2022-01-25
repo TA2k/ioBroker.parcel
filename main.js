@@ -253,13 +253,17 @@ class Parcel extends utils.Adapter {
     }
 
     async updateProvider() {
-        let data17Track;
+        let data17Track = {};
         if (this.sessions["17track"]) {
-            const trackList = await this.getStateAsync("17t.trackList");
-            if (trackList && trackList.val) {
-                data17Track = trackList.val.map((track) => {
-                    return { number: track };
-                });
+            try {
+                const trackList = await this.getStateAsync("17t.trackList");
+                if (trackList && trackList.val) {
+                    data17Track = trackList.val.map((track) => {
+                        return { number: track };
+                    });
+                }
+            } catch (error) {
+                this.log.error(error);
             }
         }
         const statusArrays = {
@@ -290,11 +294,11 @@ class Parcel extends utils.Adapter {
                     method: "post",
                     path: "17t.trackinginfo",
                     url: "https://api.17track.net/track/v1/gettrackinfo",
-                    headers: {
+                    header: {
                         "17token": this.config["17trackKey"],
                         "Content-Type": "application/json",
                     },
-                    data: data17Track,
+                    data: JSON.stringify(data17Track),
                 },
             ],
         };
@@ -314,8 +318,10 @@ class Parcel extends utils.Adapter {
                         if (!res.data) {
                             return;
                         }
-                        const data = res.data;
-
+                        let data = res.data;
+                        if (id === "17track") {
+                            data = res.data.data;
+                        }
                         const forceIndex = true;
                         const preferedArrayName = null;
 
@@ -323,7 +329,7 @@ class Parcel extends utils.Adapter {
                     })
                     .catch((error) => {
                         if (error.response) {
-                            if (error.response.status === 401) {
+                            if (error.response.status === 401 && id !== "17track") {
                                 if (element.path === "dhl.briefe") {
                                     return;
                                 }
@@ -419,11 +425,11 @@ class Parcel extends utils.Adapter {
     async onStateChange(id, state) {
         if (state) {
             if (!state.ack) {
-                if (id.split(".")[2] !== "refresh") {
+                if (id.split(".")[2] === "refresh") {
                     this.updateProvider();
                     return;
                 }
-                if (id.split(".")[2] !== "17t") {
+                if (id.split(".")[2] === "17t") {
                     if (!this.config["17trackKey"]) {
                         this.log.error("Missing 17Track Security Key");
                         return;
@@ -436,10 +442,12 @@ class Parcel extends utils.Adapter {
                             "17token": this.config["17trackKey"],
                             "Content-Type": "application/json",
                         },
-                        data: {
-                            number: state.val,
-                            auto_detection: true,
-                        },
+                        data: JSON.stringify([
+                            {
+                                number: state.val,
+                                auto_detection: true,
+                            },
+                        ]),
                     })
                         .then(async (res) => {
                             this.log.info(JSON.stringify(res.data));
@@ -462,7 +470,7 @@ class Parcel extends utils.Adapter {
                                         for (const track of res.data.data.accepted) {
                                             trackArray.push(track.number);
                                         }
-                                        this.setState("17t.trackList", trackArray, true);
+                                        this.setState("17t.trackList", JSON.stringify(trackArray), true);
                                     }
                                 })
                                 .catch((error) => {
