@@ -73,7 +73,77 @@ class Parcel extends utils.Adapter {
     }
     async loginDHL() {
         const mfaTokenState = await this.getStateAsync("auth.dhlMfaToken");
-
+        await this.requestClient({
+            method: "get",
+            url: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643057331%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
+            headers: {
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                "accept-language": "de-de",
+            },
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+        await this.requestClient({
+            method: "get",
+            url: "https://www.dhl.de/int-erkennen/deviceid",
+            headers: {
+                accept: "*/*",
+                "accept-language": "de-de",
+                "x-requested-with": "XMLHttpRequest",
+                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                referer: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643059174%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
+            },
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+        await this.requestClient({
+            method: "post",
+            url: "https://www.dhl.de/int-erkennen/refresh",
+            headers: {
+                Host: "www.dhl.de",
+                "content-type": "application/json",
+                accept: "*/*",
+                "x-requested-with": "XMLHttpRequest",
+                "accept-language": "de-de",
+                origin: "https://www.dhl.de",
+                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                referer: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643039135%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
+            },
+            data: JSON.stringify({
+                force: false,
+                meta: "",
+            }),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
         const mfaToken = mfaTokenState && mfaTokenState.val;
         if (!mfaToken || !this.config.dhlMfa) {
             this.log.info("Login to DHL");
