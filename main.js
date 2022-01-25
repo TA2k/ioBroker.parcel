@@ -72,120 +72,103 @@ class Parcel extends utils.Adapter {
         }
     }
     async loginDHL() {
-        await this.requestClient({
-            method: "get",
-            url: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643057331%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
-            headers: {
-                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-                "accept-language": "de-de",
-            },
-            jar: this.cookieJar,
-            withCredentials: true,
-        })
-            .then(async (res) => {
-                this.log.debug(JSON.stringify(res.data));
+        const mfaTokenState = await this.getStateAsync("auth.dhlMfaToken");
+
+        const mfaToken = mfaTokenState && mfaTokenState.val;
+        if (!mfaToken || !this.config.dhlMfa) {
+            this.log.info("Login to DHL");
+            await this.requestClient({
+                method: "post",
+                url: "https://www.dhl.de/int-erkennen/login",
+                headers: {
+                    Host: "www.dhl.de",
+                    "content-type": "application/json",
+                    accept: "*/*",
+                    "x-requested-with": "XMLHttpRequest",
+                    "accept-language": "de-de",
+                    origin: "https://www.dhl.de",
+                    "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                },
+                jar: this.cookieJar,
+                withCredentials: true,
+                data: JSON.stringify({
+                    id: this.config.dhlusername,
+                    password: this.config.dhlpassword,
+                    authenticationLevel: 3,
+                    authenticationMethod: ["pwd"],
+                    rememberMe: true,
+                    language: "de",
+                    context: "app",
+                    meta: "",
+                }),
             })
-            .catch((error) => {
-                this.log.error(error);
-                if (error.response) {
-                    this.log.error(JSON.stringify(error.response.data));
-                }
-            });
-        await this.requestClient({
-            method: "get",
-            url: "https://www.dhl.de/int-erkennen/deviceid",
-            headers: {
-                accept: "*/*",
-                "accept-language": "de-de",
-                "x-requested-with": "XMLHttpRequest",
-                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-                referer: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643059174%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
-            },
-            jar: this.cookieJar,
-            withCredentials: true,
-        })
-            .then(async (res) => {
-                this.log.debug(JSON.stringify(res.data));
-            })
-            .catch((error) => {
-                this.log.error(error);
-                if (error.response) {
-                    this.log.error(JSON.stringify(error.response.data));
-                }
-            });
-        await this.requestClient({
-            method: "post",
-            url: "https://www.dhl.de/int-erkennen/refresh",
-            headers: {
-                Host: "www.dhl.de",
-                "content-type": "application/json",
-                accept: "*/*",
-                "x-requested-with": "XMLHttpRequest",
-                "accept-language": "de-de",
-                origin: "https://www.dhl.de",
-                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-                referer: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643039135%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
-            },
-            data: JSON.stringify({
-                force: false,
-                meta: "",
-            }),
-            jar: this.cookieJar,
-            withCredentials: true,
-        })
-            .then(async (res) => {
-                this.log.debug(JSON.stringify(res.data));
-            })
-            .catch((error) => {
-                this.log.error(error);
-                if (error.response) {
-                    this.log.error(JSON.stringify(error.response.data));
-                }
-            });
-        await this.requestClient({
-            method: "post",
-            url: "https://www.dhl.de/int-erkennen/login",
-            headers: {
-                Host: "www.dhl.de",
-                "content-type": "application/json",
-                accept: "*/*",
-                "x-requested-with": "XMLHttpRequest",
-                "accept-language": "de-de",
-                origin: "https://www.dhl.de",
-                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-            },
-            jar: this.cookieJar,
-            withCredentials: true,
-            data: JSON.stringify({
-                id: this.config.dhlusername,
-                password: this.config.dhlpassword,
-                authenticationLevel: 3,
-                authenticationMethod: ["pwd"],
-                rememberMe: true,
-                language: "de",
-                context: "app",
-                meta: "",
-            }),
-        })
-            .then(async (res) => {
-                this.log.debug(JSON.stringify(res.data));
-                this.sessions["dhl"] = res.data;
-                this.setState("info.connection", true, true);
-                await this.setObjectNotExistsAsync("dhl", {
-                    type: "device",
-                    common: {
-                        name: "DHL Tracking",
-                    },
-                    native: {},
+                .then(async (res) => {
+                    this.log.debug(JSON.stringify(res.data));
+                    await this.setObjectNotExistsAsync("dhl", {
+                        type: "device",
+                        common: {
+                            name: "DHL Tracking",
+                        },
+                        native: {},
+                    });
+                    this.setState("auth.mfaToken", res.data.intermediateMfaToken, true);
+                    this.log.warn("Please enter SMS/Mail code in instance settings and press save");
+                })
+                .catch((error) => {
+                    this.log.error(error);
+                    if (error.response) {
+                        if (error.response.status === 409) {
+                            this.log.error("Too many MFA requests, please try in 10min again");
+                        }
+                        this.log.error(JSON.stringify(error.response.data));
+                    }
                 });
+        } else {
+            this.log.info("Login to DHL with MFA token");
+            await this.requestClient({
+                method: "post",
+                url: "https://www.dhl.de/int-erkennen/2fa",
+                headers: {
+                    Host: "www.dhl.de",
+                    "content-type": "application/json",
+                    accept: "*/*",
+                    "x-requested-with": "XMLHttpRequest",
+                    "accept-language": "de-de",
+                    origin: "https://www.dhl.de",
+                    "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                },
+                jar: this.cookieJar,
+                withCredentials: true,
+                data: JSON.stringify({
+                    value: this.config.dhlMfa,
+                    remember2fa: true,
+                    language: "de",
+                    context: "web",
+                    meta: "",
+                    intermediateMfaToken: mfaToken,
+                }),
             })
-            .catch((error) => {
-                this.log.error(error);
-                if (error.response) {
-                    this.log.error(JSON.stringify(error.response.data));
-                }
-            });
+                .then(async (res) => {
+                    this.log.debug(JSON.stringify(res.data));
+                    this.sessions["dhl"] = res.data;
+                    this.setState("info.connection", true, true);
+                    await this.setObjectNotExistsAsync("dhl", {
+                        type: "device",
+                        common: {
+                            name: "DHL Tracking",
+                        },
+                        native: {},
+                    });
+                })
+                .catch(async (error) => {
+                    this.log.error(error);
+                    if (error.response) {
+                        this.log.error(JSON.stringify(error.response.data));
+                        await this.setStateAsync("auth.mfaToken", "", true);
+                        this.log.error("Wrong code please restart adapter and try again");
+                    }
+                });
+        }
     }
 
     async updateProvider() {

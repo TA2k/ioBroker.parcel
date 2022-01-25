@@ -89,6 +89,7 @@
     "native": {
         "dhlusername": "",
         "dhlpassword": "",
+        "dhlMfa": "",
         "interval": 10
     },
     "objects": [],
@@ -98,6 +99,14 @@
             "type": "channel",
             "common": {
                 "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "auth",
+            "type": "channel",
+            "common": {
+                "name": "Auth Information"
             },
             "native": {}
         },
