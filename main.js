@@ -41,6 +41,10 @@ class Parcel extends utils.Adapter {
         }
 
         this.cookieJar = new tough.CookieJar();
+        const cookieState = await this.getStateAsync("auth.cookie");
+        if (cookieState && cookieState.val) {
+            this.cookieJar = tough.CookieJar.fromJSON(cookieState.val);
+        }
         this.requestClient = axios.create({
             jar: this.cookieJar,
             withCredentials: true,
@@ -49,20 +53,15 @@ class Parcel extends utils.Adapter {
             }),
         });
 
-        const cookieState = await this.getStateAsync("auth.cookie");
-        if (cookieState && cookieState.val) {
-            this.cookieJar = tough.CookieJar.fromJSON(cookieState.val);
+        if (this.config.dhlusername && this.config.dhlpassword) {
+            this.log.info("Login to DHL");
+            await this.loginDHL();
         }
 
         this.updateInterval = null;
         this.reLoginTimeout = null;
         this.refreshTokenTimeout = null;
         this.subscribeStates("*");
-
-        if (this.config.dhlusername && this.config.dhlpassword) {
-            this.log.info("Login to DHL");
-            await this.loginDHL();
-        }
 
         if (Object.keys(this.sessions).length > 0) {
             await this.updateProvider();
@@ -98,29 +97,8 @@ class Parcel extends utils.Adapter {
                     this.log.error(JSON.stringify(error.response.data));
                 }
             });
-        await this.requestClient({
-            method: "get",
-            url: "https://www.dhl.de/int-erkennen/deviceid",
-            headers: {
-                accept: "*/*",
-                "accept-language": "de-de",
-                "x-requested-with": "XMLHttpRequest",
-                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-                referer: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643059174%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
-            },
-            jar: this.cookieJar,
-            withCredentials: true,
-        })
-            .then(async (res) => {
-                this.log.debug(JSON.stringify(res.data));
-            })
-            .catch((error) => {
-                this.log.error(error);
-                if (error.response) {
-                    this.log.error(JSON.stringify(error.response.data));
-                }
-            });
-        await this.requestClient({
+
+        const validCookies = await this.requestClient({
             method: "post",
             url: "https://www.dhl.de/int-erkennen/refresh",
             headers: {
@@ -142,6 +120,21 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
+                if (res.data && res.data.meta) {
+                    this.log.info("Login to DHL successful");
+                    this.sessions["dhl"] = res.data;
+                    this.setState("info.connection", true, true);
+                    this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                    await this.setObjectNotExistsAsync("dhl", {
+                        type: "device",
+                        common: {
+                            name: "DHL Tracking",
+                        },
+                        native: {},
+                    });
+                    return true;
+                }
+                return false;
             })
             .catch((error) => {
                 this.log.error(error);
@@ -149,6 +142,9 @@ class Parcel extends utils.Adapter {
                     this.log.error(JSON.stringify(error.response.data));
                 }
             });
+        if (validCookies) {
+            return;
+        }
         const mfaToken = mfaTokenState && mfaTokenState.val;
         if (!mfaToken || !this.config.dhlMfa) {
             this.log.info("Login to DHL");
@@ -261,9 +257,7 @@ class Parcel extends utils.Adapter {
                     header: {
                         accept: "application/json",
                         "content-type": "application/json",
-                        "verfolgen-csrf-token": "363d8052-1cb4-43c8-840c-e15e65ebba55",
                         "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-                        referer: "https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643039135%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg",
                         "accept-language": "de-de",
                     },
                 },
@@ -326,7 +320,6 @@ class Parcel extends utils.Adapter {
                     jar: this.cookieJar,
                     withCredentials: true,
                     headers: {
-                        Host: "www.dhl.de",
                         "content-type": "application/json",
                         accept: "*/*",
                         "x-requested-with": "XMLHttpRequest",
