@@ -60,6 +60,7 @@ class Parcel extends utils.Adapter {
 
         if (this.config["17trackKey"]) {
             this.sessions["17track"] = this.config["17trackKey"];
+            this.setState("info.connection", true, true);
         }
 
         this.updateInterval = null;
@@ -237,6 +238,7 @@ class Parcel extends utils.Adapter {
                 .catch(async (error) => {
                     this.log.error(error);
                     if (error.response) {
+                        this.setState("info.connection", false, true);
                         this.log.error(JSON.stringify(error.response.data));
                         const adapterConfig = "system.adapter." + this.name + "." + this.instance;
                         this.log.error("MFA incorrect");
@@ -258,6 +260,9 @@ class Parcel extends utils.Adapter {
             try {
                 const trackList = await this.getStateAsync("17t.trackList");
                 if (trackList && trackList.val) {
+                    if (!trackList.val.map) {
+                        trackList.val = JSON.parse(trackList.val);
+                    }
                     data17Track = trackList.val.map((track) => {
                         return { number: track };
                     });
