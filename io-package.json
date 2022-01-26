@@ -125,9 +125,22 @@
             "common": {
                 "role": "state",
                 "name": "Register a new tracking id",
-                "type": "string",
+                "type": "mixed",
                 "read": true,
                 "write": true,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "17t.json",
+            "type": "state",
+            "common": {
+                "role": "state",
+                "name": "Json tracking info",
+                "type": "mixed",
+                "read": true,
+                "write": false,
                 "def": false
             },
             "native": {}
@@ -138,7 +151,7 @@
             "common": {
                 "role": "state",
                 "name": "Unregister a tracking id",
-                "type": "string",
+                "type": "mixed",
                 "read": true,
                 "write": true,
                 "def": false

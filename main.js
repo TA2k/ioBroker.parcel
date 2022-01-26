@@ -130,13 +130,7 @@ class Parcel extends utils.Adapter {
                     this.sessions["dhl"] = res.data;
                     this.setState("info.connection", true, true);
                     this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
-                    await this.setObjectNotExistsAsync("dhl", {
-                        type: "device",
-                        common: {
-                            name: "DHL Tracking",
-                        },
-                        native: {},
-                    });
+                    await this.createDHLStates();
                     return true;
                 }
                 return false;
@@ -227,13 +221,7 @@ class Parcel extends utils.Adapter {
                     this.sessions["dhl"] = res.data;
                     this.setState("info.connection", true, true);
                     this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
-                    await this.setObjectNotExistsAsync("dhl", {
-                        type: "device",
-                        common: {
-                            name: "DHL Tracking",
-                        },
-                        native: {},
-                    });
+                    await this.createDHLStates();
                 })
                 .catch(async (error) => {
                     this.log.error(error);
@@ -252,6 +240,38 @@ class Parcel extends utils.Adapter {
                     }
                 });
         }
+    }
+
+    async createDHLStates() {
+        await this.setObjectNotExistsAsync("dhl", {
+            type: "device",
+            common: {
+                name: "DHL Tracking",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("dhl.json", {
+            type: "state",
+            common: {
+                name: "Json Sendungen",
+                write: false,
+                read: true,
+                type: "string",
+                role: "json",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("dhl.briefe.json", {
+            type: "state",
+            common: {
+                name: "Json Briefe",
+                write: false,
+                read: true,
+                type: "string",
+                role: "json",
+            },
+            native: {},
+        });
     }
 
     async updateProvider() {
@@ -331,6 +351,7 @@ class Parcel extends utils.Adapter {
                         const preferedArrayName = null;
 
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
+                        this.setState(element.path + ".json", JSON.stringify(data), true);
                     })
                     .catch((error) => {
                         if (error.response) {
