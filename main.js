@@ -316,7 +316,7 @@ class Parcel extends utils.Adapter {
                 }
             });
     }
-    async loginDpd() {
+    async loginDPD() {
         await this.requestClient({
             method: "post",
             url: "https://www.dpd.com/de/de/mydpd-anmelden-und-registrieren/",
@@ -332,20 +332,44 @@ class Parcel extends utils.Adapter {
             }),
             jar: this.cookieJar,
             withCredentials: true,
+            maxRedirects: 0,
         })
             .then(async (res) => {
                 if (res.data && res.data.indexOf("Login fehlgeschlagen") !== -1) {
                     this.log.warn("Login to DPD failed");
                     return;
                 }
-                this.log.info("Login to DPD successful");
-                this.sessions["dpd"] = true;
-                this.setState("info.connection", true, true);
-                this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
             })
-            .catch((error) => {
-                this.log.error(error);
+            .catch(async (error) => {
                 if (error.response) {
+                    if (error.response.status === 302) {
+                        this.dpdToken = error.response.headers.location.split("=")[1];
+                        this.log.info("Login to DPD successful");
+                        this.sessions["dpd"] = true;
+                        await this.setObjectNotExistsAsync("dpd", {
+                            type: "device",
+                            common: {
+                                name: "DPD Tracking",
+                            },
+                            native: {},
+                        });
+                        await this.setObjectNotExistsAsync("dpd.json", {
+                            type: "state",
+                            common: {
+                                name: "Json Sendungen",
+                                write: false,
+                                read: true,
+                                type: "string",
+                                role: "json",
+                            },
+                            native: {},
+                        });
+                        this.setState("info.connection", true, true);
+                        this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                        return;
+                    }
+
+                    this.log.error(error);
                     this.log.error(JSON.stringify(error.response.data));
                 }
             });
@@ -416,7 +440,7 @@ class Parcel extends utils.Adapter {
             dpd: [
                 {
                     path: "dpd",
-                    url: "https://my.dpd.de/myParcel.aspx",
+                    url: "https://my.dpd.de/myParcel.aspx?dpd_token=" + this.dpdToken,
                     header: {
                         accept: "*/*",
                         "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
@@ -483,6 +507,10 @@ class Parcel extends utils.Adapter {
         const dom = new JSDOM(body);
         const result = { sendungen: [] };
         const parcelList = dom.window.document.querySelector(".parcelList");
+        if (!parcelList) {
+            this.log.warn("No parcelList found");
+            return;
+        }
         parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
             const parcelInfo = parcel.firstElementChild;
             result.sendungen.push({
@@ -537,6 +565,9 @@ class Parcel extends utils.Adapter {
                             }, 1000 * 60 * 1);
                         }
                     });
+            }
+            if (id === "dpd") {
+                this.loginDPD();
             }
         }
     }
