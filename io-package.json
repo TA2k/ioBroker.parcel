@@ -93,6 +93,8 @@
     "native": {
         "amzusername": "",
         "amzpassword": "",
+        "dpdusername": "",
+        "dpdpassword": "",
         "dhlusername": "",
         "dhlpassword": "",
         "dhlMfa": "",

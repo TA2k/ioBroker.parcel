@@ -12,6 +12,7 @@ const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
 const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent");
+const { JSDOM } = require("jsdom");
 
 class Parcel extends utils.Adapter {
     /**
@@ -62,6 +63,10 @@ class Parcel extends utils.Adapter {
         if (this.config.amzusername && this.config.amzpassword) {
             this.log.info("Login to Amazon");
             await this.loginAmz();
+        }
+        if (this.config.dpdusername && this.config.dpdpassword) {
+            this.log.info("Login to DPD");
+            await this.loginDPD();
         }
 
         if (this.config["17trackKey"]) {
@@ -311,7 +316,40 @@ class Parcel extends utils.Adapter {
                 }
             });
     }
-
+    async loginDpd() {
+        await this.requestClient({
+            method: "post",
+            url: "https://www.dpd.com/de/de/mydpd-anmelden-und-registrieren/",
+            headers: {
+                "content-type": "application/x-www-form-urlencoded",
+                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.66 Safari/537.36",
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "accept-language": "de,en;q=0.9",
+            },
+            data: qs.stringify({
+                dpg_username: this.config.dpdusername,
+                dpg_password: this.config.dpdpassword,
+            }),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                if (res.data && res.data.indexOf("Login fehlgeschlagen") !== -1) {
+                    this.log.warn("Login to DPD failed");
+                    return;
+                }
+                this.log.info("Login to DPD successful");
+                this.sessions["dpd"] = true;
+                this.setState("info.connection", true, true);
+                this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+    }
     async updateProvider() {
         let data17Track = {};
         if (this.sessions["17track"]) {
@@ -375,6 +413,17 @@ class Parcel extends utils.Adapter {
                     },
                 },
             ],
+            dpd: [
+                {
+                    path: "dpd",
+                    url: "https://my.dpd.de/myParcel.aspx",
+                    header: {
+                        accept: "*/*",
+                        "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                        "accept-language": "de-de",
+                    },
+                },
+            ],
         };
 
         for (const id of Object.keys(this.sessions)) {
@@ -398,6 +447,9 @@ class Parcel extends utils.Adapter {
                         }
                         const forceIndex = true;
                         const preferedArrayName = null;
+                        if (id === "dpd") {
+                            data = this.convertDomToJson(data);
+                        }
 
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
                         this.setState(element.path + ".json", JSON.stringify(data), true);
@@ -426,6 +478,20 @@ class Parcel extends utils.Adapter {
                     });
             }
         }
+    }
+    convertDomToJson(body) {
+        const dom = new JSDOM(body);
+        const result = { sendungen: [] };
+        const parcelList = dom.window.document.querySelector(".parcelList");
+        parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
+            const parcelInfo = parcel.firstElementChild;
+            result.sendungen.push({
+                name: parcelInfo.querySelector(".parcelName").textContent,
+                status: parcelInfo.querySelector(".parcelDeliveryStatus").textContent,
+                number: parcelInfo.querySelector(".parcelNo").textContent,
+            });
+        });
+        return result;
     }
     async refreshToken() {
         if (Object.keys(this.sessions).length === 0) {

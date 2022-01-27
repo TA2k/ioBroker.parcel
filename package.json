@@ -22,6 +22,7 @@
         "@iobroker/adapter-core": "^2.5.1",
         "axios": "^0.25.0",
         "http-cookie-agent": "^1.0.3",
+        "jsdom": "^19.0.0",
         "json-bigint": "^1.0.0",
         "qs": "^6.10.3",
         "tough-cookie": "^4.0.0"
