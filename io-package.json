@@ -48,7 +48,9 @@
             "parcel",
             "tracking",
             "dhl",
-            "paket"
+            "paket",
+            "17Track",
+            "Amazon"
         ],
         "license": "MIT",
         "platform": "Javascript/Node.js",
@@ -81,12 +83,16 @@
         ]
     },
     "encryptedNative": [
-        "dhlpassword"
+        "dhlpassword",
+        "amzpassword"
     ],
     "protectedNative": [
-        "dhlpassword"
+        "dhlpassword",
+        "amzpassword"
     ],
     "native": {
+        "amzusername": "",
+        "amzpassword": "",
         "dhlusername": "",
         "dhlpassword": "",
         "dhlMfa": "",
@@ -133,7 +139,7 @@
             "native": {}
         },
         {
-            "_id": "17t.json",
+            "_id": "17t.trackinginfo.json",
             "type": "state",
             "common": {
                 "role": "state",

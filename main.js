@@ -8,6 +8,7 @@
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
+const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
 const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent");
@@ -56,6 +57,11 @@ class Parcel extends utils.Adapter {
         if (this.config.dhlusername && this.config.dhlpassword) {
             this.log.info("Login to DHL");
             await this.loginDHL();
+        }
+
+        if (this.config.amzusername && this.config.amzpassword) {
+            this.log.info("Login to Amazon");
+            await this.loginAmz();
         }
 
         if (this.config["17trackKey"]) {
@@ -242,36 +248,68 @@ class Parcel extends utils.Adapter {
         }
     }
 
-    async createDHLStates() {
-        await this.setObjectNotExistsAsync("dhl", {
-            type: "device",
-            common: {
-                name: "DHL Tracking",
+    async loginAmz() {
+        const body = await this.requestClient({
+            method: "get",
+            url: "https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&accountStatusPolicy=P1&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.oa2.client_id=device:32467234687368746238704723437432432&openid.oa2.code_challenge=IeFTKnKcmHEPij50cdHHCq6ZVMbFYJMQQtbrMvKbgz0&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code",
+            headers: {
+                accept: "*/*",
+                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                "accept-language": "de-de",
             },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync("dhl.json", {
-            type: "state",
-            common: {
-                name: "Json Sendungen",
-                write: false,
-                read: true,
-                type: "string",
-                role: "json",
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+                return res.data;
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+        const form = this.extractHidden(body);
+        form.email = this.config.amzusername;
+        form.password = this.config.amzpassword;
+
+        await this.requestClient({
+            method: "post",
+            url: "https://www.amazon.de/ap/signin",
+            headers: {
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "content-type": "application/x-www-form-urlencoded",
+                origin: "https://www.amazon.de",
+                "accept-language": "de-de",
+                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                referer: "https://www.amazon.de/ap/signin",
             },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync("dhl.briefe.json", {
-            type: "state",
-            common: {
-                name: "Json Briefe",
-                write: false,
-                read: true,
-                type: "string",
-                role: "json",
-            },
-            native: {},
-        });
+            data: qs.stringify(form),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+                this.log.info("Login to Amazon successful");
+                this.sessions["amz"] = true;
+                this.setState("info.connection", true, true);
+                this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                await this.setObjectNotExistsAsync("amazon", {
+                    type: "device",
+                    common: {
+                        name: "Amazon Tracking",
+                    },
+                    native: {},
+                });
+            })
+            .catch(async (error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.setState("info.connection", false, true);
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
     }
 
     async updateProvider() {
@@ -324,6 +362,17 @@ class Parcel extends utils.Adapter {
                         "Content-Type": "application/json",
                     },
                     data: JSON.stringify(data17Track),
+                },
+            ],
+            amz: [
+                {
+                    path: "amazon",
+                    url: "https://www.amazon.de/gp/your-account/order-history?ie=UTF8",
+                    header: {
+                        accept: "*/*",
+                        "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                        "accept-language": "de-de",
+                    },
                 },
             ],
         };
@@ -425,7 +474,66 @@ class Parcel extends utils.Adapter {
             }
         }
     }
+    async createDHLStates() {
+        await this.setObjectNotExistsAsync("dhl", {
+            type: "device",
+            common: {
+                name: "DHL Tracking",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("dhl.json", {
+            type: "state",
+            common: {
+                name: "Json Sendungen",
+                write: false,
+                read: true,
+                type: "string",
+                role: "json",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("dhl.briefe.json", {
+            type: "state",
+            common: {
+                name: "Json Briefe",
+                write: false,
+                read: true,
+                type: "string",
+                role: "json",
+            },
+            native: {},
+        });
+    }
+    extractHidden(body) {
+        const returnObject = {};
+        const matches = this.matchAll(/<input (?=[^>]* name=["']([^'"]*)|)(?=[^>]* value=["']([^'"]*)|)/g, body);
+        for (const match of matches) {
+            returnObject[match[1]] = match[2];
+        }
+        return returnObject;
+    }
+    matchAll(re, str) {
+        let match;
+        const matches = [];
+        while ((match = re.exec(str))) {
+            // add all matched groups
+            matches.push(match);
+        }
 
+        return matches;
+    }
+    // getCodeChallenge() {
+    //     let hash = "";
+    //     let result = "";
+    //     const chars = "0123456789abcdef";
+    //     result = "";
+    //     for (let i = 64; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    //     hash = crypto.createHash("sha256").update(result).digest("base64");
+    //     hash = hash.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+    //     return [result, hash];
+    // }
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
      * @param {() => void} callback

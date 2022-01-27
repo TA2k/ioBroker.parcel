@@ -23,7 +23,7 @@
         "axios": "^0.25.0",
         "http-cookie-agent": "^1.0.3",
         "json-bigint": "^1.0.0",
-        "qs": "^6.10.1",
+        "qs": "^6.10.3",
         "tough-cookie": "^4.0.0"
     },
     "devDependencies": {
