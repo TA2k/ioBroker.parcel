@@ -393,13 +393,17 @@ class Parcel extends utils.Adapter {
                 '{"version":"1.0","method":"Signin","param":{"Email":"' +
                 this.config.t17username +
                 '","Password":"' +
-                this.config.t17username +
+                this.config.t17password +
                 '","CaptchaCode":""},"sourcetype":0,"timeZoneOffset":-60}',
             jar: this.cookieJar,
             withCredentials: true,
         })
             .then(async (res) => {
-                this.log.debug(res.data);
+                this.log.debug(JSON.stringify(res.data));
+                if (res.data && res.data.Message) {
+                    this.log.error(res.data.Message);
+                    return;
+                }
                 this.log.info("Login to 17T successful");
                 this.sessions["17tuser"] = true;
                 await this.setObjectNotExistsAsync("17tuser", {
@@ -649,6 +653,9 @@ class Parcel extends utils.Adapter {
             if (id === "dpd") {
                 this.loginDPD();
             }
+            if (id === "17tuser") {
+                this.login17T();
+            }
         }
     }
     async createDHLStates() {
@@ -808,6 +815,7 @@ class Parcel extends utils.Adapter {
                     })
                         .then(async (res) => {
                             this.log.info(JSON.stringify(res.data));
+                            this.updateProvider();
                         })
                         .catch((error) => {
                             this.log.error(error);
