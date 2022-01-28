@@ -409,7 +409,7 @@ class Parcel extends utils.Adapter {
                 await this.setObjectNotExistsAsync("17tuser", {
                     type: "device",
                     common: {
-                        name: "17TUser Tracking",
+                        name: "17Track User Tracking",
                     },
                     native: {},
                 });
