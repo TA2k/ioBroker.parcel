@@ -93,6 +93,8 @@
     "native": {
         "amzusername": "",
         "amzpassword": "",
+        "t17username": "",
+        "t17password": "",
         "dpdusername": "",
         "dpdpassword": "",
         "dhlusername": "",

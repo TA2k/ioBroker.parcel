@@ -68,6 +68,10 @@ class Parcel extends utils.Adapter {
             this.log.info("Login to DPD");
             await this.loginDPD();
         }
+        if (this.config.t17username && this.config.t17password) {
+            this.log.info("Login to T17 User");
+            await this.login17T();
+        }
 
         if (this.config["17trackKey"]) {
             this.sessions["17track"] = this.config["17trackKey"];
@@ -374,6 +378,70 @@ class Parcel extends utils.Adapter {
                 }
             });
     }
+
+    async login17T() {
+        await this.requestClient({
+            method: "post",
+            url: "https://user.17track.net/userapi/call",
+            headers: {
+                accept: "*/*",
+                "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "x-requested-with": "XMLHttpRequest",
+                "accept-language": "de,en;q=0.9",
+            },
+            data:
+                '{"version":"1.0","method":"Signin","param":{"Email":"' +
+                this.config.t17username +
+                '","Password":"' +
+                this.config.t17username +
+                '","CaptchaCode":""},"sourcetype":0,"timeZoneOffset":-60}',
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(res.data);
+                this.log.info("Login to 17T successful");
+                this.sessions["17tuser"] = true;
+                await this.setObjectNotExistsAsync("17tuser", {
+                    type: "device",
+                    common: {
+                        name: "17TUser Tracking",
+                    },
+                    native: {},
+                });
+                await this.setObjectNotExistsAsync("17tuser.trackinginfo.json", {
+                    type: "state",
+                    common: {
+                        name: "Json Sendungen",
+                        write: false,
+                        read: true,
+                        type: "string",
+                        role: "json",
+                    },
+                    native: {},
+                });
+                await this.setObjectNotExistsAsync("17tuser.register", {
+                    type: "state",
+                    common: {
+                        name: "Register Tracking ID",
+                        write: true,
+                        read: true,
+                        type: "mixed",
+                        role: "state",
+                    },
+                    native: {},
+                });
+                this.setState("info.connection", true, true);
+                this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                return;
+            })
+            .catch(async (error) => {
+                if (error.response) {
+                    this.log.error(error);
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+    }
     async updateProvider() {
         let data17Track = {};
         if (this.sessions["17track"]) {
@@ -426,6 +494,15 @@ class Parcel extends utils.Adapter {
                     data: JSON.stringify(data17Track),
                 },
             ],
+            "17tuser": [
+                {
+                    method: "post",
+                    path: "17tuser.trackinginfo",
+                    url: "https://buyer.17track.net/orderapi/call",
+                    data: '{"version":"1.0","timeZoneOffset":-60,"method":"GetTrackInfoList","param":{"ob":"1","Page":1,"IsArchived":false}}',
+                    header: { "content-type": "application/x-www-form-urlencoded" },
+                },
+            ],
             amz: [
                 {
                     path: "amazon",
@@ -468,6 +545,9 @@ class Parcel extends utils.Adapter {
                         let data = res.data;
                         if (id === "17track") {
                             data = res.data.data;
+                        }
+                        if (id === "17tuser") {
+                            data = res.data.Json;
                         }
                         const forceIndex = true;
                         const preferedArrayName = null;
@@ -710,6 +790,24 @@ class Parcel extends utils.Adapter {
                                         this.log.error(JSON.stringify(error.response.data));
                                     }
                                 });
+                        })
+                        .catch((error) => {
+                            this.log.error(error);
+                            if (error.response) {
+                                this.log.error(JSON.stringify(error.response.data));
+                            }
+                        });
+                }
+                if (id.split(".")[2] === "17tuser") {
+                    await this.requestClient({
+                        method: "post",
+                        url: "https://buyer.17track.net/orderapi/call",
+                        header: { "content-type": "application/x-www-form-urlencoded" },
+
+                        data: JSON.stringify({ version: "1.0", timeZoneOffset: -60, method: "AddTrackNo", param: { TrackNos: [state.val] } }),
+                    })
+                        .then(async (res) => {
+                            this.log.info(JSON.stringify(res.data));
                         })
                         .catch((error) => {
                             this.log.error(error);
