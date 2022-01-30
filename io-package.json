@@ -114,6 +114,19 @@
             "native": {}
         },
         {
+            "_id": "allProviderJson",
+            "type": "state",
+            "common": {
+                "role": "state",
+                "name": "Tracking of all Providers",
+                "type": "object",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        },
+        {
             "_id": "17t",
             "type": "channel",
             "common": {

@@ -29,6 +29,7 @@ class Parcel extends utils.Adapter {
 
         this.json2iob = new Json2iob(this);
         this.sessions = {};
+        this.mergedJson = [];
     }
 
     /**
@@ -448,6 +449,7 @@ class Parcel extends utils.Adapter {
     }
     async updateProvider() {
         let data17Track = {};
+        this.mergedJson = [];
         if (this.sessions["17track"]) {
             try {
                 const trackList = await this.getStateAsync("17t.trackList");
@@ -561,6 +563,7 @@ class Parcel extends utils.Adapter {
                         await this.cleanupProvider(id, data);
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
                         this.setState(element.path + ".json", JSON.stringify(data), true);
+                        this.mergeProviderJson(id, data);
                     })
                     .catch((error) => {
                         if (error.response) {
@@ -588,15 +591,36 @@ class Parcel extends utils.Adapter {
         }
     }
     async cleanupProvider(id, data) {
-        const objectList = await this.getObjectListAsync({
-            startkey: this.namespace,
-            endkey: this.namespace + "\u9999",
-        });
-        if (id === "dhl") {
-            for (const sendung of data.sendungen) {
-                const index = data.sendungen.indexOf(sendung);
+        if ((id === "dhl" && data.sendungen) || id === "dpd") {
+            const states = await this.getStatesAsync(id + ".sendungen*.id");
+            const sendungsArray = data.sendungen.map((sendung) => {
+                return sendung.id;
+            });
+            for (const sendungsIdKey in states) {
+                let index = Object.keys(states).indexOf(sendungsIdKey);
+                const sendungsId = states[sendungsIdKey].val;
+                if (sendungsArray[index] !== sendungsId) {
+                    const idArray = sendungsIdKey.split(".");
+                    idArray.pop();
+                    this.log.debug("deleting " + sendungsIdKey);
+                    await this.delObjectAsync(idArray.join("."), { recursive: true });
+                }
             }
         }
+    }
+    async mergeProviderJson(id, data) {
+        this.log.debug("merge provider json");
+        if (id === "dhl" && data.sendungen) {
+            const sendungsArray = data.sendungen.map((sendung) => {
+                return { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: sendung.sendungsinfo.sendungsrichtung };
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
+        }
+        if (id === "dpd") {
+            this.mergedJson = this.mergedJson.concat(data.sendungen);
+        }
+
+        this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
     }
     convertDomToJson(body) {
         const dom = new JSDOM(body);
@@ -611,7 +635,7 @@ class Parcel extends utils.Adapter {
             result.sendungen.push({
                 name: parcelInfo.querySelector(".parcelName").textContent,
                 status: parcelInfo.querySelector(".parcelDeliveryStatus").textContent,
-                number: parcelInfo.querySelector(".parcelNo").textContent,
+                id: parcelInfo.querySelector(".parcelNo").textContent,
             });
         });
         return result;
