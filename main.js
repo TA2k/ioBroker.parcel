@@ -541,7 +541,7 @@ class Parcel extends utils.Adapter {
                     withCredentials: true,
                     data: element.data,
                 })
-                    .then((res) => {
+                    .then(async (res) => {
                         this.log.debug(JSON.stringify(res.data));
                         if (!res.data) {
                             return;
@@ -558,7 +558,7 @@ class Parcel extends utils.Adapter {
                         if (id === "dpd") {
                             data = this.convertDomToJson(data);
                         }
-
+                        await this.cleanupProvider(id, data);
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
                         this.setState(element.path + ".json", JSON.stringify(data), true);
                     })
@@ -584,6 +584,17 @@ class Parcel extends utils.Adapter {
                         this.log.error(error);
                         error.response && this.log.error(JSON.stringify(error.response.data));
                     });
+            }
+        }
+    }
+    async cleanupProvider(id, data) {
+        const objectList = await this.getObjectListAsync({
+            startkey: this.namespace,
+            endkey: this.namespace + "\u9999",
+        });
+        if (id === "dhl") {
+            for (const sendung of data.sendungen) {
+                const index = data.sendungen.indexOf(sendung);
             }
         }
     }
