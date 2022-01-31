@@ -634,7 +634,9 @@ class Parcel extends utils.Adapter {
         if (id === "17track" && data.accepted) {
             const sendungsArray = data.accepted.map((sendung) => {
                 const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "" };
-                this.mergedJsonObject[sendung.id] = sendungsObject;
+                if (!this.mergedJsonObject[sendung.id]) {
+                    this.mergedJsonObject[sendung.id] = sendungsObject;
+                }
                 return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
@@ -642,7 +644,9 @@ class Parcel extends utils.Adapter {
         if (id === "17tuser" && data) {
             const sendungsArray = data.map((sendung) => {
                 const sendungsObject = { id: sendung.FTrackInfoId, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "" };
-                this.mergedJsonObject[id] = sendungsObject;
+                if (!this.mergedJsonObject[sendung.id]) {
+                    this.mergedJsonObject[sendung.id] = sendungsObject;
+                }
                 return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
