@@ -619,7 +619,7 @@ class Parcel extends utils.Adapter {
                     status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
                 }
                 const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status };
-                this.mergedJsonObject[id] = sendungsObject;
+                this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
