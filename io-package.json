@@ -118,7 +118,20 @@
             "type": "state",
             "common": {
                 "role": "state",
-                "name": "Tracking of all Providers",
+                "name": "Tracking List of all Providers",
+                "type": "object",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "allProviderObjects",
+            "type": "state",
+            "common": {
+                "role": "state",
+                "name": "Tracking Dictionary of all Providers",
                 "type": "object",
                 "read": true,
                 "write": false,

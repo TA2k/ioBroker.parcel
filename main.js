@@ -30,6 +30,7 @@ class Parcel extends utils.Adapter {
         this.json2iob = new Json2iob(this);
         this.sessions = {};
         this.mergedJson = [];
+        this.mergedJsonObject = {};
     }
 
     /**
@@ -450,6 +451,7 @@ class Parcel extends utils.Adapter {
     async updateProvider() {
         let data17Track = {};
         this.mergedJson = [];
+        this.mergedJsonObject = {};
         if (this.sessions["17track"]) {
             try {
                 const trackList = await this.getStateAsync("17t.trackList");
@@ -597,7 +599,7 @@ class Parcel extends utils.Adapter {
                 return sendung.id;
             });
             for (const sendungsIdKey in states) {
-                let index = Object.keys(states).indexOf(sendungsIdKey);
+                const index = Object.keys(states).indexOf(sendungsIdKey);
                 const sendungsId = states[sendungsIdKey].val;
                 if (sendungsArray[index] !== sendungsId) {
                     const idArray = sendungsIdKey.split(".");
@@ -612,15 +614,25 @@ class Parcel extends utils.Adapter {
         this.log.debug("merge provider json");
         if (id === "dhl" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
-                return { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: sendung.sendungsinfo.sendungsrichtung };
+                let status = sendung.sendungsinfo.sendungsrichtung;
+                if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.kurzStatus) {
+                    status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
+                }
+                const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status };
+                this.mergedJsonObject[id] = sendungsObject;
+                return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
         if (id === "dpd") {
+            for (const sendung of data.sendungen) {
+                this.mergedJsonObject[sendung.id] = sendung;
+            }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
         }
 
         this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
+        this.setState("allProviderObjects", JSON.stringify(this.mergedJsonObject), true);
     }
     convertDomToJson(body) {
         const dom = new JSDOM(body);
