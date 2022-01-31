@@ -611,7 +611,7 @@ class Parcel extends utils.Adapter {
         }
     }
     async mergeProviderJson(id, data) {
-        this.log.debug("merge provider json");
+        this.log.debug(id + " merge provider json");
         if (id === "dhl" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
                 let status = sendung.sendungsinfo.sendungsrichtung;
@@ -624,11 +624,28 @@ class Parcel extends utils.Adapter {
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
+
         if (id === "dpd") {
             for (const sendung of data.sendungen) {
                 this.mergedJsonObject[sendung.id] = sendung;
             }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
+        }
+        if (id === "17track" && data.accepted) {
+            const sendungsArray = data.accepted.map((sendung) => {
+                const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "" };
+                this.mergedJsonObject[sendung.id] = sendungsObject;
+                return sendungsObject;
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
+        }
+        if (id === "17tuser" && data) {
+            const sendungsArray = data.map((sendung) => {
+                const sendungsObject = { id: sendung.FTrackInfoId, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "" };
+                this.mergedJsonObject[id] = sendungsObject;
+                return sendungsObject;
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
 
         this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
