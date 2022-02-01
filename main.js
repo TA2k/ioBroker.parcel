@@ -649,7 +649,7 @@ class Parcel extends utils.Adapter {
             this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
 
-        if (id === "dpd" && data.sendungen) {
+        if (id === "dpd" && data && data.sendungen) {
             for (const sendung of data.sendungen) {
                 this.mergedJsonObject[sendung.id] = sendung;
             }
