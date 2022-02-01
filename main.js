@@ -587,9 +587,9 @@ class Parcel extends utils.Adapter {
                             this.setState("dhl.trackList", JSON.stringify(trackingList), true);
                         }
                         await this.cleanupProvider(id, data);
+                        this.mergeProviderJson(id, data);
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
                         this.setState(element.path + ".json", JSON.stringify(data), true);
-                        this.mergeProviderJson(id, data);
                     })
                     .catch((error) => {
                         if (error.response) {
@@ -668,11 +668,18 @@ class Parcel extends utils.Adapter {
         }
         if (id === "17tuser" && data) {
             const sendungsArray = data.map((sendung) => {
-                const sendungsObject = { id: sendung.FTrackInfoId, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "" };
-                if (!this.mergedJsonObject[sendung.id]) {
-                    this.mergedJsonObject[sendung.id] = sendungsObject;
+                try {
+                    if (sendung.FLastEvent) {
+                        sendung.FLastEvent = JSON.parse(sendung.FLastEvent);
+                    }
+                    const sendungsObject = { id: sendung.FTrackNo, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "" };
+                    if (!this.mergedJsonObject[sendung.id]) {
+                        this.mergedJsonObject[sendung.id] = sendungsObject;
+                    }
+                    return sendungsObject;
+                } catch (error) {
+                    this.log.error(error);
                 }
-                return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
         }

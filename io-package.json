@@ -121,8 +121,7 @@
                 "name": "Tracking List of all Providers",
                 "type": "object",
                 "read": true,
-                "write": false,
-                "def": false
+                "write": false
             },
             "native": {}
         },
@@ -134,8 +133,7 @@
                 "name": "Tracking Dictionary of all Providers",
                 "type": "object",
                 "read": true,
-                "write": false,
-                "def": false
+                "write": false
             },
             "native": {}
         },
@@ -163,8 +161,7 @@
                 "name": "Register a new tracking id",
                 "type": "mixed",
                 "read": true,
-                "write": true,
-                "def": false
+                "write": true
             },
             "native": {}
         },
@@ -189,8 +186,7 @@
                 "name": "Unregister a tracking id",
                 "type": "mixed",
                 "read": true,
-                "write": true,
-                "def": false
+                "write": true
             },
             "native": {}
         },
@@ -202,8 +198,7 @@
                 "name": "Registered tracking ids",
                 "type": "object",
                 "read": true,
-                "write": false,
-                "def": false
+                "write": false
             },
             "native": {}
         },
@@ -223,8 +218,7 @@
                 "name": "DHL Mfa Token",
                 "type": "string",
                 "read": true,
-                "write": false,
-                "def": false
+                "write": false
             },
             "native": {}
         },
@@ -236,8 +230,7 @@
                 "name": "Cookie state",
                 "type": "string",
                 "read": true,
-                "write": false,
-                "def": false
+                "write": false
             },
             "native": {}
         },
