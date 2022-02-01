@@ -450,6 +450,7 @@ class Parcel extends utils.Adapter {
     }
     async updateProvider() {
         let data17Track = {};
+        let dataDhl = [];
         this.mergedJson = [];
         this.mergedJsonObject = {};
         if (this.sessions["17track"]) {
@@ -467,11 +468,24 @@ class Parcel extends utils.Adapter {
                 this.log.error(error);
             }
         }
+        if (this.sessions["dhl"]) {
+            try {
+                const trackList = await this.getStateAsync("dhl.trackList");
+                if (trackList && trackList.val) {
+                    if (!trackList.val.map) {
+                        trackList.val = JSON.parse(trackList.val);
+                    }
+                    dataDhl = trackList.val.join(";");
+                }
+            } catch (error) {
+                this.log.error(error);
+            }
+        }
         const statusArrays = {
             dhl: [
                 {
                     path: "dhl",
-                    url: "https://www.dhl.de/int-verfolgen/data/search?merge=false&noRedirect=true&language=de&cid=app",
+                    url: "https://www.dhl.de/int-verfolgen/data/search?piececode=" + dataDhl + "&noRedirect=true&language=de&cid=app",
                     header: {
                         accept: "application/json",
                         "content-type": "application/json",
@@ -562,6 +576,15 @@ class Parcel extends utils.Adapter {
                         if (id === "dpd") {
                             data = this.convertDomToJson(data);
                         }
+                        //filter archive message
+                        if (id === "dhl" && data.sendungen) {
+                            const trackingList = [];
+                            data.sendungen = data.sendungen.filter((sendung) => {
+                                trackingList.push(sendung.id);
+                                return sendung.sendungsinfo.sendungsliste !== "ARCHIVIERT";
+                            });
+                            this.setState("dhl.trackList", JSON.stringify(trackingList));
+                        }
                         await this.cleanupProvider(id, data);
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
                         this.setState(element.path + ".json", JSON.stringify(data), true);
@@ -614,7 +637,8 @@ class Parcel extends utils.Adapter {
         this.log.debug(id + " merge provider json");
         if (id === "dhl" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
-                let status = sendung.sendungsinfo.sendungsrichtung;
+                let status = "";
+
                 if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.kurzStatus) {
                     status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
                 }
@@ -625,7 +649,7 @@ class Parcel extends utils.Adapter {
             this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
 
-        if (id === "dpd") {
+        if (id === "dpd" && data.sendungen) {
             for (const sendung of data.sendungen) {
                 this.mergedJsonObject[sendung.id] = sendung;
             }
@@ -731,6 +755,28 @@ class Parcel extends utils.Adapter {
             type: "device",
             common: {
                 name: "DHL Tracking",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("dhl.json", {
+            type: "state",
+            common: {
+                name: "Json Sendungen",
+                write: false,
+                read: true,
+                type: "string",
+                role: "json",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("dhl.trackList", {
+            type: "state",
+            common: {
+                name: "Tracklist",
+                write: false,
+                read: true,
+                type: "string",
+                role: "object",
             },
             native: {},
         });
