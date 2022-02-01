@@ -551,6 +551,7 @@ class Parcel extends utils.Adapter {
 
         for (const id of Object.keys(this.sessions)) {
             for (const element of statusArrays[id]) {
+                this.log.debug(element.url);
                 await this.requestClient({
                     method: element.method ? element.method : "get",
                     url: element.url,
@@ -583,7 +584,7 @@ class Parcel extends utils.Adapter {
                                 trackingList.push(sendung.id);
                                 return sendung.sendungsinfo.sendungsliste !== "ARCHIVIERT";
                             });
-                            this.setState("dhl.trackList", JSON.stringify(trackingList));
+                            this.setState("dhl.trackList", JSON.stringify(trackingList), true);
                         }
                         await this.cleanupProvider(id, data);
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
