@@ -403,6 +403,7 @@ class Parcel extends utils.Adapter {
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
                 if (res.data && res.data.Message) {
+                    this.log.error("Login to 17TUser failed. Login via Google is not working");
                     this.log.error(res.data.Message);
                     return;
                 }
@@ -617,7 +618,7 @@ class Parcel extends utils.Adapter {
         }
     }
     async cleanupProvider(id, data) {
-        if ((id === "dhl" && data.sendungen) || id === "dpd") {
+        if ((id === "dhl" && data.sendungen) || id === "dpd" || (data && data.sendungen)) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
             const sendungsArray = data.sendungen.map((sendung) => {
                 return sendung.id;
