@@ -698,9 +698,9 @@ class Parcel extends utils.Adapter {
         parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
             const parcelInfo = parcel.firstElementChild;
             result.sendungen.push({
+                id: parcelInfo.querySelector(".parcelNo").textContent,
                 name: parcelInfo.querySelector(".parcelName").textContent,
                 status: parcelInfo.querySelector(".parcelDeliveryStatus").textContent,
-                id: parcelInfo.querySelector(".parcelNo").textContent,
             });
         });
         return result;
