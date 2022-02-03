@@ -264,7 +264,7 @@ class Parcel extends utils.Adapter {
     async loginAmz() {
         const body = await this.requestClient({
             method: "get",
-            url: "https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&accountStatusPolicy=P1&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.oa2.client_id=device:32467234687368746238704723437432432&openid.oa2.code_challenge=IeFTKnKcmHEPij50cdHHCq6ZVMbFYJMQQtbrMvKbgz0&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code",
+            url: "https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first",
             headers: {
                 accept: "*/*",
                 "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
@@ -304,6 +304,10 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
+                if (res.data.indexOf("nav_prefetch_yourorders") === -1) {
+                    this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
+                    return;
+                }
                 this.log.info("Login to Amazon successful");
                 this.sessions["amz"] = true;
                 this.setState("info.connection", true, true);
@@ -531,17 +535,7 @@ class Parcel extends utils.Adapter {
                     header: { "content-type": "application/x-www-form-urlencoded" },
                 },
             ],
-            amz: [
-                {
-                    path: "amazon",
-                    url: "https://www.amazon.de/gp/your-account/order-history?ie=UTF8",
-                    header: {
-                        accept: "*/*",
-                        "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-                        "accept-language": "de-de",
-                    },
-                },
-            ],
+            amz: [],
             dpd: [
                 {
                     path: "dpd",
@@ -625,6 +619,17 @@ class Parcel extends utils.Adapter {
     async cleanupProvider(id, data) {
         if (id === "dhl" && data.grantToken) {
             await this.delObjectAsync("dhl.briefe", { recursive: true });
+            await this.setObjectNotExistsAsync("dhl.briefe.json", {
+                type: "state",
+                common: {
+                    name: "Json Briefe",
+                    write: false,
+                    read: true,
+                    type: "string",
+                    role: "json",
+                },
+                native: {},
+            });
         }
         if ((id === "dhl" && data.sendungen) || id === "dpd" || (data && data.sendungen)) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
@@ -717,11 +722,39 @@ class Parcel extends utils.Adapter {
     }
     async getAmazonPackages() {
         const allCookies = this.cookieJar.toJSON();
-        this.nightmare.cookies.set(allCookies);
+        /*  this.nightmare.goto("https://amazon.de/amazon");
+        const cookieArray = [];
+        for (const key in this.cookieJar.store.idx["amazon.de"]["/"]) {
+            const cookie = this.cookieJar.store.idx["amazon.de"]["/"][key];
+
+            cookieArray.push({
+                name: cookie.key,
+                value: cookie.value,
+                domain: ".amazon.de",
+                hostOnly: false,
+                path: "/",
+                secure: true,
+                httpOnly: false,
+                session: false,
+            });
+        }
+        this.nightmare.cookies.set(cookieArray);
+
+        await this.sleep(5000);
         this.nightmare
-            .goto(
-                "https://www.amazon.de/ap/signin?_encoding=UTF8&accountStatusPolicy=P1&openid.assoc_handle=deflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.de%2Fgp%2Fcss%2Forder-history%3Fie%3DUTF8%26ref_%3Dnav_orders_first&pageId=webcs-yourorder&showRmrMe=1"
-            )
+            .goto("https://amazon.de/amazon")
+            .cookies.get()
+            .then((cookies) => {
+                console.log(JSON.stringify(cookies, null, 4));
+            });
+        await this.sleep(5000);*/
+        this.nightmare
+            .goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first")
+            .insert("#ap_email", this.config.amzusername)
+            .click(".a-button-input")
+            .wait(5000)
+            .insert("#ap_password", this.config.amzpassword)
+            .click("#signInSubmit")
             .wait("#ordersContainer")
             .evaluate(() => {
                 return Array.from(document.querySelectorAll(".track-package-button a")).map((element) => element.href);
@@ -733,7 +766,7 @@ class Parcel extends utils.Adapter {
             })
 
             .catch((error) => {
-                console.error("Amazon fetch failed:", error);
+                this.log.error("Amazon fetch failed:", error);
             });
     }
     async refreshToken() {
@@ -841,6 +874,12 @@ class Parcel extends utils.Adapter {
             },
             native: {},
         });
+    }
+    sleep(ms) {
+        if (this.adapterStopped) {
+            ms = 0;
+        }
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
     extractHidden(body) {
         const returnObject = {};
