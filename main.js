@@ -8,6 +8,7 @@
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
+const Nightmare = require("nightmare");
 const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
 const tough = require("tough-cookie");
@@ -65,6 +66,7 @@ class Parcel extends utils.Adapter {
         if (this.config.amzusername && this.config.amzpassword) {
             this.log.info("Login to Amazon");
             await this.loginAmz();
+            this.nightmare = Nightmare({ show: false });
         }
         if (this.config.dpdusername && this.config.dpdpassword) {
             this.log.info("Login to DPD");
@@ -482,6 +484,9 @@ class Parcel extends utils.Adapter {
                 this.log.error(error);
             }
         }
+        if (this.sessions["amz"]) {
+            this.getAmazonPackages();
+        }
         const statusArrays = {
             dhl: [
                 {
@@ -618,6 +623,9 @@ class Parcel extends utils.Adapter {
         }
     }
     async cleanupProvider(id, data) {
+        if (id === "dhl" && data.grantToken) {
+            await this.delObjectAsync("dhl.briefe", { recursive: true });
+        }
         if ((id === "dhl" && data.sendungen) || id === "dpd" || (data && data.sendungen)) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
             const sendungsArray = data.sendungen.map((sendung) => {
@@ -644,7 +652,7 @@ class Parcel extends utils.Adapter {
                 if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.kurzStatus) {
                     status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
                 }
-                const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status };
+                const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL" };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });
@@ -653,13 +661,14 @@ class Parcel extends utils.Adapter {
 
         if (id === "dpd" && data && data.sendungen) {
             for (const sendung of data.sendungen) {
+                sendung.source = "DPD";
                 this.mergedJsonObject[sendung.id] = sendung;
             }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
         }
         if (id === "17track" && data.accepted) {
             const sendungsArray = data.accepted.map((sendung) => {
-                const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "" };
+                const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "", source: "17track" };
                 if (!this.mergedJsonObject[sendung.id]) {
                     this.mergedJsonObject[sendung.id] = sendungsObject;
                 }
@@ -673,7 +682,7 @@ class Parcel extends utils.Adapter {
                     if (sendung.FLastEvent) {
                         sendung.FLastEvent = JSON.parse(sendung.FLastEvent);
                     }
-                    const sendungsObject = { id: sendung.FTrackNo, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "" };
+                    const sendungsObject = { id: sendung.FTrackNo, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "", source: "17tuser" };
                     if (!this.mergedJsonObject[sendung.id]) {
                         this.mergedJsonObject[sendung.id] = sendungsObject;
                     }
@@ -705,6 +714,27 @@ class Parcel extends utils.Adapter {
             });
         });
         return result;
+    }
+    async getAmazonPackages() {
+        const allCookies = this.cookieJar.toJSON();
+        this.nightmare.cookies.set(allCookies);
+        this.nightmare
+            .goto(
+                "https://www.amazon.de/ap/signin?_encoding=UTF8&accountStatusPolicy=P1&openid.assoc_handle=deflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.de%2Fgp%2Fcss%2Forder-history%3Fie%3DUTF8%26ref_%3Dnav_orders_first&pageId=webcs-yourorder&showRmrMe=1"
+            )
+            .wait("#ordersContainer")
+            .evaluate(() => {
+                return Array.from(document.querySelectorAll(".track-package-button a")).map((element) => element.href);
+            })
+            .then((element) => {
+                for (const url of element) {
+                    this.log.debug(url);
+                }
+            })
+
+            .catch((error) => {
+                console.error("Amazon fetch failed:", error);
+            });
     }
     async refreshToken() {
         if (Object.keys(this.sessions).length === 0) {
