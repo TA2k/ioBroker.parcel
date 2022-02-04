@@ -58,15 +58,16 @@ class Parcel extends utils.Adapter {
             }),
         });
 
+        // if (this.config.amzusername && this.config.amzpassword) {
+        //     this.log.info("Login to Amazon");
+        //     await this.loginAmz();
+
+        //     this.sessions["amz"] = true;
+        //     this.nightmare = Nightmare({ show: true });
+        // }
         if (this.config.dhlusername && this.config.dhlpassword) {
             this.log.info("Login to DHL");
             await this.loginDHL();
-        }
-
-        if (this.config.amzusername && this.config.amzpassword) {
-            this.log.info("Login to Amazon");
-            await this.loginAmz();
-            this.nightmare = Nightmare({ show: false });
         }
         if (this.config.dpdusername && this.config.dpdpassword) {
             this.log.info("Login to DPD");
@@ -476,17 +477,26 @@ class Parcel extends utils.Adapter {
             }
         }
         if (this.sessions["dhl"]) {
-            try {
-                const trackList = await this.getStateAsync("dhl.trackList");
-                if (trackList && trackList.val) {
-                    if (!trackList.val.map) {
-                        trackList.val = JSON.parse(trackList.val);
+            dataDhl = await this.requestClient({
+                method: "get",
+                url: "https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app",
+            })
+                .then(async (res) => {
+                    this.log.info(JSON.stringify(res.data));
+                    if (res.data && res.data.sendungen) {
+                        return res.data.sendungen.map((sendung) => {
+                            if (sendung.sendungsinfo.sendungsliste !== "ARCHIVIERT") {
+                                return sendung.id;
+                            }
+                        });
                     }
-                    dataDhl = trackList.val.join(";");
-                }
-            } catch (error) {
-                this.log.error(error);
-            }
+                    return [];
+                })
+                .catch((error) => {
+                    this.log.error(error);
+                    error.response && this.log.error(JSON.stringify(error.response.data));
+                    return [];
+                });
         }
         if (this.sessions["amz"]) {
             this.getAmazonPackages();
@@ -584,7 +594,6 @@ class Parcel extends utils.Adapter {
                                 trackingList.push(sendung.id);
                                 return sendung.sendungsinfo.sendungsliste !== "ARCHIVIERT";
                             });
-                            this.setState("dhl.trackList", JSON.stringify(trackingList), true);
                         }
                         await this.cleanupProvider(id, data);
                         this.mergeProviderJson(id, data);
@@ -752,7 +761,7 @@ class Parcel extends utils.Adapter {
             .goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first")
             .insert("#ap_email", this.config.amzusername)
             .click(".a-button-input")
-            .wait(5000)
+            .wait(2000)
             .insert("#ap_password", this.config.amzpassword)
             .click("#signInSubmit")
             .wait("#ordersContainer")
@@ -766,7 +775,8 @@ class Parcel extends utils.Adapter {
             })
 
             .catch((error) => {
-                this.log.error("Amazon fetch failed:", error);
+                this.log.error("Amazon fetch failed:");
+                this.log.error(error);
             });
     }
     async refreshToken() {
@@ -841,17 +851,7 @@ class Parcel extends utils.Adapter {
             },
             native: {},
         });
-        await this.setObjectNotExistsAsync("dhl.trackList", {
-            type: "state",
-            common: {
-                name: "Tracklist",
-                write: false,
-                read: true,
-                type: "string",
-                role: "object",
-            },
-            native: {},
-        });
+
         await this.setObjectNotExistsAsync("dhl.json", {
             type: "state",
             common: {
