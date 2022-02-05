@@ -480,6 +480,8 @@ class Parcel extends utils.Adapter {
             dataDhl = await this.requestClient({
                 method: "get",
                 url: "https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app",
+                jar: this.cookieJar,
+                withCredentials: true,
             })
                 .then(async (res) => {
                     this.log.info(JSON.stringify(res.data));
@@ -594,6 +596,10 @@ class Parcel extends utils.Adapter {
                                 trackingList.push(sendung.id);
                                 return sendung.sendungsinfo.sendungsliste !== "ARCHIVIERT";
                             });
+                        }
+                        //filter archive message
+                        if (element.path === "dhl.briefe" && res.data.grantToken) {
+                            await this.activateToken(res.data.grantToken, res.data.accessTokenUrl);
                         }
                         await this.cleanupProvider(id, data);
                         this.mergeProviderJson(id, data);
@@ -710,6 +716,28 @@ class Parcel extends utils.Adapter {
 
         this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
         this.setState("allProviderObjects", JSON.stringify(this.mergedJsonObject), true);
+    }
+    async activateToken(grant_token, url) {
+        await this.requestClient({
+            method: "post",
+            url: url,
+            headers: {
+                Accept: "*/*",
+                "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+                grant_token: grant_token,
+            }),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.info(JSON.stringify(res.data));
+            })
+            .catch((error) => {
+                this.log.error(error);
+                error.response && this.log.error(JSON.stringify(error.response.data));
+            });
     }
     convertDomToJson(body) {
         const dom = new JSDOM(body);
@@ -1015,6 +1043,39 @@ class Parcel extends utils.Adapter {
                                 this.log.error(JSON.stringify(error.response.data));
                             }
                         });
+                }
+            } else {
+                if (id.indexOf("dhl.briefe") !== -1 && id.indexOf("image_url") !== -1) {
+                    const image = await this.requestClient({
+                        method: "get",
+                        url: state.val,
+                        responseType: "arraybuffer",
+                        jar: this.cookieJar,
+                        withCredentials: true,
+                    }).catch((error) => {
+                        this.log.error(error);
+                        if (error.response) {
+                            this.log.error(JSON.stringify(error.response.data));
+                        }
+                    });
+                    const imageBuffer = Buffer.from(image.data, "binary");
+                    const imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
+                    const pathArray = id.split(".");
+                    pathArray.pop();
+                    pathArray.push("image");
+                    await this.setObjectNotExistsAsync(pathArray.join("."), {
+                        type: "state",
+                        common: {
+                            name: "Image",
+                            write: false,
+                            read: true,
+                            type: "string",
+                            role: "state",
+                        },
+                        native: {},
+                    });
+
+                    this.setState(pathArray.join("."), imageBase64, true);
                 }
             }
         }
