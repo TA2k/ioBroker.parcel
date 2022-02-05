@@ -32,6 +32,7 @@ class Parcel extends utils.Adapter {
         this.sessions = {};
         this.mergedJson = [];
         this.mergedJsonObject = {};
+        this.images = {};
     }
 
     /**
@@ -1046,20 +1047,24 @@ class Parcel extends utils.Adapter {
                 }
             } else {
                 if (id.indexOf("dhl.briefe") !== -1 && id.indexOf("image_url") !== -1) {
-                    const image = await this.requestClient({
-                        method: "get",
-                        url: state.val,
-                        responseType: "arraybuffer",
-                        jar: this.cookieJar,
-                        withCredentials: true,
-                    }).catch((error) => {
-                        this.log.error(error);
-                        if (error.response) {
-                            this.log.error(JSON.stringify(error.response.data));
-                        }
-                    });
-                    const imageBuffer = Buffer.from(image.data, "binary");
-                    const imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
+                    let imageBase64 = this.images[state.val];
+                    if (!imageBase64) {
+                        const image = await this.requestClient({
+                            method: "get",
+                            url: state.val,
+                            responseType: "arraybuffer",
+                            jar: this.cookieJar,
+                            withCredentials: true,
+                        }).catch((error) => {
+                            this.log.error(error);
+                            if (error.response) {
+                                this.log.error(JSON.stringify(error.response.data));
+                            }
+                        });
+                        const imageBuffer = Buffer.from(image.data, "binary");
+                        imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
+                        this.images[state.val] = imageBase64;
+                    }
                     const pathArray = id.split(".");
                     pathArray.pop();
                     pathArray.push("image");
