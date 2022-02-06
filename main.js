@@ -59,30 +59,36 @@ class Parcel extends utils.Adapter {
             }),
         });
 
-        // if (this.config.amzusername && this.config.amzpassword) {
-        //     this.log.info("Login to Amazon");
-        //     await this.loginAmz();
-
-        //     this.sessions["amz"] = true;
-        //     this.nightmare = Nightmare({ show: true });
+        if (this.config.amzusername && this.config.amzpassword) {
+            this.log.info("Login to Amazon");
+            this.nightmare = Nightmare({ show: false });
+            await this.nightmare
+                .goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first")
+                .insert("#ap_email", this.config.amzusername)
+                .click(".a-button-input")
+                .wait(2000)
+                .insert("#ap_password", this.config.amzpassword)
+                .click("#signInSubmit")
+                .wait(1000);
+            this.sessions["amz"] = true;
+        }
+        // if (this.config.dhlusername && this.config.dhlpassword) {
+        //     this.log.info("Login to DHL");
+        //     await this.loginDHL();
         // }
-        if (this.config.dhlusername && this.config.dhlpassword) {
-            this.log.info("Login to DHL");
-            await this.loginDHL();
-        }
-        if (this.config.dpdusername && this.config.dpdpassword) {
-            this.log.info("Login to DPD");
-            await this.loginDPD();
-        }
-        if (this.config.t17username && this.config.t17password) {
-            this.log.info("Login to T17 User");
-            await this.login17T();
-        }
+        // if (this.config.dpdusername && this.config.dpdpassword) {
+        //     this.log.info("Login to DPD");
+        //     await this.loginDPD();
+        // }
+        // if (this.config.t17username && this.config.t17password) {
+        //     this.log.info("Login to T17 User");
+        //     await this.login17T();
+        // }
 
-        if (this.config["17trackKey"]) {
-            this.sessions["17track"] = this.config["17trackKey"];
-            this.setState("info.connection", true, true);
-        }
+        // if (this.config["17trackKey"]) {
+        //     this.sessions["17track"] = this.config["17trackKey"];
+        //     this.setState("info.connection", true, true);
+        // }
 
         this.updateInterval = null;
         this.reLoginTimeout = null;
@@ -263,10 +269,10 @@ class Parcel extends utils.Adapter {
         }
     }
 
-    async loginAmz() {
+    async loginAmzLegacy() {
         const body = await this.requestClient({
             method: "get",
-            url: "https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first",
+            url: "https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&accountStatusPolicy=P1&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.oa2.client_id=device:32467234687368746238704723437432432&openid.oa2.code_challenge=IeFTKnKcmHEPij50cdHHCq6ZVMbFYJMQQtbrMvKbgz0&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code",
             headers: {
                 accept: "*/*",
                 "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
@@ -306,7 +312,7 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
-                if (res.data.indexOf("nav_prefetch_yourorders") === -1) {
+                if (res.data.indexOf("Amazon Anmelden") !== -1) {
                     this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
                     return;
                 }
@@ -323,11 +329,26 @@ class Parcel extends utils.Adapter {
                 });
             })
             .catch(async (error) => {
-                this.log.error(error);
                 if (error.response) {
+                    if (error.response.status === 404) {
+                        this.log.info("Login to Amazon successful");
+                        this.sessions["amz"] = true;
+                        this.setState("info.connection", true, true);
+                        this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                        await this.setObjectNotExistsAsync("amazon", {
+                            type: "device",
+                            common: {
+                                name: "Amazon Tracking",
+                            },
+                            native: {},
+                        });
+                        return;
+                    }
                     this.setState("info.connection", false, true);
                     this.log.error(JSON.stringify(error.response.data));
                 }
+
+                this.log.error(error);
             });
     }
     async loginDPD() {
@@ -647,7 +668,7 @@ class Parcel extends utils.Adapter {
                 native: {},
             });
         }
-        if ((id === "dhl" && data.sendungen) || id === "dpd" || (data && data.sendungen)) {
+        if ((id === "dhl" && data.sendungen) || id === "dpd" || id === "amz" || (data && data.sendungen)) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
             const sendungsArray = data.sendungen.map((sendung) => {
                 return sendung.id;
@@ -759,54 +780,46 @@ class Parcel extends utils.Adapter {
         return result;
     }
     async getAmazonPackages() {
-        const allCookies = this.cookieJar.toJSON();
-        /*  this.nightmare.goto("https://amazon.de/amazon");
-        const cookieArray = [];
-        for (const key in this.cookieJar.store.idx["amazon.de"]["/"]) {
-            const cookie = this.cookieJar.store.idx["amazon.de"]["/"][key];
-
-            cookieArray.push({
-                name: cookie.key,
-                value: cookie.value,
-                domain: ".amazon.de",
-                hostOnly: false,
-                path: "/",
-                secure: true,
-                httpOnly: false,
-                session: false,
-            });
-        }
-        this.nightmare.cookies.set(cookieArray);
-
-        await this.sleep(5000);
-        this.nightmare
-            .goto("https://amazon.de/amazon")
-            .cookies.get()
-            .then((cookies) => {
-                console.log(JSON.stringify(cookies, null, 4));
-            });
-        await this.sleep(5000);*/
-        this.nightmare
+        const amzResult = { sendungen: [] };
+        let urls;
+        await this.nightmare
             .goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first")
-            .insert("#ap_email", this.config.amzusername)
-            .click(".a-button-input")
-            .wait(2000)
-            .insert("#ap_password", this.config.amzpassword)
-            .click("#signInSubmit")
             .wait("#ordersContainer")
             .evaluate(() => {
                 return Array.from(document.querySelectorAll(".track-package-button a")).map((element) => element.href);
             })
             .then((element) => {
-                for (const url of element) {
-                    this.log.debug(url);
-                }
+                this.log.debug("Found amazon orders: " + element.length);
+                urls = element;
             })
-
             .catch((error) => {
                 this.log.error("Amazon fetch failed:");
                 this.log.error(error);
             });
+        for (const url of urls) {
+            this.log.debug(url);
+            await this.nightmare
+                .goto(url)
+                .wait(1000)
+                .evaluate(() => {
+                    return {
+                        id: document.querySelector(".carrierRelatedInfo-trackingId-text")
+                            ? document.querySelector(".carrierRelatedInfo-trackingId-text").textContent.replace("Trackingnummer ", "")
+                            : "Keine Trackingnummer",
+                        name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").textContent.replace(/\n +/g, "") : "",
+                        status: document.querySelector(".milestone-primaryMessage") ? document.querySelector(".milestone-primaryMessage").textContent.replace(/\n +/g, "") : "",
+                    };
+                })
+                .then((element) => {
+                    this.log.debug(JSON.stringify(element));
+                    amzResult.sendungen.push(element);
+                })
+                .catch((error) => {
+                    this.log.error("Amazon fetch failed:");
+                    this.log.error(error);
+                });
+        }
+        this.json2iob.parse("amazon", amzResult, { forceIndex: true });
     }
     async refreshToken() {
         if (Object.keys(this.sessions).length === 0) {
