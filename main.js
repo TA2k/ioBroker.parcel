@@ -66,7 +66,8 @@ class Parcel extends utils.Adapter {
                 .goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first")
                 .insert("#ap_email", this.config.amzusername)
                 .click(".a-button-input")
-                .wait(2000)
+                .wait("#ap_password")
+                .click("input[name*='rememberMe']")
                 .insert("#ap_password", this.config.amzpassword)
                 .click("#signInSubmit")
                 .wait(1000);
@@ -811,11 +812,15 @@ class Parcel extends utils.Adapter {
                     };
                 })
                 .then((element) => {
+                    const orderId = qs.parse(url).orderId;
+                    if (!element.name && orderId) {
+                        element.name = orderId;
+                    }
                     this.log.debug(JSON.stringify(element));
                     amzResult.sendungen.push(element);
                 })
                 .catch((error) => {
-                    this.log.error("Amazon fetch failed:");
+                    this.log.error("Amazon package fetch failed:");
                     this.log.error(error);
                 });
         }
