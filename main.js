@@ -61,9 +61,9 @@ class Parcel extends utils.Adapter {
 
         if (this.config.amzusername && this.config.amzpassword) {
             this.log.info("Login to Amazon");
-            this.browser = await puppeteer.launch({ headless: true });
-            this.page = await this.browser.newPage();
-            await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first");
+            this.browser = await puppeteer.launch({ headless: true }).catch((e) => this.log.error(e));
+            this.page = await this.browser.newPage().catch((e) => this.log.error(e));
+            await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first").catch((e) => this.log.error(e));
             await this.page
                 .evaluate((config) => {
                     const email = document.querySelector("#ap_email");
@@ -72,7 +72,7 @@ class Parcel extends utils.Adapter {
                     next.click();
                 }, this.config)
                 .catch((e) => this.log.error(e));
-            await this.page.waitForSelector("#ap_password");
+            await this.page.waitForSelector("#ap_password").catch((e) => this.log.error(e));
             await this.page
                 .evaluate((config) => {
                     const email = document.querySelector("#ap_password");
@@ -84,7 +84,7 @@ class Parcel extends utils.Adapter {
                 }, this.config)
                 .catch((e) => this.log.error(e));
 
-            await this.page.waitForSelector("#ordersContainer");
+            await this.page.waitForSelector("#ordersContainer").catch((e) => this.log.error(e));
             await this.setObjectNotExistsAsync("amazon", {
                 type: "device",
                 common: {
