@@ -85,26 +85,33 @@ class Parcel extends utils.Adapter {
                 .catch((e) => this.log.error(e));
 
             await this.page.waitForSelector("#ordersContainer");
+            await this.setObjectNotExistsAsync("amazon", {
+                type: "device",
+                common: {
+                    name: "Amazon Tracking",
+                },
+                native: {},
+            });
             this.log.info("Login to Amazon successful");
             this.sessions["amz"] = true;
         }
-        // if (this.config.dhlusername && this.config.dhlpassword) {
-        //     this.log.info("Login to DHL");
-        //     await this.loginDHL();
-        // }
-        // if (this.config.dpdusername && this.config.dpdpassword) {
-        //     this.log.info("Login to DPD");
-        //     await this.loginDPD();
-        // }
-        // if (this.config.t17username && this.config.t17password) {
-        //     this.log.info("Login to T17 User");
-        //     await this.login17T();
-        // }
+        if (this.config.dhlusername && this.config.dhlpassword) {
+            this.log.info("Login to DHL");
+            await this.loginDHL();
+        }
+        if (this.config.dpdusername && this.config.dpdpassword) {
+            this.log.info("Login to DPD");
+            await this.loginDPD();
+        }
+        if (this.config.t17username && this.config.t17password) {
+            this.log.info("Login to T17 User");
+            await this.login17T();
+        }
 
-        // if (this.config["17trackKey"]) {
-        //     this.sessions["17track"] = this.config["17trackKey"];
-        //     this.setState("info.connection", true, true);
-        // }
+        if (this.config["17trackKey"]) {
+            this.sessions["17track"] = this.config["17trackKey"];
+            this.setState("info.connection", true, true);
+        }
 
         this.updateInterval = null;
         this.reLoginTimeout = null;
