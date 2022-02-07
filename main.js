@@ -698,7 +698,7 @@ class Parcel extends utils.Adapter {
                 native: {},
             });
         }
-        if ((id === "dhl" && data.sendungen) || id === "dpd" || id === "amz" || (data && data.sendungen)) {
+        if ((id === "dhl" || id === "dpd" || id === "amz") && data && data.sendungen) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
             const sendungsArray = data.sendungen.map((sendung) => {
                 return sendung.id;
