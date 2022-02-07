@@ -64,7 +64,8 @@ class Parcel extends utils.Adapter {
             this.browser = await puppeteer.launch({ headless: true }).catch((e) => this.log.error(e));
             if (!this.browser) {
                 this.log.error("Can't start puppeteer please execute on your ioBroker command line");
-                this.log.error("sudo apt-get install -y libgbm-dev");
+                this.log.error("sudo apt-get install libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev");
+                this.log.error("More infos: https://github.com/TA2k/ioBroker.parcel/blob/master/README.md#amazon-vorbedingungen");
                 return;
             }
             this.page = await this.browser.newPage().catch((e) => this.log.error(e));
