@@ -827,7 +827,7 @@ class Parcel extends utils.Adapter {
         const result = { sendungen: [] };
         const parcelList = dom.window.document.querySelector(".parcelList");
         if (!parcelList) {
-            this.log.warn("No parcelList found");
+            this.log.debug("No parcelList found");
             return;
         }
         parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
@@ -1133,6 +1133,10 @@ class Parcel extends utils.Adapter {
                                 this.log.error(JSON.stringify(error.response.data));
                             }
                         });
+                        if (!image) {
+                            this.log.warn("No image received for " + state.val);
+                            return;
+                        }
                         const imageBuffer = Buffer.from(image.data, "binary");
                         imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
                         this.images[state.val] = imageBase64;
