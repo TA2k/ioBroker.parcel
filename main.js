@@ -1128,13 +1128,10 @@ class Parcel extends utils.Adapter {
                             jar: this.cookieJar,
                             withCredentials: true,
                         }).catch((error) => {
-                            this.log.error(error);
-                            if (error.response) {
-                                this.log.error(JSON.stringify(error.response.data));
-                            }
+                            this.log.error(state.val + " " + error);
                         });
                         if (!image) {
-                            this.log.warn("No image received for " + state.val);
+                            this.log.debug("No image received for " + state.val);
                             return;
                         }
                         const imageBuffer = Buffer.from(image.data, "binary");
