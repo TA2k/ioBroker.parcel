@@ -62,6 +62,11 @@ class Parcel extends utils.Adapter {
         if (this.config.amzusername && this.config.amzpassword) {
             this.log.info("Login to Amazon");
             this.browser = await puppeteer.launch({ headless: true }).catch((e) => this.log.error(e));
+            if (!this.browser) {
+                this.log.error("Can't start puppeteer please execute on your ioBroker command line");
+                this.log.error("sudo apt-get install -y libgbm-dev");
+                return;
+            }
             this.page = await this.browser.newPage().catch((e) => this.log.error(e));
             await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first").catch((e) => this.log.error(e));
             await this.page
