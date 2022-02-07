@@ -8,7 +8,7 @@
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
-const Nightmare = require("nightmare");
+const puppeteer = require("puppeteer");
 const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
 const tough = require("tough-cookie");
@@ -61,16 +61,24 @@ class Parcel extends utils.Adapter {
 
         if (this.config.amzusername && this.config.amzpassword) {
             this.log.info("Login to Amazon");
-            this.nightmare = Nightmare({ show: false });
-            await this.nightmare
-                .goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first")
-                .insert("#ap_email", this.config.amzusername)
-                .click(".a-button-input")
-                .wait("#ap_password")
-                .click("input[name*='rememberMe']")
-                .insert("#ap_password", this.config.amzpassword)
-                .click("#signInSubmit")
-                .wait(1000);
+            this.browser = await puppeteer.launch({ headless: true });
+            this.page = await this.browser.newPage();
+            await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first");
+            await this.page.evaluate(() => {
+                const email = document.querySelector("#ap_email");
+                email.value = this.config.amzusername;
+                const next = document.querySelector(".a-button-input");
+                next.click();
+            });
+            await this.page.evaluate(() => {
+                const email = document.querySelector("#ap_password");
+                email.value = this.config.amzusername;
+                const remember = document.querySelector("input[name*='rememberMe']");
+                remember.click();
+                const next = document.querySelector("#signInSubmit");
+                next.click();
+            });
+            this.log.info("Login to Amazon successful");
             this.sessions["amz"] = true;
         }
         if (this.config.dhlusername && this.config.dhlpassword) {
@@ -782,36 +790,25 @@ class Parcel extends utils.Adapter {
     }
     async getAmazonPackages() {
         const amzResult = { sendungen: [] };
-        let urls;
-        await this.nightmare
-            .goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first")
-            .wait("#ordersContainer")
-            .evaluate(() => {
-                return Array.from(document.querySelectorAll(".track-package-button a")).map((element) => element.href);
-            })
-            .then((element) => {
-                this.log.debug("Found amazon orders: " + element.length);
-                urls = element;
-            })
-            .catch((error) => {
-                this.log.error("Amazon fetch failed:");
-                this.log.error(error);
-            });
+        let urls = [];
+
+        await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first");
+        await this.page.evaluate(() => {
+            urls = Array.from(document.querySelectorAll(".track-package-button a")).map((element) => element.getAttribute("href"));
+        });
+
         for (const url of urls) {
             this.log.debug(url);
-            await this.nightmare
-                .goto(url)
-                .wait(1000)
+            await this.page.goto(url);
+            await this.page
                 .evaluate(() => {
-                    return {
+                    const element = {
                         id: document.querySelector(".carrierRelatedInfo-trackingId-text")
-                            ? document.querySelector(".carrierRelatedInfo-trackingId-text").textContent.replace("Trackingnummer ", "")
+                            ? document.querySelector(".carrierRelatedInfo-trackingId-text").innerText.replace("Trackingnummer ", "")
                             : "Keine Trackingnummer",
-                        name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").textContent.replace(/\n +/g, "") : "",
-                        status: document.querySelector(".milestone-primaryMessage") ? document.querySelector(".milestone-primaryMessage").textContent.replace(/\n +/g, "") : "",
+                        name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").innerText.replace(/\n +/g, "") : "",
+                        status: document.querySelector(".milestone-primaryMessage") ? document.querySelector(".milestone-primaryMessage").innerText.replace(/\n +/g, "") : "",
                     };
-                })
-                .then((element) => {
                     const orderId = qs.parse(url).orderId;
                     if (!element.name && orderId) {
                         element.name = orderId;
@@ -819,6 +816,7 @@ class Parcel extends utils.Adapter {
                     this.log.debug(JSON.stringify(element));
                     amzResult.sendungen.push(element);
                 })
+
                 .catch((error) => {
                     this.log.error("Amazon package fetch failed:");
                     this.log.error(error);
