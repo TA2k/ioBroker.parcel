@@ -23,7 +23,8 @@ DHL:
 * In die Instanzeinstellungen eingeben und speichern
 
 ## Amazon Vorbedingungen
-Es müssen auf Linuxsysteme Pakete installiert werden
+Es müssen auf Linuxsysteme Pakete installiert werden. 
+Nach jeder Variante den Adapter neustarten um zu sehen ob der Login funktioniert.
 
 Variante #1 minimal
 
@@ -31,7 +32,7 @@ Variante #1 minimal
 sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libpango-1.0-0
 ```
 
-Variante #2 komplett
+Variante #2 falls Variante #1 nicht funktioniert
 
 ``` 
 sudo apt-get install -yq \
@@ -42,7 +43,7 @@ sudo apt-get install -yq \
           fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
  ```
 
-Variante #3 Voll
+Variante #3 Falls Variante #2 nicht funktioniert
 
 ```
 sudo apt-get install -y chromium
