@@ -100,6 +100,7 @@ class Parcel extends utils.Adapter {
             });
             this.log.info("Login to Amazon successful");
             this.sessions["amz"] = true;
+            this.setState("info.connection", true, true);
         }
         if (this.config.dhlusername && this.config.dhlpassword) {
             this.log.info("Login to DHL");
