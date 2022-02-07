@@ -28,7 +28,7 @@ Es müssen auf Linuxsysteme Pakete installiert werden
 Variante #1 minimal
 
 ```
-sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libpango
+sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev 
 ```
 
 Variante #2 komplett
