@@ -64,7 +64,9 @@ class Parcel extends utils.Adapter {
             this.browser = await puppeteer.launch({ headless: true }).catch((e) => this.log.error(e));
             if (!this.browser) {
                 this.log.error("Can't start puppeteer please execute on your ioBroker command line");
-                this.log.error("sudo apt-get install libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev");
+                this.log.error(
+                    "sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libpango-1.0-0"
+                );
                 this.log.error("More infos: https://github.com/TA2k/ioBroker.parcel/blob/master/README.md#amazon-vorbedingungen");
                 return;
             }
@@ -90,7 +92,25 @@ class Parcel extends utils.Adapter {
                 }, this.config)
                 .catch((e) => this.log.error(e));
 
-            await this.page.waitForSelector("#ordersContainer").catch((e) => this.log.error(e));
+            const success = await this.page
+                .waitForSelector("#ordersContainer")
+                .then(() => true)
+                .catch(async (e) => {
+                    this.log.debug(await this.page.content());
+
+                    this.log.error(e);
+
+                    this.log.error("Amazon login failed. Please check your credentials and login manually");
+                    const errorHandle = await this.page.$(".a-alert-content .a-list-item");
+                    if (errorHandle) {
+                        this.log.error(await errorHandle.evaluate((node) => node.innerText));
+                    }
+                    return false;
+                });
+            if (!success) {
+                return;
+            }
+
             await this.setObjectNotExistsAsync("amazon", {
                 type: "device",
                 common: {
@@ -734,6 +754,13 @@ class Parcel extends utils.Adapter {
         if (id === "dpd" && data && data.sendungen) {
             for (const sendung of data.sendungen) {
                 sendung.source = "DPD";
+                this.mergedJsonObject[sendung.id] = sendung;
+            }
+            this.mergedJson = this.mergedJson.concat(data.sendungen);
+        }
+        if (id === "amz" && data && data.sendungen) {
+            for (const sendung of data.sendungen) {
+                sendung.source = "AMZ";
                 this.mergedJsonObject[sendung.id] = sendung;
             }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
