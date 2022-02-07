@@ -25,9 +25,11 @@ DHL:
 ## Amazon Vorbedingungen
 Es müssen auf Linuxsysteme Pakete installiert werden
 Variante #1
+
 ```sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev```
 
 Variante #2
+
 ``` sudo apt-get install -yq \
           gconf-service libasound2 libatk1.0-0 libatk-bridge2.0-0 libc6 libcairo2 libcups2 libdbus-1-3 \
           libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 \
@@ -37,6 +39,7 @@ Variante #2
  ```
 
 Variante #3
+
 ```sudo apt-get install -y chromium```
 
 ## Diskussion und Fragen
