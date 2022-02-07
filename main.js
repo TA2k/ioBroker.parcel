@@ -61,7 +61,11 @@ class Parcel extends utils.Adapter {
 
         if (this.config.amzusername && this.config.amzpassword) {
             this.log.info("Login to Amazon");
-            this.browser = await puppeteer.launch({ headless: true }).catch((e) => this.log.error(e));
+            this.browser = await puppeteer
+                .launch({
+                    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+                })
+                .catch((e) => this.log.error(e));
             if (!this.browser) {
                 this.log.error("Can't start puppeteer please execute on your ioBroker command line");
                 this.log.error(
