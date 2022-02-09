@@ -860,12 +860,15 @@ class Parcel extends utils.Adapter {
             const element = await this.page
                 .evaluate(() => {
                     const statusHandle = document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
+                    const additionalStatus = document.querySelector(".primaryStatus") ? document.querySelector(".primaryStatus").innerText.replace(/\n +/g, "") : "";
+                    let status = statusHandle ? statusHandle.innerText.replace(/\n +/g, "") : "";
+                    status = status + " " + additionalStatus;
                     return {
                         id: document.querySelector(".carrierRelatedInfo-trackingId-text")
                             ? document.querySelector(".carrierRelatedInfo-trackingId-text").innerText.replace("Trackingnummer ", "")
                             : "Keine Trackingnummer",
                         name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").innerText.replace(/\n +/g, "") : "",
-                        status: statusHandle ? statusHandle.innerText.replace(/\n +/g, "") : "",
+                        status: status,
                     };
                 })
                 .catch((e) => this.log.error(e));
