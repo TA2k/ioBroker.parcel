@@ -43,7 +43,7 @@ sudo apt-get install -yq \
           fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
  ```
 
-Variante #3 Falls Variante #2 nicht funktioniert
+Variante #3 **Nur Falls Variante #2 nicht funktioniert, kann zu Problemen auf RPI 4 führen**
 
 ```
 sudo apt-get install -y chromium
