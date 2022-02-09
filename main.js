@@ -860,7 +860,7 @@ class Parcel extends utils.Adapter {
             const element = await this.page
                 .evaluate(() => {
                     const statusHandle = document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
-                    const additionalStatus = document.querySelector(".primaryStatus") ? document.querySelector(".primaryStatus").innerText.replace(/\n +/g, "") : "";
+                    const additionalStatus = document.querySelector("#primaryStatus") ? document.querySelector("#primaryStatus").innerText.replace(/\n +/g, "") : "";
                     let status = statusHandle ? statusHandle.innerText.replace(/\n +/g, "") : "";
                     status = status + " " + additionalStatus;
                     return {
