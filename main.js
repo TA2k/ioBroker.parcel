@@ -82,7 +82,21 @@ class Parcel extends utils.Adapter {
                 .launch({
                     args: ["--no-sandbox", "--disable-setuid-sandbox"],
                 })
-                .catch((e) => this.log.error(e));
+                .catch((e) => {
+                    this.log.error(e);
+                });
+            //try local instance
+            if (!this.browser) {
+                this.log.info("Try to start local instance of chromium");
+                this.browser = await puppeteer
+                    .launch({
+                        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+                        executablePath: "/usr/bin/chromium-browser",
+                    })
+                    .catch((e) => {
+                        this.log.error(e);
+                    });
+            }
             if (!this.browser) {
                 this.log.error("Can't start puppeteer please execute on your ioBroker command line");
                 this.log.error(
