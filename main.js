@@ -573,7 +573,7 @@ class Parcel extends utils.Adapter {
                 withCredentials: true,
             })
                 .then(async (res) => {
-                    this.log.info(JSON.stringify(res.data));
+                    this.log.debug(JSON.stringify(res.data));
                     if (res.data && res.data.sendungen) {
                         return res.data.sendungen.map((sendung) => {
                             if (sendung.sendungsinfo.sendungsliste !== "ARCHIVIERT") {
@@ -828,7 +828,7 @@ class Parcel extends utils.Adapter {
             withCredentials: true,
         })
             .then(async (res) => {
-                this.log.info(JSON.stringify(res.data));
+                this.log.debug(JSON.stringify(res.data));
             })
             .catch((error) => {
                 this.log.error(error);
