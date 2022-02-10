@@ -856,21 +856,31 @@ class Parcel extends utils.Adapter {
     async getAmazonPackages() {
         this.log.debug("Get Amazon Packages");
         const amzResult = { sendungen: [] };
-        let urls = [];
 
         await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first").catch((e) => this.log.error(e));
-        urls = await this.page
+        const orders = await this.page
             .evaluate(() => {
-                return Array.from(document.querySelectorAll(".track-package-button a")).map((element) => element.getAttribute("href"));
+                const elements = [];
+                const orders = document.querySelectorAll(".a-box.shipment");
+
+                for (const order of orders) {
+                    const descHandle = order.querySelector(".a-fixed-right-grid-col.a-col-left .a-row div:first-child .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal");
+                    const desc = descHandle ? descHandle.innerText.replace(/\n +/g, "") : "";
+                    const url = order.querySelector(".track-package-button a") ? order.querySelector(".track-package-button a").getAttribute("href") : "";
+                    if (url) {
+                        elements.push({ desc: desc, url: url });
+                    }
+                }
+                return elements;
             })
             .catch((e) => this.log.error(e));
-        this.log.debug("found " + urls.length + " packages");
-        for (let url of urls) {
-            if (url.indexOf("http") === -1) {
-                url = "https://www.amazon.de" + url;
+        this.log.debug("found " + orders.length + " packages");
+        for (const order of orders) {
+            if (order.url.indexOf("http") === -1) {
+                order.url = "https://www.amazon.de" + order.url;
             }
-            this.log.debug(url);
-            await this.page.goto(url).catch((e) => this.log.error(e));
+            this.log.debug(order.url);
+            await this.page.goto(order.url).catch((e) => this.log.error(e));
             const element = await this.page
                 .evaluate(() => {
                     const statusHandle = document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
@@ -887,7 +897,8 @@ class Parcel extends utils.Adapter {
                 })
                 .catch((e) => this.log.error(e));
             if (element) {
-                const orderId = qs.parse(url).orderId;
+                const orderId = qs.parse(order.url).orderId;
+                element.name = order.desc;
                 if (!element.name && orderId) {
                     element.name = orderId;
                 }
