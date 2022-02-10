@@ -1161,6 +1161,7 @@ class Parcel extends utils.Adapter {
                             withCredentials: true,
                         }).catch((error) => {
                             this.log.error(state.val + " " + error);
+                            this.log.info("Please check the mail images in the DHL App");
                         });
                         if (!image) {
                             this.log.debug("No image received for " + state.val);
