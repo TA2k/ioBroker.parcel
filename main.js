@@ -885,8 +885,9 @@ class Parcel extends utils.Adapter {
                 .evaluate(() => {
                     const statusHandle = document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
                     const additionalStatus = document.querySelector("#primaryStatus") ? document.querySelector("#primaryStatus").innerText.replace(/\n +/g, "") : "";
+                    const secondaryStatus = document.querySelector("#secondaryStatus") ? document.querySelector("#secondaryStatus").innerText.replace(/\n +/g, "") : "";
                     let status = statusHandle ? statusHandle.innerText.replace(/\n +/g, "") : "";
-                    status = status + " " + additionalStatus;
+                    status = status + " " + additionalStatus + " " + secondaryStatus;
                     return {
                         id: document.querySelector(".carrierRelatedInfo-trackingId-text")
                             ? document.querySelector(".carrierRelatedInfo-trackingId-text").innerText.replace("Trackingnummer ", "")
