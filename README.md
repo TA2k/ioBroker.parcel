@@ -46,7 +46,7 @@ sudo apt-get install -yq \
 Variante #3 **Nur Falls Variante #2 nicht funktioniert**
 
 ```
-sudo apt-get install -y chromium
+sudo apt-get install -y chromium-browser
 ```
 
 ## Diskussion und Fragen
