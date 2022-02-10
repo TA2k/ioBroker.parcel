@@ -1089,7 +1089,7 @@ class Parcel extends utils.Adapter {
                         ]),
                     })
                         .then(async (res) => {
-                            this.log.info(JSON.stringify(res.data));
+                            this.log.debug(JSON.stringify(res.data));
                             await this.requestClient({
                                 method: "post",
                                 url: "https://api.17track.net/track/v1/gettracklist",
@@ -1103,7 +1103,7 @@ class Parcel extends utils.Adapter {
                                 },
                             })
                                 .then(async (res) => {
-                                    this.log.info(JSON.stringify(res.data));
+                                    this.log.debug(JSON.stringify(res.data));
                                     if (res.data && res.data.data && res.data.data.accepted) {
                                         const trackArray = [];
                                         for (const track of res.data.data.accepted) {
