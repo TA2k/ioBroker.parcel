@@ -761,7 +761,7 @@ class Parcel extends utils.Adapter {
                 if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.kurzStatus) {
                     status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
                 }
-                const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL" };
+                const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL", direction: sendung.sendungsinfo.sendungsrichtung };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });
