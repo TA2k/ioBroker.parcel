@@ -82,7 +82,11 @@ class Parcel extends utils.Adapter {
                     args: ["--no-sandbox", "--disable-setuid-sandbox"],
                 })
                 .catch((e) => {
-                    this.log.error(e);
+                    if (e.message && e.message.indexOf("Unterminated quoted string") !== -1) {
+                        this.log.warn("Puppeteer native browser is not ARM compatible. Try to start local chromium browser installed via sudo apt-get install chromium-browser");
+                    } else {
+                        this.log.error(e);
+                    }
                 });
             //try local instance
             if (!this.browser) {
