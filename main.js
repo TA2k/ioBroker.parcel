@@ -32,7 +32,6 @@ class Parcel extends utils.Adapter {
         this.sessions = {};
         this.mergedJson = [];
         this.mergedJsonObject = {};
-        this.images = {};
     }
 
     /**
@@ -1148,8 +1147,12 @@ class Parcel extends utils.Adapter {
                 }
             } else {
                 if (id.indexOf("dhl.briefe") !== -1 && id.indexOf("image_url") !== -1) {
-                    let imageBase64 = this.images[state.val];
-                    if (!imageBase64) {
+                    const pathArray = id.split(".");
+                    pathArray.pop();
+                    pathArray.push("image");
+                    const imageState = await this.getStateAsync(pathArray.join("."));
+                    if (!imageState || !imageState.val) {
+                        this.log.debug("Downloading image" + state.val);
                         const image = await this.requestClient({
                             method: "get",
                             url: state.val,
@@ -1164,25 +1167,21 @@ class Parcel extends utils.Adapter {
                             return;
                         }
                         const imageBuffer = Buffer.from(image.data, "binary");
-                        imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
-                        this.images[state.val] = imageBase64;
-                    }
-                    const pathArray = id.split(".");
-                    pathArray.pop();
-                    pathArray.push("image");
-                    await this.setObjectNotExistsAsync(pathArray.join("."), {
-                        type: "state",
-                        common: {
-                            name: "Image",
-                            write: false,
-                            read: true,
-                            type: "string",
-                            role: "state",
-                        },
-                        native: {},
-                    });
+                        const imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
+                        await this.setObjectNotExistsAsync(pathArray.join("."), {
+                            type: "state",
+                            common: {
+                                name: "Image",
+                                write: false,
+                                read: true,
+                                type: "string",
+                                role: "state",
+                            },
+                            native: {},
+                        });
 
-                    this.setState(pathArray.join("."), imageBase64, true);
+                        this.setState(pathArray.join("."), imageBase64, true);
+                    }
                 }
             }
         }
