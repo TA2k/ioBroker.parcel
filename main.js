@@ -703,6 +703,7 @@ class Parcel extends utils.Adapter {
                         if (error.response) {
                             if (error.response.status === 401 && id !== "17track") {
                                 if (element.path === "dhl.briefe") {
+                                    this.log.debug(error);
                                     return;
                                 }
                                 error.response && this.log.debug(JSON.stringify(error.response.data));
@@ -725,7 +726,7 @@ class Parcel extends utils.Adapter {
         }
     }
     async cleanupProvider(id, data) {
-        if (id === "dhl" && data.grantToken) {
+        if (id === "dhl" && data.hasOwnProperty("grantToken")) {
             await this.delObjectAsync("dhl.briefe", { recursive: true });
             await this.setObjectNotExistsAsync("dhl.briefe.json", {
                 type: "state",
