@@ -1157,14 +1157,14 @@ class Parcel extends utils.Adapter {
                         const image = await this.requestClient({
                             method: "get",
                             url: state.val,
-                           responseType: "arraybuffer",
-                           jar: this.cookieJar,
-                           withCredentials: true,
-                       }).catch((error) => {
-                           this.log.error(state.val + " " + error);
-                       });
-                       if (!image) {
-                           this.log.debug("No image received for " + state.val);
+                            responseType: "arraybuffer",
+                            jar: this.cookieJar,
+                            withCredentials: true,
+                        }).catch((error) => {
+                            this.log.error(state.val + " " + error);
+                        });
+                        if (!image) {
+                            this.log.debug("No image received for " + state.val);
                             return;
                         }
                         const imageBuffer = Buffer.from(image.data, "binary");
@@ -1187,7 +1187,6 @@ class Parcel extends utils.Adapter {
                     });
 
                     this.setState(pathArray.join("."), imageBase64, true);
-                    }
                 }
             }
         }
