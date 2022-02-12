@@ -1,4 +1,5 @@
 ![Logo](admin/parcel.png)
+
 # ioBroker.parcel
 
 [![NPM version](https://img.shields.io/npm/v/iobroker.parcel.svg)](https://www.npmjs.com/package/iobroker.parcel)
@@ -18,12 +19,14 @@ Parcel tracking
 ## Loginablauf
 
 DHL:
+
 * DHL App Login eingeben
 * SMS/EMail Code erhalten
 * In die Instanzeinstellungen eingeben und speichern
 
 ## Amazon Vorbedingungen
-Es müssen auf Linuxsysteme Pakete installiert werden. 
+
+Es müssen auf Linuxsysteme Pakete installiert werden.
 Nach jeder Variante den Adapter neustarten um zu sehen ob der Login funktioniert.
 
 Variante #1 minimal
@@ -34,7 +37,7 @@ sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-d
 
 Variante #2 falls Variante #1 nicht funktioniert
 
-``` 
+```
 sudo apt-get install -yq \
           gconf-service libasound2 libatk1.0-0 libatk-bridge2.0-0 libc6 libcairo2 libcups2 libdbus-1-3 \
           libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 \
@@ -49,17 +52,71 @@ Variante #3 **Nur Falls Variante #2 nicht funktioniert**
 sudo apt-get install -y chromium-browser
 ```
 
+## Skripte
+
+### Telegram Benachrichtigung bei Statusänderung  via Javascript Skript:
+
+```
+const alreadySentMessages = {}
+on({ id: "parcel.0.allProviderObjects", change: "ne" }, function (obj) {
+    const sendungen = JSON.parse(obj.state.val)
+    const ids = Object.keys(sendungen)
+    for (const id of ids) {
+        if (alreadySentMessages[id] === sendungen[id].status) {
+            return
+        }
+        sendTo('telegram.0', sendungen[id].name + '\n' + sendungen[id].status);
+        alreadySentMessages[id] = sendungen[id].status
+    }
+});
+```
+
+### DHL Briefverfolgung Telegram versenden via Javascript Skript:
+
+```
+const alreadySent = {}
+const fs = require('fs')
+on({id:/^parcel\.0\.dhl\.briefe.*image$/, change: "ne"}, async function(obj){
+
+    const parentId = obj.id.split(".")
+    parentId.splice(-1)
+    parentId.push("image_url")
+    const urlState = await getStateAsync(parentId.join("."))
+
+    if (alreadySent[urlState.val]) {
+        return
+    }
+    const base64Data = obj.state.val.split("base64,")[1]
+    fs.writeFile("/tmp/snapshot.jpg", base64Data, 'base64', function(err) {
+      if (err) {
+        console.error(err);
+      } else {
+        sendTo('telegram.0', 'Briefankündigung');
+        sendTo('telegram.0', '/tmp/snapshot.jpg');
+        alreadySent[urlState.val] = true
+      }
+    });
+});
+ 
+
+```
+
+### DHL Briefverfolgung in der Vis anzeigen.
+
+Den Datenpunkt image ein "String img src" element als Object ID zuordnen
+
 ## Diskussion und Fragen
 
 <https://forum.iobroker.net/topic/51795/test-adapter-parcel-paketverfolgung-dhl-v0-0-1>
 
-
 ## Changelog
 
 ### 0.0.1
+
 * (TA2k) initial release
 
 ## License
+
 MIT License
 
 Copyright (c) 2022 TA2k <tombox2020@gmail.com>

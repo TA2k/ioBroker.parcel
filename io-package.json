@@ -119,7 +119,7 @@
             "common": {
                 "role": "state",
                 "name": "Tracking List of all Providers",
-                "type": "object",
+                "type": "json",
                 "read": true,
                 "write": false
             },
@@ -131,7 +131,7 @@
             "common": {
                 "role": "state",
                 "name": "Tracking Dictionary of all Providers",
-                "type": "object",
+                "type": "json",
                 "read": true,
                 "write": false
             },
