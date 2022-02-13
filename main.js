@@ -894,9 +894,7 @@ class Parcel extends utils.Adapter {
                     let status = statusHandle ? statusHandle.innerText.replace(/\n +/g, "") : "";
                     status = status + " " + additionalStatus + " " + secondaryStatus;
                     return {
-                        id: document.querySelector(".carrierRelatedInfo-trackingId-text")
-                            ? document.querySelector(".carrierRelatedInfo-trackingId-text").innerText.replace("Trackingnummer ", "")
-                            : "Keine Trackingnummer",
+                        id: document.querySelector(".carrierRelatedInfo-trackingId-text") ? document.querySelector(".carrierRelatedInfo-trackingId-text").innerText.replace("Trackingnummer ", "") : "",
                         name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").innerText.replace(/\n +/g, "") : "",
                         status: status,
                     };
@@ -907,6 +905,9 @@ class Parcel extends utils.Adapter {
                 element.name = order.desc;
                 if (!element.name && orderId) {
                     element.name = orderId;
+                }
+                if (!element.id && orderId) {
+                    element.id = orderId;
                 }
                 this.log.debug(JSON.stringify(element));
                 amzResult.sendungen.push(element);
