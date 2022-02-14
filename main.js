@@ -914,8 +914,9 @@ class Parcel extends utils.Adapter {
             }
         }
 
-        this.mergeProviderJson("amz", amzResult);
         this.json2iob.parse("amazon", amzResult, { forceIndex: true });
+
+        this.mergeProviderJson("amz", amzResult);
     }
     async refreshToken() {
         if (Object.keys(this.sessions).length === 0) {
