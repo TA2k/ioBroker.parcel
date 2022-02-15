@@ -130,8 +130,8 @@ class Parcel extends utils.Adapter {
                     next.click();
                 }, this.config)
                 .catch((e) => this.log.error(e));
-            await page.waitForNavigation({ waitUntil: "networkidle2" });
-            await page
+            await this.page.waitForNavigation({ waitUntil: "networkidle2" });
+            await this.page
                 .evaluate((config) => {
                     const otp = document.querySelector("#auth-mfa-otpcode");
                     if (otp) {
