@@ -130,7 +130,19 @@ class Parcel extends utils.Adapter {
                     next.click();
                 }, this.config)
                 .catch((e) => this.log.error(e));
-
+            await page.waitForNavigation({ waitUntil: "networkidle2" });
+            await page
+                .evaluate((config) => {
+                    const otp = document.querySelector("#auth-mfa-otpcode");
+                    if (otp) {
+                        otp.value = config.amzotp;
+                        const remember = document.querySelector("input[name*='rememberDevice']");
+                        remember.click();
+                        const next = document.querySelector("#auth-signin-button");
+                        next.click();
+                    }
+                }, this.config)
+                .catch((e) => console.log(e));
             const success = await this.page
                 .waitForSelector("#yourOrdersContent")
                 .then(() => true)
