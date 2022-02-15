@@ -132,7 +132,7 @@ class Parcel extends utils.Adapter {
                 .catch((e) => this.log.error(e));
 
             const success = await this.page
-                .waitForSelector("#ordersContainer")
+                .waitForSelector("#yourOrdersContent")
                 .then(() => true)
                 .catch(async (e) => {
                     this.log.debug(await this.page.content());
