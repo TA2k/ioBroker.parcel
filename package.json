@@ -1,6 +1,6 @@
 {
     "name": "iobroker.parcel",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Parcel tracking",
     "author": {
         "name": "TA2k",
@@ -12,6 +12,9 @@
         "parcel",
         "tracking",
         "dhl",
+        "briefe",
+        "dpd",
+        "amazon",
         "paket"
     ],
     "repository": {

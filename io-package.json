@@ -1,9 +1,9 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.1",
+        "version": "0.0.2",
         "news": {
-            "0.0.1": {
+            "0.0.2": {
                 "en": "initial release",
                 "de": "Erstveröffentlichung",
                 "ru": "Начальная версия",
@@ -50,7 +50,9 @@
             "dhl",
             "paket",
             "17Track",
-            "Amazon"
+            "Amazon",
+            "dpd",
+            "briefe"
         ],
         "license": "MIT",
         "platform": "Javascript/Node.js",
@@ -84,11 +86,15 @@
     },
     "encryptedNative": [
         "dhlpassword",
-        "amzpassword"
+        "amzpassword",
+        "dpdpassword",
+        "t17password"
     ],
     "protectedNative": [
         "dhlpassword",
-        "amzpassword"
+        "amzpassword",
+        "dpdpassword",
+        "t17password"
     ],
     "native": {
         "amzusername": "",
