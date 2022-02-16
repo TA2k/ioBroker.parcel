@@ -50,12 +50,16 @@ on({ id: "parcel.0.allProviderObjects", change: "ne" }, function (obj) {
 const alreadySent = {}
 const fs = require('fs')
 on({id:/^parcel\.0\.dhl\.briefe.*image$/, change: "ne"}, async function(obj){
-
+ 
     const parentId = obj.id.split(".")
     parentId.splice(-1)
     parentId.push("image_url")
     const urlState = await getStateAsync(parentId.join("."))
-
+    //Beispiel damit nur zu bestimmten Zeiten eine Nachricht verschickt wird
+    //const hours = new.Date().hours()
+    //if (hours >= 0 && hours <=7 ) {
+    //    return
+    //}
     if (alreadySent[urlState.val]) {
         return
     }
@@ -70,6 +74,9 @@ on({id:/^parcel\.0\.dhl\.briefe.*image$/, change: "ne"}, async function(obj){
       }
     });
 });
+ 
+ 
+
  
 
 ```
