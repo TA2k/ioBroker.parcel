@@ -304,6 +304,10 @@ class Parcel extends utils.Adapter {
                     this.log.error("Login to Amazon failed, please restart adapter or login to Amazon and check your credentials");
                     return;
                 }
+                if (res.data.indexOf("Zurücksetzen des Passworts erforderlich") !== -1) {
+                    this.log.error("Zurücksetzen des Passworts erforderlich");
+                    return;
+                }
                 this.log.info("Login to Amazon successful");
                 this.sessions["amz"] = true;
                 this.setState("info.connection", true, true);
