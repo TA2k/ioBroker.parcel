@@ -301,7 +301,7 @@ class Parcel extends utils.Adapter {
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
                 if (res.data.indexOf("Amazon Anmelden") !== -1) {
-                    this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
+                    this.log.error("Login to Amazon failed, please restart adapter or login to Amazon and check your credentials");
                     return;
                 }
                 this.log.info("Login to Amazon successful");
