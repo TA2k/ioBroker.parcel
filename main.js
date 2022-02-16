@@ -301,24 +301,16 @@ class Parcel extends utils.Adapter {
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
                 if (res.data.indexOf("Amazon Anmelden") !== -1) {
-                    this.log.error("Login to Amazon failed, please restart adapter or login to Amazon and check your credentials");
+                    this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
                     return;
                 }
                 if (res.data.indexOf("Zurücksetzen des Passworts erforderlich") !== -1) {
                     this.log.error("Zurücksetzen des Passworts erforderlich");
                     return;
                 }
-                this.log.info("Login to Amazon successful");
-                this.sessions["amz"] = true;
-                this.setState("info.connection", true, true);
-                this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
-                await this.setObjectNotExistsAsync("amazon", {
-                    type: "device",
-                    common: {
-                        name: "Amazon Tracking",
-                    },
-                    native: {},
-                });
+                this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
+                this.setState("info.connection", false, true);
+                return;
             })
             .catch(async (error) => {
                 if (error.response) {
