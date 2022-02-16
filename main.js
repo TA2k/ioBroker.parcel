@@ -788,6 +788,7 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 //this.log.debug(JSON.stringify(res.data));
+
                 const dom = new JSDOM(res.data);
                 const document = dom.window.document;
                 const elements = [];
@@ -834,7 +835,16 @@ class Parcel extends utils.Adapter {
                     const additionalStatus = document.querySelector("#primaryStatus") ? document.querySelector("#primaryStatus").textContent.replace(/\n */g, "") : "";
                     const secondaryStatus = document.querySelector("#secondaryStatus") ? document.querySelector("#secondaryStatus").textContent.replace(/\n */g, "") : "";
                     let status = statusHandle ? statusHandle.textContent.replace(/\n */g, "") : "";
-                    status = status + " " + additionalStatus + " " + secondaryStatus;
+                    if (!status) {
+                        status = additionalStatus;
+                    }
+                    if (additionalStatus && status !== additionalStatus) {
+                        status = status + " " + additionalStatus;
+                    }
+                    if (secondaryStatus) {
+                        status = status + " " + secondaryStatus;
+                    }
+
                     return {
                         id: document.querySelector(".carrierRelatedInfo-trackingId-text")
                             ? document.querySelector(".carrierRelatedInfo-trackingId-text").textContent.replace("Trackingnummer ", "")
@@ -865,8 +875,8 @@ class Parcel extends utils.Adapter {
         }
 
         this.json2iob.parse("amazon", amzResult, { forceIndex: true });
-
         this.mergeProviderJson("amz", amzResult);
+        await this.setStateAsync("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
     }
     async refreshToken() {
         if (Object.keys(this.sessions).length === 0) {
