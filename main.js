@@ -300,6 +300,56 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
+                if (res.data.indexOf("auth-mfa-otpcode") !== -1) {
+                    this.log.info("Found MFA token login");
+                    const form = this.extractHidden(res.data);
+                    form.otpCode = this.config.amzotp;
+                    form.rememberDevice = true;
+
+                    await this.requestClient({
+                        method: "post",
+                        url: "https://www.amazon.de/ap/signin",
+                        headers: {
+                            accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                            "content-type": "application/x-www-form-urlencoded",
+                            origin: "https://www.amazon.de",
+                            "accept-language": "de-de",
+                            "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                            referer: "https://www.amazon.de/ap/signin",
+                        },
+                        data: qs.stringify(form),
+                        jar: this.cookieJar,
+                        withCredentials: true,
+                    })
+                        .then(async (res) => {
+                            this.log.debug(JSON.stringify(res.data));
+                            this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
+                            this.setState("info.connection", false, true);
+                        })
+                        .catch(async (error) => {
+                            if (error.response) {
+                                if (error.response.status === 404) {
+                                    this.log.info("Login to Amazon successful");
+                                    this.sessions["amz"] = true;
+                                    this.setState("info.connection", true, true);
+                                    this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                                    await this.setObjectNotExistsAsync("amazon", {
+                                        type: "device",
+                                        common: {
+                                            name: "Amazon Tracking",
+                                        },
+                                        native: {},
+                                    });
+                                    return;
+                                }
+                                this.setState("info.connection", false, true);
+                                this.log.error(JSON.stringify(error.response.data));
+                            }
+
+                            this.log.error(error);
+                        });
+                    return;
+                }
                 if (res.data.indexOf("Amazon Anmelden") !== -1) {
                     this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
                     return;
