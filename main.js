@@ -8,7 +8,6 @@
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
-const puppeteer = require("puppeteer");
 const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
 const tough = require("tough-cookie");
@@ -77,101 +76,7 @@ class Parcel extends utils.Adapter {
             this.setState("info.connection", true, true);
         }
         if (this.config.amzusername && this.config.amzpassword) {
-            this.log.info("Login to Amazon");
-            this.browser = await puppeteer
-                .launch({
-                    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-                })
-                .catch((e) => {
-                    if (e.message && e.message.indexOf("Unterminated quoted string") !== -1) {
-                        this.log.warn("Puppeteer native browser is not ARM compatible. Try to start local chromium browser installed via sudo apt-get install chromium-browser");
-                    } else {
-                        this.log.error(e);
-                    }
-                });
-            //try local instance
-            if (!this.browser) {
-                this.log.info("Try to start local instance of chromium");
-                this.browser = await puppeteer
-                    .launch({
-                        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-                        executablePath: "/usr/bin/chromium-browser",
-                    })
-                    .catch((e) => {
-                        this.log.error(e);
-                    });
-            }
-            if (!this.browser) {
-                this.log.error("Can't start puppeteer please execute on your ioBroker command line");
-                this.log.error(
-                    "sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm-dev libxkbcommon-dev libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm-dev libpango-1.0-0"
-                );
-                this.log.error("More infos: https://github.com/TA2k/ioBroker.parcel/blob/master/README.md#amazon-vorbedingungen");
-                return;
-            }
-            this.page = await this.browser.newPage().catch((e) => this.log.error(e));
-            await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first").catch((e) => this.log.error(e));
-            await this.page
-                .evaluate((config) => {
-                    const email = document.querySelector("#ap_email");
-                    email.value = config.amzusername;
-                    const next = document.querySelector(".a-button-input");
-                    next.click();
-                }, this.config)
-                .catch((e) => this.log.error(e));
-            await this.page.waitForSelector("#ap_password").catch((e) => this.log.error(e));
-            await this.page
-                .evaluate((config) => {
-                    const email = document.querySelector("#ap_password");
-                    email.value = config.amzpassword;
-                    const remember = document.querySelector("input[name*='rememberMe']");
-                    remember.click();
-                    const next = document.querySelector("#signInSubmit");
-                    next.click();
-                }, this.config)
-                .catch((e) => this.log.error(e));
-            await this.page.waitForNavigation({ waitUntil: "networkidle2" });
-            await this.page
-                .evaluate((config) => {
-                    const otp = document.querySelector("#auth-mfa-otpcode");
-                    if (otp) {
-                        otp.value = config.amzotp;
-                        const remember = document.querySelector("input[name*='rememberDevice']");
-                        remember.click();
-                        const next = document.querySelector("#auth-signin-button");
-                        next.click();
-                    }
-                }, this.config)
-                .catch((e) => console.log(e));
-            const success = await this.page
-                .waitForSelector("#yourOrdersContent")
-                .then(() => true)
-                .catch(async (e) => {
-                    this.log.debug(await this.page.content());
-
-                    this.log.error(e);
-
-                    this.log.error("Amazon login failed. Please check your credentials and login manually");
-                    const errorHandle = await this.page.$(".a-alert-content .a-list-item");
-                    if (errorHandle) {
-                        this.log.error(await errorHandle.evaluate((node) => node.innerText));
-                    }
-                    return false;
-                });
-            if (!success) {
-                return;
-            }
-
-            await this.setObjectNotExistsAsync("amazon", {
-                type: "device",
-                common: {
-                    name: "Amazon Tracking",
-                },
-                native: {},
-            });
-            this.log.info("Login to Amazon successful");
-            this.sessions["amz"] = true;
-            this.setState("info.connection", true, true);
+            await this.loginAmz();
         }
         this.updateInterval = null;
         this.reLoginTimeout = null;
@@ -352,7 +257,7 @@ class Parcel extends utils.Adapter {
         }
     }
 
-    async loginAmzLegacy() {
+    async loginAmz() {
         const body = await this.requestClient({
             method: "get",
             url: "https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&accountStatusPolicy=P1&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.oa2.client_id=device:32467234687368746238704723437432432&openid.oa2.code_challenge=IeFTKnKcmHEPij50cdHHCq6ZVMbFYJMQQtbrMvKbgz0&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code",
@@ -874,15 +779,27 @@ class Parcel extends utils.Adapter {
         this.log.debug("Get Amazon Packages");
         const amzResult = { sendungen: [] };
 
-        await this.page.goto("https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first").catch((e) => this.log.error(e));
-        const orders = await this.page
-            .evaluate(() => {
+        const orders = await this.requestClient({
+            method: "get",
+            url: "https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first&disableCsd=missing-library",
+            headers: {
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
+                "accept-language": "de-de",
+            },
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                //this.log.debug(JSON.stringify(res.data));
+                const dom = new JSDOM(res.data);
+                const document = dom.window.document;
                 const elements = [];
                 const orders = document.querySelectorAll(".a-box.shipment");
 
                 for (const order of orders) {
                     const descHandle = order.querySelector(".a-fixed-right-grid-col.a-col-left .a-row div:first-child .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal");
-                    const desc = descHandle ? descHandle.innerText.replace(/\n +/g, "") : "";
+                    const desc = descHandle ? descHandle.textContent.replace(/\n */g, "") : "";
                     const url = order.querySelector(".track-package-button a") ? order.querySelector(".track-package-button a").getAttribute("href") : "";
                     if (url) {
                         elements.push({ desc: desc, url: url });
@@ -890,28 +807,53 @@ class Parcel extends utils.Adapter {
                 }
                 return elements;
             })
-            .catch((e) => this.log.error(e));
-        this.log.debug("found " + orders.length + " packages");
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+        this.log.debug("Found " + orders.length + " Amazon Orders");
         for (const order of orders) {
             if (order.url.indexOf("http") === -1) {
                 order.url = "https://www.amazon.de" + order.url;
             }
             this.log.debug(order.url);
-            await this.page.goto(order.url).catch((e) => this.log.error(e));
-            const element = await this.page
-                .evaluate(() => {
+            order.url = order.url + "&disableCsd=missing-library";
+            const element = await this.requestClient({
+                method: "get",
+                url: order.url,
+                headers: {
+                    accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "accept-language": "de-de",
+                },
+                jar: this.cookieJar,
+                withCredentials: true,
+            })
+                .then(async (res) => {
+                    // this.log.debug(JSON.stringify(res.data));
+                    const dom = new JSDOM(res.data);
+                    const document = dom.window.document;
                     const statusHandle = document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
-                    const additionalStatus = document.querySelector("#primaryStatus") ? document.querySelector("#primaryStatus").innerText.replace(/\n +/g, "") : "";
-                    const secondaryStatus = document.querySelector("#secondaryStatus") ? document.querySelector("#secondaryStatus").innerText.replace(/\n +/g, "") : "";
-                    let status = statusHandle ? statusHandle.innerText.replace(/\n +/g, "") : "";
+                    const additionalStatus = document.querySelector("#primaryStatus") ? document.querySelector("#primaryStatus").textContent.replace(/\n */g, "") : "";
+                    const secondaryStatus = document.querySelector("#secondaryStatus") ? document.querySelector("#secondaryStatus").textContent.replace(/\n */g, "") : "";
+                    let status = statusHandle ? statusHandle.textContent.replace(/\n */g, "") : "";
                     status = status + " " + additionalStatus + " " + secondaryStatus;
                     return {
-                        id: document.querySelector(".carrierRelatedInfo-trackingId-text") ? document.querySelector(".carrierRelatedInfo-trackingId-text").innerText.replace("Trackingnummer ", "") : "",
-                        name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").innerText.replace(/\n +/g, "") : "",
+                        id: document.querySelector(".carrierRelatedInfo-trackingId-text")
+                            ? document.querySelector(".carrierRelatedInfo-trackingId-text").textContent.replace("Trackingnummer ", "")
+                            : "",
+                        name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").textContent.replace(/\\n */g, "") : "",
                         status: status,
                     };
                 })
-                .catch((e) => this.log.error(e));
+                .catch((error) => {
+                    this.log.error(error);
+                    if (error.response) {
+                        this.log.error(JSON.stringify(error.response.data));
+                    }
+                });
+
             if (element) {
                 const orderId = qs.parse(order.url).orderId;
                 element.name = order.desc;
