@@ -13,6 +13,7 @@ const Json2iob = require("./lib/json2iob");
 const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent");
 const { JSDOM } = require("jsdom");
+const fs = require("fs");
 
 class Parcel extends utils.Adapter {
     /**
@@ -32,6 +33,7 @@ class Parcel extends utils.Adapter {
         this.mergedJson = [];
         this.mergedJsonObject = {};
         this.images = {};
+        this.alreadySentMessages = {};
     }
 
     /**
@@ -806,6 +808,17 @@ class Parcel extends utils.Adapter {
 
         this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
         this.setState("allProviderObjects", JSON.stringify(this.mergedJsonObject), true);
+        if (this.config.sendToActive) {
+            const sendungen = this.mergedJsonObject;
+            const ids = Object.keys(sendungen);
+            for (const id of ids) {
+                if (this.alreadySentMessages[id] === sendungen[id].status) {
+                    return;
+                }
+                this.sendTo(this.config.sendToActive, sendungen[id].name + "\n" + sendungen[id].status);
+                this.alreadySentMessages[id] = sendungen[id].status;
+            }
+        }
     }
     async activateToken(grant_token, url) {
         await this.requestClient({
@@ -1211,6 +1224,16 @@ class Parcel extends utils.Adapter {
                         const imageBuffer = Buffer.from(image.data, "binary");
                         imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
                         this.images[state.val] = imageBase64;
+                        if (this.config.sendToActive) {
+                            fs.writeFile("/tmp/snapshot.jpg", imageBuffer.toString("base64"), "base64", (err) => {
+                                if (err) {
+                                    this.log.error(err);
+                                } else {
+                                    this.sendTo(this.config.sendToActive, "Briefankündigung");
+                                    this.sendTo(this.config.sendToActive, "/tmp/snapshot.jpg");
+                                }
+                            });
+                        }
                     }
                     const pathArray = id.split(".");
                     pathArray.pop();

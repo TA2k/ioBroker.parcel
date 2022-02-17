@@ -67,7 +67,21 @@
 
             <!-- Put your content here -->
             <div class="row">
-                <div class="col">DHL</div>
+                <div class="col"><h5>Allgemein</h5></div>
+            </div>
+            <div class="row">
+                <div class="col s6 input-field">
+                    <input type="number" class="value" id="interval" />
+                    <label for="interval" class="translate">Update interval in minutes (Unter 10min kann bei DHL zu einer Benachrichtigung führen)</label>
+                </div>
+                <div class="col s6 input-field">
+                    <input type="text" class="value" id="sendToActive" />
+                    <label for="sendToActive" class="translate">Benachrichtigung bei Änderungen senden an z.B. telegram.0</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col"><h5>DHL</h5></div>
             </div>
             <div class="row">
                 <div class="col s6 input-field">
@@ -88,7 +102,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">Amazon</div>
+                <div class="col"><h5>Amazon</h5></div>
             </div>
             <div class="row">
                 <div class="col s6 input-field">
@@ -110,7 +124,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">DPD</div>
+                <div class="col"><h5>DPD</h5></div>
             </div>
             <div class="row">
                 <div class="col s6 input-field">
@@ -125,7 +139,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">17Track Normal User</div>
+                <div class="col"><h5>17Track Normal User</h5></div>
             </div>
             <div class="row">
                 <div class="col s6 input-field">
@@ -141,7 +155,7 @@
             </div>
             <div class="row">
                 <div class="col">
-                    <div>17Track</div>
+                    <div><h5>17Track</h5></div>
                     <a href="https://api.17track.net/en/admin/settings" target="_blank">Register HERE to receive a API Key</a>
                 </div>
             </div>
@@ -149,13 +163,6 @@
                 <div class="col s6 input-field">
                     <input type="text" class="value" id="17trackKey" />
                     <label for="17trackKey" class="translate">17Track API Key</label>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col s2 input-field">
-                    <input type="number" class="value" id="interval" />
-                    <label for="interval" class="translate">Update interval in minutes</label>
                 </div>
             </div>
         </div>
