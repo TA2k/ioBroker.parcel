@@ -258,9 +258,9 @@ class Parcel extends utils.Adapter {
     }
 
     async loginAmz() {
-        const body = await this.requestClient({
+        let body = await this.requestClient({
             method: "get",
-            url: "https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&accountStatusPolicy=P1&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.oa2.client_id=device:32467234687368746238704723437432432&openid.oa2.code_challenge=IeFTKnKcmHEPij50cdHHCq6ZVMbFYJMQQtbrMvKbgz0&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code",
+            url: "https://www.amazon.de/ap/signin?_encoding=UTF8&accountStatusPolicy=P1&openid.assoc_handle=deflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.de%2Fgp%2Fcss%2Forder-history%3Fie%3DUTF8%26ref_%3Dnav_orders_first&pageId=webcs-yourorder&showRmrMe=1",
             headers: {
                 accept: "*/*",
                 "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
@@ -279,10 +279,35 @@ class Parcel extends utils.Adapter {
                     this.log.error(JSON.stringify(error.response.data));
                 }
             });
-        const form = this.extractHidden(body);
+        let form = this.extractHidden(body);
         form.email = this.config.amzusername;
+        body = await this.requestClient({
+            method: "post",
+            url: "https://www.amazon.de/ap/signin",
+            headers: {
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "content-type": "application/x-www-form-urlencoded",
+                origin: "https://www.amazon.de",
+                "accept-language": "de-de",
+                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                referer: "https://www.amazon.de/ap/signin",
+            },
+            data: qs.stringify(form),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+                return res.data;
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+        form = this.extractHidden(body);
         form.password = this.config.amzpassword;
-
         await this.requestClient({
             method: "post",
             url: "https://www.amazon.de/ap/signin",
@@ -300,6 +325,20 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
+                if (res.data.indexOf("Meine Bestellungen") !== -1) {
+                    this.log.info("Login to Amazon successful");
+                    this.sessions["amz"] = true;
+                    this.setState("info.connection", true, true);
+                    this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                    await this.setObjectNotExistsAsync("amazon", {
+                        type: "device",
+                        common: {
+                            name: "Amazon Tracking",
+                        },
+                        native: {},
+                    });
+                    return;
+                }
                 if (res.data.indexOf("auth-mfa-otpcode") !== -1) {
                     this.log.info("Found MFA token login");
                     const form = this.extractHidden(res.data);
@@ -323,25 +362,25 @@ class Parcel extends utils.Adapter {
                     })
                         .then(async (res) => {
                             this.log.debug(JSON.stringify(res.data));
-                            this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
+                            if (res.data.indexOf("Meine Bestellungen") !== -1) {
+                                this.log.info("Login to Amazon successful");
+                                this.sessions["amz"] = true;
+                                this.setState("info.connection", true, true);
+                                this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                                await this.setObjectNotExistsAsync("amazon", {
+                                    type: "device",
+                                    common: {
+                                        name: "Amazon Tracking",
+                                    },
+                                    native: {},
+                                });
+                                return;
+                            }
+                            this.log.error("MFA: Login to Amazon failed, please login manually to Amazon");
                             this.setState("info.connection", false, true);
                         })
                         .catch(async (error) => {
                             if (error.response) {
-                                if (error.response.status === 404) {
-                                    this.log.info("Login to Amazon successful");
-                                    this.sessions["amz"] = true;
-                                    this.setState("info.connection", true, true);
-                                    this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
-                                    await this.setObjectNotExistsAsync("amazon", {
-                                        type: "device",
-                                        common: {
-                                            name: "Amazon Tracking",
-                                        },
-                                        native: {},
-                                    });
-                                    return;
-                                }
                                 this.setState("info.connection", false, true);
                                 this.log.error(JSON.stringify(error.response.data));
                             }
@@ -351,33 +390,20 @@ class Parcel extends utils.Adapter {
                     return;
                 }
                 if (res.data.indexOf("Amazon Anmelden") !== -1) {
-                    this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
+                    this.log.error("Login to Amazon failed, please login to Amazon manually and check the login");
+
                     return;
                 }
                 if (res.data.indexOf("Zurücksetzen des Passworts erforderlich") !== -1) {
                     this.log.error("Zurücksetzen des Passworts erforderlich");
                     return;
                 }
-                this.log.error("Login to Amazon failed, please login to Amazon and check your credentials");
+                this.log.error("Unknown Error: Login to Amazon failed, please login to Amazon and check your credentials");
                 this.setState("info.connection", false, true);
                 return;
             })
             .catch(async (error) => {
                 if (error.response) {
-                    if (error.response.status === 404) {
-                        this.log.info("Login to Amazon successful");
-                        this.sessions["amz"] = true;
-                        this.setState("info.connection", true, true);
-                        this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
-                        await this.setObjectNotExistsAsync("amazon", {
-                            type: "device",
-                            common: {
-                                name: "Amazon Tracking",
-                            },
-                            native: {},
-                        });
-                        return;
-                    }
                     this.setState("info.connection", false, true);
                     this.log.error(JSON.stringify(error.response.data));
                 }
@@ -467,7 +493,7 @@ class Parcel extends utils.Adapter {
                 this.log.debug(JSON.stringify(res.data));
                 if (res.data && res.data.Message) {
                     this.log.error("Login to 17TUser failed. Login via Google is not working");
-                    this.log.error(res.data.Message);
+                    this.log.error("T17User: " + res.data.Message);
                     return;
                 }
                 this.log.info("Login to 17T successful");
