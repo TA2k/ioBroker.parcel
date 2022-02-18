@@ -75,8 +75,14 @@
                     <label for="interval" class="translate">Update interval in minutes (Unter 10min kann bei DHL zu einer Benachrichtigung führen)</label>
                 </div>
                 <div class="col s6 input-field">
-                    <input type="text" class="value" id="sendToActive" />
-                    <label for="sendToActive" class="translate">Benachrichtigung bei Änderungen senden an z.B. telegram.0</label>
+                    <div>
+                        <input type="checkbox" class="value" id="sendToActive" />
+                        <label for="sendToActive" class="translate">Benachrichtigung bei Änderungen senden an</label>
+                    </div>
+                    <div>
+                        <input type="text" class="value" id="sendToInstance" />
+                        <label for="sendToInstance" class="translate">Instanz zu senden verwenden</label>
+                    </div>
                 </div>
             </div>
 

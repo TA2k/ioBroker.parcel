@@ -108,6 +108,8 @@
         "dhlpassword": "",
         "dhlMfa": "",
         "17trackKey": "",
+        "sendToActive": false,
+        "sendToInstance": "telegram.0",
         "interval": 10
     },
     "objects": [],
