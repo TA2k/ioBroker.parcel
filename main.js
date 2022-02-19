@@ -75,11 +75,19 @@ class Parcel extends utils.Adapter {
 
         if (this.config["17trackKey"]) {
             this.sessions["17track"] = this.config["17trackKey"];
+            this.login17TApi();
             this.setState("info.connection", true, true);
         }
         if (this.config.amzusername && this.config.amzpassword) {
+            this.log.info("Login to Amazon");
             await this.loginAmz();
         }
+
+        if (this.config.glsusername && this.config.glspassword) {
+            this.log.info("Login to GLS");
+            await this.loginGLS();
+        }
+
         this.updateInterval = null;
         this.reLoginTimeout = null;
         this.refreshTokenTimeout = null;
@@ -471,7 +479,139 @@ class Parcel extends utils.Adapter {
                 }
             });
     }
-
+    async loginGLS() {
+        await this.requestClient({
+            method: "post",
+            url: "https://gls-one.de/api/auth",
+            headers: {
+                Accept: "application/json, text/plain, */*",
+                "X-Selected-Country": "DE",
+                "Accept-Language": "de-de",
+                "X-Selected-Language": "DE",
+                "Content-Type": "application/json",
+                Origin: "https://gls-one.de",
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                "X-Client-Id": "iOS",
+                Referer: "https://gls-one.de/de?platform=iOS",
+            },
+            data: JSON.stringify({
+                username: this.config.glsusername,
+                password: this.config.glspassword,
+            }),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.sessions["gls"] = res.data;
+            })
+            .catch(async (error) => {
+                error.response && this.log.error(JSON.stringify(error.response.data));
+                this.log.error(error);
+            });
+        await this.requestClient({
+            method: "get",
+            url: "https://gls-one.de/api/auth/login",
+            headers: {
+                "X-Selected-Country": "DE",
+                "Accept-Language": "de-de",
+                "X-Selected-Language": "DE",
+                Accept: "application/json, text/plain, */*",
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                "X-Client-Id": "iOS",
+                "X-Auth-Token": this.sessions["gls"].token,
+            },
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.info("Login to GLS successful");
+                this.sessions["gls"].id = res.data._id;
+                await this.setObjectNotExistsAsync("gls", {
+                    type: "device",
+                    common: {
+                        name: "GLS Tracking",
+                    },
+                    native: {},
+                });
+                await this.setObjectNotExistsAsync("gls.json", {
+                    type: "state",
+                    common: {
+                        name: "Json Sendungen",
+                        write: false,
+                        read: true,
+                        type: "string",
+                        role: "json",
+                    },
+                    native: {},
+                });
+                this.setState("info.connection", true, true);
+                this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+            })
+            .catch(async (error) => {
+                error.response && this.log.error(JSON.stringify(error.response.data));
+                this.log.error(error);
+            });
+    }
+    async login17TApi() {
+        await this.setObjectNotExistsAsync("17t", {
+            type: "device",
+            common: {
+                name: "17Track API Tracking",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("17t.trackinginfo", {
+            type: "channel",
+            common: {
+                name: "17Track Tracking Info",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("17t.trackinginfo.json", {
+            type: "state",
+            common: {
+                name: "Json Sendungen",
+                write: false,
+                read: true,
+                type: "string",
+                role: "json",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("17t.register", {
+            type: "state",
+            common: {
+                name: "Register Tracking ID",
+                write: true,
+                read: true,
+                type: "mixed",
+                role: "state",
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("17t.trackList", {
+            type: "state",
+            common: {
+                role: "state",
+                name: "Registered tracking ids",
+                type: "object",
+                read: true,
+                write: false,
+            },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync("17t.deleteTrack", {
+            type: "state",
+            common: {
+                role: "state",
+                name: "Unregister a tracking id",
+                type: "mixed",
+                read: true,
+                write: true,
+            },
+            native: {},
+        });
+    }
     async login17T() {
         await this.requestClient({
             method: "post",
@@ -643,6 +783,18 @@ class Parcel extends utils.Adapter {
                     },
                 },
             ],
+            gls: [
+                {
+                    path: "gls",
+                    url: "https://gls-one.de/api/v3/customers/" + this.sessions.gls.id + "/parcels?page=0&sort=createdDate,DESC",
+                    header: {
+                        accept: "*/*",
+                        "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                        "accept-language": "de-de",
+                        "X-Auth-Token": this.sessions.gls.token,
+                    },
+                },
+            ],
         };
 
         for (const id of Object.keys(this.sessions)) {
@@ -668,6 +820,13 @@ class Parcel extends utils.Adapter {
                         if (id === "17tuser") {
                             data = res.data.Json;
                         }
+                        if (id === "gls") {
+                            for (const parcel of res.data._embedded.parcels) {
+                                parcel.id = parcel._id.toString();
+                                delete parcel._id;
+                            }
+                            data = { sendungen: res.data._embedded.parcels };
+                        }
                         const forceIndex = true;
                         const preferedArrayName = null;
                         if (id === "dpd") {
@@ -685,6 +844,7 @@ class Parcel extends utils.Adapter {
                         if (element.path === "dhl.briefe" && res.data.grantToken) {
                             await this.activateToken(res.data.grantToken, res.data.accessTokenUrl);
                         }
+
                         await this.cleanupProvider(id, data);
                         this.mergeProviderJson(id, data);
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
@@ -731,7 +891,7 @@ class Parcel extends utils.Adapter {
                 native: {},
             });
         }
-        if ((id === "dhl" || id === "dpd" || id === "amz") && data && data.sendungen) {
+        if ((id === "dhl" || id === "dpd" || id === "amz" || id === "gls") && data && data.sendungen) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
             const sendungsArray = data.sendungen.map((sendung) => {
                 return sendung.id;
@@ -758,6 +918,14 @@ class Parcel extends utils.Adapter {
                     status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
                 }
                 const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL", direction: sendung.sendungsinfo.sendungsrichtung };
+                this.mergedJsonObject[sendung.id] = sendungsObject;
+                return sendungsObject;
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
+        }
+        if (id === "gls" && data.sendungen) {
+            const sendungsArray = data.sendungen.map((sendung) => {
+                const sendungsObject = { id: sendung.id, name: sendung.label || sendung.parcelNumber, status: sendung.status, source: "GLS", direction: sendung.type };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });

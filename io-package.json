@@ -88,17 +88,33 @@
         "dhlpassword",
         "amzpassword",
         "dpdpassword",
-        "t17password"
+        "t17password",
+        "upspassword",
+        "postchpassword",
+        "postatpassword",
+        "glspassword"
     ],
     "protectedNative": [
         "dhlpassword",
         "amzpassword",
         "dpdpassword",
-        "t17password"
+        "t17password",
+        "upspassword",
+        "postchpassword",
+        "postatpassword",
+        "glspassword"
     ],
     "native": {
         "amzusername": "",
         "amzpassword": "",
+        "glsusername": "",
+        "glspassword": "",
+        "upsusername": "",
+        "upspassword": "",
+        "postchusername": "",
+        "postchpassword": "",
+        "postatusername": "",
+        "postatpassword": "",
         "amzotp": "",
         "t17username": "",
         "t17password": "",
@@ -141,71 +157,6 @@
                 "role": "state",
                 "name": "Tracking Dictionary of all Providers",
                 "type": "json",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "17t",
-            "type": "channel",
-            "common": {
-                "name": "17Track API key Tracking"
-            },
-            "native": {}
-        },
-        {
-            "_id": "17t.trackinginfo",
-            "type": "channel",
-            "common": {
-                "name": "17Track Tracking Info"
-            },
-            "native": {}
-        },
-        {
-            "_id": "17t.register",
-            "type": "state",
-            "common": {
-                "role": "state",
-                "name": "Register a new tracking id",
-                "type": "mixed",
-                "read": true,
-                "write": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "17t.trackinginfo.json",
-            "type": "state",
-            "common": {
-                "role": "state",
-                "name": "Json tracking info",
-                "type": "mixed",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "17t.deleteTrack",
-            "type": "state",
-            "common": {
-                "role": "state",
-                "name": "Unregister a tracking id",
-                "type": "mixed",
-                "read": true,
-                "write": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "17t.trackList",
-            "type": "state",
-            "common": {
-                "role": "state",
-                "name": "Registered tracking ids",
-                "type": "object",
                 "read": true,
                 "write": false
             },
