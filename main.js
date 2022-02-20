@@ -1017,7 +1017,8 @@ class Parcel extends utils.Adapter {
         const parcelList = dom.window.document.querySelector(".parcelList");
         if (!parcelList) {
             this.log.debug("No parcelList found");
-            return;
+
+            return result;
         }
         parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
             const parcelInfo = parcel.firstElementChild;
