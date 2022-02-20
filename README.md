@@ -25,61 +25,6 @@ DHL:
 * In die Instanzeinstellungen eingeben und speichern
 
 
-## Skripte
-
-### Telegram Benachrichtigung bei Statusänderung  via Javascript Skript:
-
-```
-const alreadySentMessages = {}
-on({ id: "parcel.0.allProviderObjects", change: "ne" }, function (obj) {
-    const sendungen = JSON.parse(obj.state.val)
-    const ids = Object.keys(sendungen)
-    for (const id of ids) {
-        if (alreadySentMessages[id] === sendungen[id].status) {
-            return
-        }
-        sendTo('telegram.0', sendungen[id].name + '\n' + sendungen[id].status);
-        alreadySentMessages[id] = sendungen[id].status
-    }
-});
-```
-
-### DHL Briefverfolgung Telegram versenden via Javascript Skript:
-
-```
-const alreadySent = {}
-const fs = require('fs')
-on({id:/^parcel\.0\.dhl\.briefe.*image$/, change: "ne"}, async function(obj){
- 
-    const parentId = obj.id.split(".")
-    parentId.splice(-1)
-    parentId.push("image_url")
-    const urlState = await getStateAsync(parentId.join("."))
-    //Beispiel damit nur zu bestimmten Zeiten eine Nachricht verschickt wird
-    //const hours = new.Date().hours()
-    //if (hours >= 0 && hours <=7 ) {
-    //    return
-    //}
-    if (alreadySent[urlState.val]) {
-        return
-    }
-    const base64Data = obj.state.val.split("base64,")[1]
-    fs.writeFile("/tmp/snapshot.jpg", base64Data, 'base64', function(err) {
-      if (err) {
-        console.error(err);
-      } else {
-        sendTo('telegram.0', 'Briefankündigung');
-        sendTo('telegram.0', '/tmp/snapshot.jpg');
-        alreadySent[urlState.val] = true
-      }
-    });
-});
- 
- 
-
- 
-
-```
 
 ### DHL Briefverfolgung in der Vis anzeigen.
 
