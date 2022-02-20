@@ -503,6 +503,7 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.sessions["gls"] = res.data;
+                this.glstoken = res.data.token;
             })
             .catch(async (error) => {
                 error.response && this.log.error(JSON.stringify(error.response.data));
@@ -525,7 +526,7 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.log.info("Login to GLS successful");
-                this.sessions["gls"].id = res.data._id;
+                this.glsid = res.data._id;
                 await this.setObjectNotExistsAsync("gls", {
                     type: "device",
                     common: {
@@ -786,12 +787,12 @@ class Parcel extends utils.Adapter {
             gls: [
                 {
                     path: "gls",
-                    url: "https://gls-one.de/api/v3/customers/" + this.sessions.gls.id + "/parcels?page=0&sort=createdDate,DESC",
+                    url: "https://gls-one.de/api/v3/customers/" + this.glsid + "/parcels?page=0&sort=createdDate,DESC",
                     header: {
                         accept: "*/*",
                         "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
                         "accept-language": "de-de",
-                        "X-Auth-Token": this.sessions.gls.token,
+                        "X-Auth-Token": this.glstoken,
                     },
                 },
             ],
@@ -1185,6 +1186,9 @@ class Parcel extends utils.Adapter {
             }
             if (id === "17tuser") {
                 this.login17T();
+            }
+            if (id === "gls") {
+                this.loginGLS();
             }
         }
     }
