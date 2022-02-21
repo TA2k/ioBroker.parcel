@@ -1138,7 +1138,7 @@ class Parcel extends utils.Adapter {
             const ids = Object.keys(sendungen);
             for (const id of ids) {
                 if (this.alreadySentMessages[id] === sendungen[id].status) {
-                    return;
+                    continue;
                 }
                 this.sendTo(this.config.sendToInstance, sendungen[id].name + "\n" + sendungen[id].status);
                 this.alreadySentMessages[id] = sendungen[id].status;
