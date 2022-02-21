@@ -763,7 +763,7 @@ class Parcel extends utils.Adapter {
                     this.log.error("T17User: " + res.data.Message);
                     return;
                 }
-                this.log.info("Login to 17T successful");
+                this.log.info("Login to T17 User successful");
                 this.sessions["17tuser"] = true;
                 await this.setObjectNotExistsAsync("17tuser", {
                     type: "device",
