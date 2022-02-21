@@ -588,7 +588,7 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
-                if (res.data.LoginSubmitUserIdResponse) {
+                if (res.data.LoginSubmitUserIdResponse && res.data.LoginSubmitUserIdResponse.LoginResponse && res.data.LoginSubmitUserIdResponse.LoginResponse.AuthenticationToken) {
                     this.upsAuthToken = res.data.LoginSubmitUserIdResponse.LoginResponse.AuthenticationToken;
 
                     this.sessions["ups"] = res.data;
@@ -613,6 +613,9 @@ class Parcel extends utils.Adapter {
                     });
                     this.setState("info.connection", true, true);
                     this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                } else {
+                    this.log.warn("Login to UPS failed");
+                    this.log.info(JSON.stringify(res.data));
                 }
 
                 return;
