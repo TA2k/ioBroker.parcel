@@ -18,12 +18,22 @@ Parcel tracking
 
 ## Loginablauf
 
-DHL:
-
+**DHL:**
 * DHL App Login eingeben
 * SMS/EMail Code erhalten
 * In die Instanzeinstellungen eingeben und speichern
 
+**Amazon:**
+* Login eingeben
+* Wenn nötig vorab ein OTP token aus der 2FA App eingeben.
+
+**DPD, GLS, UPS, 17Track User:**
+
+Login und Passwort eingeben
+
+**Telegram Benachrichtigun für Sendungen und Briefe**
+
+In den Instanz Einstellung aktivieren und z.B. telegram.0 eingeben
 
 
 ### DHL Briefverfolgung in der Vis anzeigen.
