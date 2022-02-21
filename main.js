@@ -14,6 +14,7 @@ const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent");
 const { JSDOM } = require("jsdom");
 const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
 
 class Parcel extends utils.Adapter {
     /**
@@ -86,6 +87,10 @@ class Parcel extends utils.Adapter {
         if (this.config.glsusername && this.config.glspassword) {
             this.log.info("Login to GLS");
             await this.loginGLS();
+        }
+        if (this.config.upsusername && this.config.upspassword) {
+            this.log.info("Login to UPS");
+            await this.loginUPS();
         }
 
         this.updateInterval = null;
@@ -553,6 +558,122 @@ class Parcel extends utils.Adapter {
                 this.log.error(error);
             });
     }
+    async loginUPS() {
+        await this.requestClient({
+            method: "post",
+            url: "https://onlinetools.ups.com/rest/Login",
+            headers: {
+                Connection: "keep-alive",
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Host: "onlinetools.ups.com",
+            },
+            data: JSON.stringify({
+                UPSSecurity: {
+                    UsernameToken: {},
+                    ServiceAccessToken: {
+                        AccessLicenseNumber: "BDB176074C16EB9D",
+                    },
+                },
+                LoginSubmitUserIdRequest: {
+                    UserId: this.config.upsusername,
+                    Password: this.config.upspassword,
+                    Locale: "de_DE",
+                    ClientID: "native",
+                    IsMobile: "true",
+                },
+            }),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+                if (res.data.LoginSubmitUserIdResponse) {
+                    this.upsAuthToken = res.data.LoginSubmitUserIdResponse.LoginResponse.AuthenticationToken;
+
+                    this.sessions["ups"] = res.data;
+                    this.log.info("Login to UPS successful");
+                    await this.setObjectNotExistsAsync("ups", {
+                        type: "device",
+                        common: {
+                            name: "UPS Tracking",
+                        },
+                        native: {},
+                    });
+                    await this.setObjectNotExistsAsync("ups.json", {
+                        type: "state",
+                        common: {
+                            name: "Json Sendungen",
+                            write: false,
+                            read: true,
+                            type: "string",
+                            role: "json",
+                        },
+                        native: {},
+                    });
+                    this.setState("info.connection", true, true);
+                    this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                }
+
+                return;
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+        if (!this.upsAuthToken) {
+            return;
+        }
+        await this.requestClient({
+            method: "post",
+            url: "https://onlinetools.ups.com/rest/MCEnrollment",
+            headers: {
+                Connection: "keep-alive",
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+                UPSSecurity: {
+                    UsernameToken: {
+                        AuthenticationToken: this.upsAuthToken,
+                    },
+                    ServiceAccessToken: {
+                        AccessLicenseNumber: "BDB176074C16EB9D",
+                    },
+                },
+                GetEnrollmentsRequest: {
+                    Request: {
+                        RequestOption: ["00"],
+                        TransactionReference: {},
+                    },
+                    Locale: {
+                        Language: "de",
+                        Country: "DE",
+                    },
+                },
+            }),
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+                if (
+                    res.data.GetEnrollmentsResponse &&
+                    res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary &&
+                    res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken
+                ) {
+                    this.upsAddressToken = res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken;
+                } else {
+                    this.log.warn("No UPS address found");
+                }
+            })
+            .catch(async (error) => {
+                error.response && this.log.error(JSON.stringify(error.response.data));
+                this.log.error(error);
+            });
+    }
     async login17TApi() {
         await this.setObjectNotExistsAsync("17t", {
             type: "device",
@@ -796,6 +917,27 @@ class Parcel extends utils.Adapter {
                     },
                 },
             ],
+            ups: [
+                {
+                    path: "ups",
+                    method: "post",
+                    url: "https://onlinetools.ups.com/mychoice/v1/shipments/details/AddressToken?loc=de_DE",
+                    header: {
+                        Connection: "keep-alive",
+                        Accept: "application/json",
+                        AccessLicenseNumber: "BDB176074C16EB9D",
+                        AuthenticationToken: this.upsAuthToken,
+                        addresstoken: this.upsAddressToken,
+                        transID: uuidv4().substring(0, 25),
+                        transactionSrc: "MOBILE",
+                        "Content-Type": "application/json",
+                    },
+                    data: JSON.stringify({
+                        parcelCount: "10",
+                        disableFeature: "",
+                    }),
+                },
+            ],
         };
 
         for (const id of Object.keys(this.sessions)) {
@@ -827,6 +969,12 @@ class Parcel extends utils.Adapter {
                                 delete parcel._id;
                             }
                             data = { sendungen: res.data._embedded.parcels };
+                        }
+                        if (id === "ups") {
+                            for (const parcel of res.data.response.shipments) {
+                                parcel.id = parcel.trackingNumber;
+                            }
+                            data = { sendungen: res.data.response.shipments };
                         }
                         const forceIndex = true;
                         const preferedArrayName = null;
@@ -892,7 +1040,7 @@ class Parcel extends utils.Adapter {
                 native: {},
             });
         }
-        if ((id === "dhl" || id === "dpd" || id === "amz" || id === "gls") && data && data.sendungen) {
+        if ((id === "dhl" || id === "dpd" || id === "amz" || id === "gls" || id === "ups") && data && data.sendungen) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
             const sendungsArray = data.sendungen.map((sendung) => {
                 return sendung.id;
@@ -927,6 +1075,14 @@ class Parcel extends utils.Adapter {
         if (id === "gls" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.label || sendung.parcelNumber, status: sendung.status, source: "GLS", direction: sendung.type };
+                this.mergedJsonObject[sendung.id] = sendungsObject;
+                return sendungsObject;
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
+        }
+        if (id === "ups" && data.sendungen) {
+            const sendungsArray = data.sendungen.map((sendung) => {
+                const sendungsObject = { id: sendung.id, name: sendung.shipFromName, status: sendung.locStatus || sendung.status, source: "UPS" };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });

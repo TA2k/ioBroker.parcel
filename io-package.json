@@ -1,9 +1,9 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.4",
+        "version": "0.0.5",
         "news": {
-            "0.0.4": {
+            "0.0.5": {
                 "en": "initial release",
                 "de": "Erstveröffentlichung",
                 "ru": "Начальная версия",
@@ -47,7 +47,11 @@
         "keywords": [
             "parcel",
             "tracking",
+            "paketverfolgung",
+            "sendungsverfolgung",
             "dhl",
+            "gls",
+            "ups",
             "paket",
             "17Track",
             "Amazon",

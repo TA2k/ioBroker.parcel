@@ -1,6 +1,6 @@
 {
     "name": "iobroker.parcel",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Parcel tracking",
     "author": {
         "name": "TA2k",
@@ -14,6 +14,8 @@
         "dhl",
         "briefe",
         "dpd",
+        "gls",
+        "ups",
         "amazon",
         "paket"
     ],
@@ -29,7 +31,8 @@
         "jsdom": "^19.0.0",
         "json-bigint": "^1.0.0",
         "qs": "^6.10.3",
-        "tough-cookie": "^4.0.0"
+        "tough-cookie": "^4.0.0",
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
         "@iobroker/testing": "^2.5.4",
