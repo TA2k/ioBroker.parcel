@@ -1140,7 +1140,7 @@ class Parcel extends utils.Adapter {
                 if (this.alreadySentMessages[id] === sendungen[id].status) {
                     continue;
                 }
-                this.sendTo(this.config.sendToInstance, sendungen[id].name + "\n" + sendungen[id].status);
+                this.sendTo(this.config.sendToInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
                 this.alreadySentMessages[id] = sendungen[id].status;
             }
         }
@@ -1558,7 +1558,7 @@ class Parcel extends utils.Adapter {
                                 if (err) {
                                     this.log.error(err);
                                 } else {
-                                    this.sendTo(this.config.sendToInstance, "Briefankündigung");
+                                    this.sendTo(this.config.sendToInstance, "✉️Briefankündigung");
                                     this.sendTo(this.config.sendToInstance, "/tmp/snapshot.jpg");
                                 }
                             });

@@ -25,7 +25,7 @@ Parcel tracking
 
 **Amazon:**
 * Login eingeben
-* Wenn nötig vorab ein OTP token aus der 2FA App eingeben.
+* Wenn nötig vorab ein OTP token aus der 2FA App vor dem ersten Login eingeben.
 
 **DPD, GLS, UPS, 17Track User:**
 
