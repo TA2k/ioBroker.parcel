@@ -1000,7 +1000,7 @@ class Parcel extends utils.Adapter {
                         await this.cleanupProvider(id, data);
                         this.mergeProviderJson(id, data);
                         this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
-                        this.setState(element.path + ".json", JSON.stringify(data), true);
+                        data && this.setState(element.path + ".json", JSON.stringify(data), true);
                     })
                     .catch((error) => {
                         if (error.response) {
