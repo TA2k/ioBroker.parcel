@@ -32,6 +32,7 @@ class Parcel extends utils.Adapter {
         this.json2iob = new Json2iob(this);
         this.sessions = {};
         this.mergedJson = [];
+        this.inDelivery = [];
         this.mergedJsonObject = {};
         this.images = {};
         this.alreadySentMessages = {};
@@ -48,6 +49,10 @@ class Parcel extends utils.Adapter {
             this.config.interval = 0.5;
         }
 
+        // const alreadySentMessagesState = await this.getStateAsync("alreadySentMessages");
+        // if (alreadySentMessagesState && alreadySentMessagesState.val) {
+        //     this.alreadySentMessages = JSON.parse(alreadySentMessagesState.val);
+        // }
         this.cookieJar = new tough.CookieJar();
         const cookieState = await this.getStateAsync("auth.cookie");
         if (cookieState && cookieState.val) {
@@ -508,12 +513,18 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 this.sessions["gls"] = res.data;
+                if (!res.data.token) {
+                    this.log.error(res.data);
+                }
                 this.glstoken = res.data.token;
             })
             .catch(async (error) => {
                 error.response && this.log.error(JSON.stringify(error.response.data));
                 this.log.error(error);
             });
+        if (!this.glstoken) {
+            return;
+        }
         await this.requestClient({
             method: "get",
             url: "https://gls-one.de/api/auth/login",
@@ -524,7 +535,7 @@ class Parcel extends utils.Adapter {
                 Accept: "application/json, text/plain, */*",
                 "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
                 "X-Client-Id": "iOS",
-                "X-Auth-Token": this.sessions["gls"].token,
+                "X-Auth-Token": this.glstoken,
             },
             jar: this.cookieJar,
             withCredentials: true,
@@ -812,6 +823,7 @@ class Parcel extends utils.Adapter {
         let dataDhl = [];
         this.mergedJson = [];
         this.mergedJsonObject = {};
+        this.inDelivery = [];
         if (this.sessions["17track"]) {
             try {
                 const trackList = await this.getStateAsync("17t.trackList");
@@ -1073,6 +1085,7 @@ class Parcel extends utils.Adapter {
                 }
                 const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL", direction: sendung.sendungsinfo.sendungsrichtung };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
+                this.inDeliveryCheck(sendungsObject);
                 return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
@@ -1081,6 +1094,7 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.label || sendung.parcelNumber, status: sendung.status, source: "GLS", direction: sendung.type };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
+                this.inDeliveryCheck(sendungsObject);
                 return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
@@ -1089,6 +1103,7 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.shipFromName, status: sendung.locStatus || sendung.status, source: "UPS" };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
+                this.inDeliveryCheck(sendungsObject);
                 return sendungsObject;
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
@@ -1098,6 +1113,7 @@ class Parcel extends utils.Adapter {
             for (const sendung of data.sendungen) {
                 sendung.source = "DPD";
                 this.mergedJsonObject[sendung.id] = sendung;
+                this.inDeliveryCheck(sendung);
             }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
         }
@@ -1105,6 +1121,7 @@ class Parcel extends utils.Adapter {
             for (const sendung of data.sendungen) {
                 sendung.source = "AMZ";
                 this.mergedJsonObject[sendung.id] = sendung;
+                this.inDeliveryCheck(sendung);
             }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
         }
@@ -1113,6 +1130,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "", source: "17track" };
                 if (!this.mergedJsonObject[sendung.id]) {
                     this.mergedJsonObject[sendung.id] = sendungsObject;
+                    this.inDeliveryCheck(sendungsObject);
                 }
                 return sendungsObject;
             });
@@ -1127,6 +1145,7 @@ class Parcel extends utils.Adapter {
                     const sendungsObject = { id: sendung.FTrackNo, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "", source: "17tuser" };
                     if (!this.mergedJsonObject[sendung.id]) {
                         this.mergedJsonObject[sendung.id] = sendungsObject;
+                        this.inDeliveryCheck(sendungsObject);
                     }
                     return sendungsObject;
                 } catch (error) {
@@ -1138,18 +1157,33 @@ class Parcel extends utils.Adapter {
 
         this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
         this.setState("allProviderObjects", JSON.stringify(this.mergedJsonObject), true);
+        this.setState("inDelivery", JSON.stringify(this.inDelivery), true);
+
         if (this.config.sendToActive) {
             const sendungen = this.mergedJsonObject;
             const ids = Object.keys(sendungen);
             for (const id of ids) {
-                if (this.alreadySentMessages[id] === sendungen[id].status) {
+                if (this.alreadySentMessages[id + sendungen[id].source] === sendungen[id].status) {
                     continue;
                 }
                 this.sendTo(this.config.sendToInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
-                this.alreadySentMessages[id] = sendungen[id].status;
+                this.alreadySentMessages[id + sendungen[id].source] = sendungen[id].status;
             }
+
+            // this.setState("alreadySentMessages", JSON.stringify(this.alreadySentMessages), true);
         }
     }
+    inDeliveryCheck(sendungsObject) {
+        if (
+            sendungsObject.status.toLocaleLowerCase().includes("in zustellung") ||
+            (sendungsObject.status.toLocaleLowerCase().includes("heute") && !sendungsObject.status.toLocaleLowerCase().includes("heute bestellt")) ||
+            sendungsObject.status.toLocaleLowerCase().includes("wird zugestellt") ||
+            sendungsObject.status.toLocaleLowerCase().includes("zustellfahrzeug")
+        ) {
+            this.inDelivery.push(sendungsObject);
+        }
+    }
+
     async activateToken(grant_token, url) {
         await this.requestClient({
             method: "post",
