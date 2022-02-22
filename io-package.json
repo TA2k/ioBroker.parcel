@@ -167,6 +167,30 @@
             "native": {}
         },
         {
+            "_id": "alreadySentMessages",
+            "type": "state",
+            "common": {
+                "role": "state",
+                "name": "already sent messages",
+                "type": "json",
+                "read": true,
+                "write": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "inDelivery",
+            "type": "state",
+            "common": {
+                "role": "state",
+                "name": "in delivery packages",
+                "type": "json",
+                "read": true,
+                "write": false
+            },
+            "native": {}
+        },
+        {
             "_id": "auth",
             "type": "channel",
             "common": {
