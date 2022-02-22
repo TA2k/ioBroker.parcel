@@ -1176,7 +1176,8 @@ class Parcel extends utils.Adapter {
     inDeliveryCheck(sendungsObject) {
         if (
             sendungsObject.status.toLocaleLowerCase().includes("in zustellung") ||
-            (sendungsObject.status.toLocaleLowerCase().includes("heute") && !sendungsObject.status.toLocaleLowerCase().includes("heute bestellt")) ||
+            sendungsObject.status.toLocaleLowerCase().includes("zustellung heute") ||
+            sendungsObject.status.toLocaleLowerCase().includes("heute zugestell") ||
             sendungsObject.status.toLocaleLowerCase().includes("wird zugestellt") ||
             sendungsObject.status.toLocaleLowerCase().includes("zustellfahrzeug")
         ) {
