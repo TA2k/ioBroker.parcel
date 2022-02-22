@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.6",
+        "version": "0.0.7",
         "news": {
+            "0.0.7": {
+                "en": "Datenpunkt für in Zustellung hinzugefügt, Fix für wiederholende Benachrichtigungen"
+            },
             "0.0.6": {
                 "en": "initial release",
                 "de": "Erstveröffentlichung",
