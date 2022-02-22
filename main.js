@@ -664,12 +664,14 @@ class Parcel extends utils.Adapter {
                 this.log.debug(JSON.stringify(res.data));
                 if (
                     res.data.GetEnrollmentsResponse &&
+                    res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries &&
                     res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary &&
                     res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken
                 ) {
                     this.upsAddressToken = res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken;
                 } else {
                     this.log.warn("No UPS address found");
+                    this.log.info(JSON.stringify(res.data));
                 }
             })
             .catch(async (error) => {
