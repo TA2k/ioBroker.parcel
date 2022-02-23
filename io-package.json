@@ -55,6 +55,7 @@
             "dhl",
             "gls",
             "ups",
+            "hermes",
             "paket",
             "17Track",
             "Amazon",
@@ -97,6 +98,7 @@
         "dpdpassword",
         "t17password",
         "upspassword",
+        "hermespassword",
         "postchpassword",
         "postatpassword",
         "glspassword"
@@ -107,6 +109,7 @@
         "dpdpassword",
         "t17password",
         "upspassword",
+        "hermespassword",
         "postchpassword",
         "postatpassword",
         "glspassword"
@@ -118,6 +121,8 @@
         "glspassword": "",
         "upsusername": "",
         "upspassword": "",
+        "hermespassword": "",
+        "hermesusername": "",
         "postchusername": "",
         "postchpassword": "",
         "postatusername": "",

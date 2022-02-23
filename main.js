@@ -93,6 +93,10 @@ class Parcel extends utils.Adapter {
             this.log.info("Login to UPS");
             await this.loginUPS();
         }
+        if (this.config.hermesusername && this.config.hermespassword) {
+            this.log.info("Login to Hermes");
+            await this.loginHermes();
+        }
 
         this.updateInterval = null;
         this.reLoginTimeout = null;
@@ -565,6 +569,61 @@ class Parcel extends utils.Adapter {
                 this.log.error(error);
             });
     }
+    async loginHermes() {
+        await this.requestClient({
+            method: "post",
+            url: "https://mobile-api.myhermes.de/mobile-api-web/v2/users/login",
+            headers: {
+                Host: "mobile-api.myhermes.de",
+                accept: "application/json",
+                "content-type": "application/json; charset=utf-8",
+                "user-agent": "Hermes/33 CFNetwork/1240.0.4 Darwin/20.6.0",
+                "accept-language": "de-de",
+            },
+            data: `{"username":"${this.config.hermesusername}","password":"${this.config.hermespassword}"}`,
+
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+                if (res.data.accessToken) {
+                    this.hermesAuthToken = res.data.accessToken;
+                    this.sessions["hermes"] = res.data;
+                    this.log.info("Login to Hermes successful");
+                    await this.setObjectNotExistsAsync("hermes", {
+                        type: "device",
+                        common: {
+                            name: "Hermes Tracking",
+                        },
+                        native: {},
+                    });
+                    await this.setObjectNotExistsAsync("hermes.json", {
+                        type: "state",
+                        common: {
+                            name: "Json Sendungen",
+                            write: false,
+                            read: true,
+                            type: "string",
+                            role: "json",
+                        },
+                        native: {},
+                    });
+                    this.setState("info.connection", true, true);
+                } else {
+                    this.log.error("Login to Hermes failed");
+                    this.log.error(JSON.stringify(res.data));
+                }
+
+                return;
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+    }
     async loginUPS() {
         await this.requestClient({
             method: "post",
@@ -930,6 +989,18 @@ class Parcel extends utils.Adapter {
                     },
                 },
             ],
+            hermes: [
+                {
+                    path: "hermes",
+                    url: "https://mobile-api.myhermes.de/mobile-api-web/v2/shipments",
+                    header: {
+                        accept: "application/json",
+                        "user-agent": "Hermes/33 CFNetwork/1240.0.4 Darwin/20.6.0",
+                        "accept-language": "de-de",
+                        authorization: "Bearer " + this.hermesAuthToken,
+                    },
+                },
+            ],
             ups: [
                 {
                     path: "ups",
@@ -988,6 +1059,12 @@ class Parcel extends utils.Adapter {
                                 parcel.id = parcel.trackingNumber;
                             }
                             data = { sendungen: res.data.response.shipments };
+                        }
+                        if (id === "hermes") {
+                            for (const parcel of res.data) {
+                                parcel.id = parcel.shipmentId;
+                            }
+                            data = { sendungen: res.data };
                         }
                         const forceIndex = true;
                         const preferedArrayName = null;
@@ -1053,7 +1130,7 @@ class Parcel extends utils.Adapter {
                 native: {},
             });
         }
-        if ((id === "dhl" || id === "dpd" || id === "amz" || id === "gls" || id === "ups") && data && data.sendungen) {
+        if ((id === "dhl" || id === "dpd" || id === "amz" || id === "gls" || id === "ups" || id === "hermes") && data && data.sendungen) {
             const states = await this.getStatesAsync(id + ".sendungen*.id");
             const sendungsArray = data.sendungen.map((sendung) => {
                 return sendung.id;
@@ -1098,6 +1175,15 @@ class Parcel extends utils.Adapter {
         if (id === "ups" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.shipFromName, status: sendung.locStatus || sendung.status, source: "UPS" };
+                this.mergedJsonObject[sendung.id] = sendungsObject;
+                this.inDeliveryCheck(sendungsObject);
+                return sendungsObject;
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
+        }
+        if (id === "hermes" && data.sendungen) {
+            const sendungsArray = data.sendungen.map((sendung) => {
+                const sendungsObject = { id: sendung.id, name: sendung.description, status: sendung.lastStatusMessage, source: "Hermes" };
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 this.inDeliveryCheck(sendungsObject);
                 return sendungsObject;
@@ -1380,6 +1466,12 @@ class Parcel extends utils.Adapter {
             }
             if (id === "gls") {
                 this.loginGLS();
+            }
+            if (id === "ups") {
+                this.loginUPS();
+            }
+            if (id === "hermes") {
+                this.loginHermes();
             }
         }
     }
