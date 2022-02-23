@@ -49,10 +49,6 @@ class Parcel extends utils.Adapter {
             this.config.interval = 0.5;
         }
 
-        // const alreadySentMessagesState = await this.getStateAsync("alreadySentMessages");
-        // if (alreadySentMessagesState && alreadySentMessagesState.val) {
-        //     this.alreadySentMessages = JSON.parse(alreadySentMessagesState.val);
-        // }
         this.cookieJar = new tough.CookieJar();
         const cookieState = await this.getStateAsync("auth.cookie");
         if (cookieState && cookieState.val) {
@@ -451,7 +447,7 @@ class Parcel extends utils.Adapter {
         })
             .then(async (res) => {
                 if (res.data && res.data.indexOf("Login fehlgeschlagen") !== -1) {
-                    this.log.warn("Login to DPD failed");
+                    this.log.error("Login to DPD failed, please check username and password");
                     return;
                 }
             })
@@ -1169,8 +1165,6 @@ class Parcel extends utils.Adapter {
                 this.sendTo(this.config.sendToInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
                 this.alreadySentMessages[id + sendungen[id].source] = sendungen[id].status;
             }
-
-            // this.setState("alreadySentMessages", JSON.stringify(this.alreadySentMessages), true);
         }
     }
     inDeliveryCheck(sendungsObject) {
