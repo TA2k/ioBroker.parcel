@@ -1471,7 +1471,28 @@ class Parcel extends utils.Adapter {
                 this.loginUPS();
             }
             if (id === "hermes") {
-                this.loginHermes();
+                await this.requestClient({
+                    method: "post",
+                    url: "https://mobile-api.myhermes.de/mobile-api-web/v2/users/refreshtoken",
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        Accept: "application/json",
+                        "User-Agent": "Hermes/33 CFNetwork/1240.0.4 Darwin/20.6.0",
+                        "Accept-Language": "de-de",
+                    },
+                    data: `{"refreshToken":"${this.sessions["hermes"].refreshToken}"}`,
+                })
+                    .then((res) => {
+                        this.log.debug(JSON.stringify(res.data));
+                        this.hermesAuthToken = res.data.accessToken;
+                        this.sessions["hermes"] = res.data;
+                        this.setState("info.connection", true, true);
+                    })
+                    .catch((error) => {
+                        this.log.error("refresh token failed");
+                        this.log.error(error);
+                        error.response && this.log.error(JSON.stringify(error.response.data));
+                    });
             }
         }
     }
