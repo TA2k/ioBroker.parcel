@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.7",
+        "version": "0.0.8",
         "news": {
+            "0.0.8": {
+                "en": "Hermes hinzugefügt"
+            },
             "0.0.7": {
                 "en": "Datenpunkt für in Zustellung hinzugefügt, Fix für wiederholende Benachrichtigungen"
             },

@@ -1,6 +1,6 @@
 {
     "name": "iobroker.parcel",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "Parcel tracking",
     "author": {
         "name": "TA2k",
@@ -15,6 +15,7 @@
         "briefe",
         "dpd",
         "gls",
+        "hermes",
         "ups",
         "amazon",
         "paket"
