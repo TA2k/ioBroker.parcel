@@ -1294,16 +1294,18 @@ class Parcel extends utils.Adapter {
     convertDomToJson(body) {
         const dom = new JSDOM(body);
         const result = { sendungen: [] };
+
         const parcelList = dom.window.document.querySelector(".parcelList");
         if (!parcelList) {
             this.log.info("No DPD parcelList found");
+            this.log.info(body);
             return result;
         }
-        this.log.info("Found DPD Parcel List");
-        this.log.info("Found " + parcelList.querySelectorAll(".btnSelectParcel").length + " parcels");
+        this.log.debug("Found DPD Parcel List");
+        this.log.debug("Found " + parcelList.querySelectorAll(".btnSelectParcel").length + " parcels");
         parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
             const parcelInfo = parcel.firstElementChild;
-            this.log.info(parcelInfo.textContent);
+            this.log.debug(parcelInfo.textContent);
             result.sendungen.push({
                 id: parcelInfo.querySelector(".parcelNo").textContent,
                 name: parcelInfo.querySelector(".parcelName").textContent,
