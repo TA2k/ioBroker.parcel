@@ -972,7 +972,7 @@ class Parcel extends utils.Adapter {
                     url: "https://my.dpd.de/myParcel.aspx?dpd_token=" + this.dpdToken,
                     header: {
                         accept: "*/*",
-                        "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                        "user-agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.45 Safari/537.36",
                         "accept-language": "de-de",
                     },
                 },
