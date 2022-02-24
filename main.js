@@ -433,6 +433,15 @@ class Parcel extends utils.Adapter {
     }
     async loginDPD(silent) {
         await this.requestClient({
+            method: "get",
+            url: "https://my.dpd.de/logout.aspx",
+            jar: this.cookieJar,
+            withCredentials: true,
+        }).catch(async (error) => {
+            error.response && this.log.error(JSON.stringify(error.response.data));
+            this.log.error(error);
+        });
+        await this.requestClient({
             method: "post",
             url: "https://www.dpd.com/de/de/mydpd-anmelden-und-registrieren/",
             headers: {
@@ -1295,11 +1304,9 @@ class Parcel extends utils.Adapter {
     convertDomToJson(body) {
         const dom = new JSDOM(body);
         const result = { sendungen: [] };
-
         const parcelList = dom.window.document.querySelector(".parcelList");
         if (!parcelList) {
-            this.log.info("No DPD parcelList found");
-            this.log.info(body);
+            this.log.debug("No DPD parcelList found");
             return result;
         }
         this.log.debug("Found DPD Parcel List");
@@ -1468,7 +1475,7 @@ class Parcel extends utils.Adapter {
                     });
             }
             if (id === "dpd") {
-                this.loginDPD(true);
+                //  this.loginDPD(true);
             }
             if (id === "17tuser") {
                 this.login17T(true);
