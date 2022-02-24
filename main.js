@@ -431,7 +431,7 @@ class Parcel extends utils.Adapter {
                 this.log.error(error);
             });
     }
-    async loginDPD() {
+    async loginDPD(silent) {
         await this.requestClient({
             method: "post",
             url: "https://www.dpd.com/de/de/mydpd-anmelden-und-registrieren/",
@@ -459,7 +459,7 @@ class Parcel extends utils.Adapter {
                 if (error.response) {
                     if (error.response.status === 302) {
                         this.dpdToken = error.response.headers.location.split("=")[1];
-                        this.log.info("Login to DPD successful");
+                        !silent && this.log.info("Login to DPD successful");
                         this.sessions["dpd"] = true;
                         await this.setObjectNotExistsAsync("dpd", {
                             type: "device",
@@ -489,7 +489,7 @@ class Parcel extends utils.Adapter {
                 }
             });
     }
-    async loginGLS() {
+    async loginGLS(silent) {
         await this.requestClient({
             method: "post",
             url: "https://gls-one.de/api/auth",
@@ -541,7 +541,7 @@ class Parcel extends utils.Adapter {
             withCredentials: true,
         })
             .then(async (res) => {
-                this.log.info("Login to GLS successful");
+                !silent && this.log.info("Login to GLS successful");
                 this.glsid = res.data._id;
                 await this.setObjectNotExistsAsync("gls", {
                     type: "device",
@@ -624,7 +624,7 @@ class Parcel extends utils.Adapter {
                 }
             });
     }
-    async loginUPS() {
+    async loginUPS(silent) {
         await this.requestClient({
             method: "post",
             url: "https://onlinetools.ups.com/rest/Login",
@@ -658,7 +658,7 @@ class Parcel extends utils.Adapter {
                     this.upsAuthToken = res.data.LoginSubmitUserIdResponse.LoginResponse.AuthenticationToken;
 
                     this.sessions["ups"] = res.data;
-                    this.log.info("Login to UPS successful");
+                    !silent && this.log.info("Login to UPS successful");
                     await this.setObjectNotExistsAsync("ups", {
                         type: "device",
                         common: {
@@ -805,7 +805,7 @@ class Parcel extends utils.Adapter {
             native: {},
         });
     }
-    async login17T() {
+    async login17T(silent) {
         await this.requestClient({
             method: "post",
             url: "https://user.17track.net/userapi/call",
@@ -831,7 +831,7 @@ class Parcel extends utils.Adapter {
                     this.log.error("T17User: " + res.data.Message);
                     return;
                 }
-                this.log.info("Login to T17 User successful");
+                !silent && this.log.info("Login to T17 User successful");
                 this.sessions["17tuser"] = true;
                 await this.setObjectNotExistsAsync("17tuser", {
                     type: "device",
@@ -1082,6 +1082,7 @@ class Parcel extends utils.Adapter {
                         //filter archive message
                         if (element.path === "dhl.briefe" && res.data.grantToken) {
                             await this.activateToken(res.data.grantToken, res.data.accessTokenUrl);
+                            await this.sleep(1000);
                         }
 
                         await this.cleanupProvider(id, data);
@@ -1467,16 +1468,16 @@ class Parcel extends utils.Adapter {
                     });
             }
             if (id === "dpd") {
-                this.loginDPD();
+                this.loginDPD(true);
             }
             if (id === "17tuser") {
-                this.login17T();
+                this.login17T(true);
             }
             if (id === "gls") {
-                this.loginGLS();
+                this.loginGLS(true);
             }
             if (id === "ups") {
-                this.loginUPS();
+                this.loginUPS(true);
             }
             if (id === "hermes") {
                 await this.requestClient({
