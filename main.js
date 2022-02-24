@@ -1248,11 +1248,12 @@ class Parcel extends utils.Adapter {
                 if (this.alreadySentMessages[id + sendungen[id].source] === sendungen[id].status) {
                     continue;
                 }
+
+                this.alreadySentMessages[id + sendungen[id].source] = sendungen[id].status;
                 const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
                 for (const sendInstance of sendInstances) {
                     await this.sendToAsync(sendInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
                 }
-                this.alreadySentMessages[id + sendungen[id].source] = sendungen[id].status;
             }
         }
     }
@@ -1295,12 +1296,14 @@ class Parcel extends utils.Adapter {
         const result = { sendungen: [] };
         const parcelList = dom.window.document.querySelector(".parcelList");
         if (!parcelList) {
-            this.log.debug("No parcelList found");
-
+            this.log.info("No DPD parcelList found");
             return result;
         }
+        this.log.info("Found DPD Parcel List");
+        this.log.info("Found " + parcelList.querySelectorAll(".btnSelectParcel").length + " parcels");
         parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
             const parcelInfo = parcel.firstElementChild;
+            this.log.info(parcelInfo.textContent);
             result.sendungen.push({
                 id: parcelInfo.querySelector(".parcelNo").textContent,
                 name: parcelInfo.querySelector(".parcelName").textContent,
@@ -1704,15 +1707,17 @@ class Parcel extends utils.Adapter {
                         imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
                         this.images[state.val] = imageBase64;
                         if (this.config.sendToActive) {
-                            fs.writeFileSync("/tmp/snapshot.jpg", imageBuffer.toString("base64"), "base64");
+                            const uuid = uuidv4();
+                            fs.writeFileSync("/tmp/" + uuid + ".jpg", imageBuffer.toString("base64"), "base64");
                             const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
                             for (const sendInstance of sendInstances) {
                                 if (sendInstance.includes("pushover")) {
-                                    await this.sendToAsync(sendInstance, { file: "/tmp/snapshot.jpg", title: "✉️Briefankündigung" });
+                                    await this.sendToAsync(sendInstance, { file: "/tmp/" + uuid + ".jpg", title: "✉️Briefankündigung" });
                                 } else {
                                     await this.sendToAsync(sendInstance, "✉️Briefankündigung");
-                                    await this.sendToAsync(sendInstance, "/tmp/snapshot.jpg");
+                                    await this.sendToAsync(sendInstance, "/tmp/" + uuid + ".jpg");
                                 }
+                                fs.unlinkSync("/tmp/" + uuid + ".jpg");
                             }
                         }
                     }
