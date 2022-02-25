@@ -1402,6 +1402,9 @@ class Parcel extends utils.Adapter {
                     const statusHandle = document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
                     const additionalStatus = document.querySelector("#primaryStatus") ? document.querySelector("#primaryStatus").textContent.replace(/\n */g, "") : "";
                     const secondaryStatus = document.querySelector("#secondaryStatus") ? document.querySelector("#secondaryStatus").textContent.replace(/\n */g, "") : "";
+                    const stopsStatus = document.querySelector(".mapTracker-da-bubble .H_ib_content")
+                        ? document.querySelector(".mapTracker-da-bubble .H_ib_content").textContent.replace(/\n */g, "")
+                        : "";
                     let status = statusHandle ? statusHandle.textContent.replace(/\n */g, "") : "";
                     if (!status) {
                         status = additionalStatus;
@@ -1409,8 +1412,13 @@ class Parcel extends utils.Adapter {
                     if (additionalStatus && status !== additionalStatus) {
                         status = status + " " + additionalStatus;
                     }
+
                     if (secondaryStatus) {
                         status = status + " " + secondaryStatus;
+                    }
+
+                    if (stopsStatus) {
+                        status = status + " " + stopsStatus;
                     }
 
                     return {
