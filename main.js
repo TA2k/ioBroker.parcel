@@ -1072,10 +1072,15 @@ class Parcel extends utils.Adapter {
                             data = { sendungen: res.data.response.shipments };
                         }
                         if (id === "hermes") {
-                            for (const parcel of res.data) {
-                                parcel.id = parcel.shipmentId;
+                            try {
+                                for (const parcel of res.data) {
+                                    parcel.id = parcel.shipmentId;
+                                }
+                                data = { sendungen: res.data };
+                            } catch (error) {
+                                this.log.debug(error);
+                                data = { sendungen: [] };
                             }
-                            data = { sendungen: res.data };
                         }
                         const forceIndex = true;
                         const preferedArrayName = null;
@@ -1267,7 +1272,7 @@ class Parcel extends utils.Adapter {
 
                 this.alreadySentMessages[id + sendungen[id].source] = sendungen[id].status;
                 if (this.config.noFirstStartSend && this.firstStart) {
-                    return;
+                    continue;
                 }
                 const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
                 for (const sendInstance of sendInstances) {
