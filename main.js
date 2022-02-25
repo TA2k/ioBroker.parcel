@@ -1290,6 +1290,13 @@ class Parcel extends utils.Adapter {
             sendungsObject.status.toLocaleLowerCase().includes("wird zugestellt") ||
             sendungsObject.status.toLocaleLowerCase().includes("zustellfahrzeug")
         ) {
+            if (
+                sendungsObject.status.toLocaleLowerCase().includes("geliefert heute") ||
+                sendungsObject.status.toLocaleLowerCase().includes("unterschrieben von") ||
+                sendungsObject.status.toLocaleLowerCase().includes("hausbewohner übergeben")
+            ) {
+                return false;
+            }
             this.inDelivery.push(sendungsObject);
             return true;
         }
