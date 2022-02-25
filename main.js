@@ -1254,9 +1254,6 @@ class Parcel extends utils.Adapter {
         this.setState("inDelivery", JSON.stringify(this.inDelivery), true);
 
         if (this.config.sendToActive) {
-            if (this.config.noFirstStartSend && this.firstStart) {
-                return;
-            }
             const sendungen = this.mergedJsonObject;
             const ids = Object.keys(sendungen);
             for (const id of ids) {
@@ -1265,6 +1262,9 @@ class Parcel extends utils.Adapter {
                 }
 
                 this.alreadySentMessages[id + sendungen[id].source] = sendungen[id].status;
+                if (this.config.noFirstStartSend && this.firstStart) {
+                    return;
+                }
                 const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
                 for (const sendInstance of sendInstances) {
                     await this.sendToAsync(sendInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
