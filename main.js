@@ -1078,7 +1078,8 @@ class Parcel extends utils.Adapter {
                                 }
                                 data = { sendungen: res.data };
                             } catch (error) {
-                                this.log.debug(error);
+                                this.log.error(error);
+                                this.log.error(res.data);
                                 data = { sendungen: [] };
                             }
                         }
