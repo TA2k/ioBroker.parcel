@@ -140,6 +140,7 @@
         "dhlMfa": "",
         "17trackKey": "",
         "sendToActive": false,
+        "noFirstStartSend": false,
         "sendToInstance": "telegram.0",
         "interval": 10
     },

@@ -36,6 +36,7 @@ class Parcel extends utils.Adapter {
         this.mergedJsonObject = {};
         this.images = {};
         this.alreadySentMessages = {};
+        this.firstStart = true;
     }
 
     /**
@@ -106,6 +107,7 @@ class Parcel extends utils.Adapter {
         if (Object.keys(this.sessions).length > 0) {
             await this.updateProvider();
             this.updateInterval = setInterval(async () => {
+                this.firstStart = false;
                 await this.updateProvider();
             }, this.config.interval * 60 * 1000);
             this.refreshTokenInterval = setInterval(() => {
@@ -1252,6 +1254,9 @@ class Parcel extends utils.Adapter {
         this.setState("inDelivery", JSON.stringify(this.inDelivery), true);
 
         if (this.config.sendToActive) {
+            if (this.config.noFirstStartSend && this.firstStart) {
+                return;
+            }
             const sendungen = this.mergedJsonObject;
             const ids = Object.keys(sendungen);
             for (const id of ids) {
@@ -1717,6 +1722,9 @@ class Parcel extends utils.Adapter {
                         imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
                         this.images[state.val] = imageBase64;
                         if (this.config.sendToActive) {
+                            if (this.config.noFirstStartSend && this.firstStart) {
+                                return;
+                            }
                             const uuid = uuidv4();
                             fs.writeFileSync("/tmp/" + uuid + ".jpg", imageBuffer.toString("base64"), "base64");
                             const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
