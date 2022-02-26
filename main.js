@@ -1409,9 +1409,20 @@ class Parcel extends utils.Adapter {
                     const statusHandle = document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
                     const additionalStatus = document.querySelector("#primaryStatus") ? document.querySelector("#primaryStatus").textContent.replace(/\n */g, "") : "";
                     const secondaryStatus = document.querySelector("#secondaryStatus") ? document.querySelector("#secondaryStatus").textContent.replace(/\n */g, "") : "";
-                    const stopsStatus = document.querySelector(".mapTracker-da-bubble .H_ib_content")
-                        ? document.querySelector(".mapTracker-da-bubble .H_ib_content").textContent.replace(/\n */g, "")
-                        : "";
+                    let stopsStatus = "";
+                    let stateObject = {};
+                    if (document.querySelector(`script[data-a-state='{"key":"page-state"}']`)) {
+                        try {
+                            const jsonState = document.querySelector(`script[data-a-state='{"key":"page-state"}']`).textContent;
+                            stateObject = JSON.parse(jsonState);
+                            if (stateObject.mapTracking && stateObject.mapTracking.calloutMessage) {
+                                stopsStatus = stateObject.mapTracking.calloutMessage;
+                            }
+                        } catch (error) {
+                            this.log.error(errror);
+                        }
+                    }
+
                     let status = statusHandle ? statusHandle.textContent.replace(/\n */g, "") : "";
                     if (!status) {
                         status = additionalStatus;
@@ -1434,6 +1445,7 @@ class Parcel extends utils.Adapter {
                             : "",
                         name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle") ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").textContent.replace(/\\n */g, "") : "",
                         status: status,
+                        detailedState: stateObject,
                     };
                 })
                 .catch((error) => {
