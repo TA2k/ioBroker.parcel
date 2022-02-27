@@ -1428,15 +1428,15 @@ class Parcel extends utils.Adapter {
                         status = additionalStatus;
                     }
                     if (additionalStatus && status !== additionalStatus) {
-                        status = status + " " + additionalStatus;
+                        status = status + ". " + additionalStatus;
                     }
 
                     if (secondaryStatus) {
-                        status = status + " " + secondaryStatus;
+                        status = status + ". " + secondaryStatus;
                     }
 
                     if (stopsStatus) {
-                        status = status + " " + stopsStatus;
+                        status = status + ". " + stopsStatus;
                     }
 
                     return {
