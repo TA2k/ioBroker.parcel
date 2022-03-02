@@ -1155,12 +1155,14 @@ class Parcel extends utils.Adapter {
             });
             for (const sendungsIdKey in states) {
                 const index = Object.keys(states).indexOf(sendungsIdKey);
-                const sendungsId = states[sendungsIdKey].val;
-                if (sendungsArray[index] !== sendungsId) {
-                    const idArray = sendungsIdKey.split(".");
-                    idArray.pop();
-                    this.log.debug("deleting " + sendungsIdKey);
-                    await this.delObjectAsync(idArray.join("."), { recursive: true });
+                if (states[sendungsIdKey]) {
+                    const sendungsId = states[sendungsIdKey].val;
+                    if (sendungsArray[index] !== sendungsId) {
+                        const idArray = sendungsIdKey.split(".");
+                        idArray.pop();
+                        this.log.debug("deleting " + sendungsIdKey);
+                        await this.delObjectAsync(idArray.join("."), { recursive: true });
+                    }
                 }
             }
         }

@@ -84,7 +84,7 @@
         "materialize": true,
         "plugins": {
             "sentry": {
-                "dsn": ""
+                "dsn": "https://6296452769de44959c1809642564a7e3@sentry.iobroker.net/171"
             }
         },
         "dependencies": [
