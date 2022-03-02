@@ -1207,7 +1207,7 @@ class Parcel extends utils.Adapter {
         }
         if (id === "hermes" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
-                const sendungsObject = { id: sendung.id, name: sendung.description, status: sendung.lastStatusMessage, source: "Hermes" };
+                const sendungsObject = { id: sendung.id, name: sendung.description, status: sendung.lastStatusMessage || "", source: "Hermes" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
@@ -1287,6 +1287,9 @@ class Parcel extends utils.Adapter {
         }
     }
     inDeliveryCheck(sendungsObject) {
+        if (!sendungsObject.status) {
+            return false;
+        }
         if (
             sendungsObject.status.toLocaleLowerCase().includes("in zustellung") ||
             sendungsObject.status.toLocaleLowerCase().includes("zustellung heute") ||
