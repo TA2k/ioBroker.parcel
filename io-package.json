@@ -186,7 +186,7 @@
             "type": "state",
             "common": {
                 "role": "json",
-                "name": "In delivery packages",
+                "name": "Today in delivery/Heute in Zustellung",
                 "type": "string",
                 "read": true,
                 "write": false

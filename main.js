@@ -1748,7 +1748,7 @@ class Parcel extends utils.Adapter {
                         });
                 }
             } else {
-                if (id.indexOf("dhl.briefe") !== -1 && id.indexOf("image_url") !== -1) {
+                if (id.indexOf("dhl.briefe") !== -1 && id.indexOf("image_url") !== -1 && id.indexOf("oldAdvices") === -1)  {
                     let imageBase64 = this.images[state.val];
                     if (!imageBase64) {
                         const image = await this.requestClient({
