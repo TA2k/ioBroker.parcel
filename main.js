@@ -1301,6 +1301,7 @@ class Parcel extends utils.Adapter {
         ) {
             if (
                 sendungsObject.status.toLocaleLowerCase().includes("geliefert heute") ||
+                sendungsObject.status.toLocaleLowerCase().includes("geliefert. heute zugestellt") ||
                 sendungsObject.status.toLocaleLowerCase().includes("unterschrieben von") ||
                 sendungsObject.status.toLocaleLowerCase().includes("hausbewohner übergeben")
             ) {
