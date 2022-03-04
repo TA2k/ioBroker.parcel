@@ -360,9 +360,13 @@ class Parcel extends utils.Adapter {
                         native: {},
                     });
                     await this.setObjectNotExistsAsync("amazon.json", {
-                        type: "channel",
+                        type: "state",
                         common: {
                             name: "Json Sendungen",
+                            write: false,
+                            read: true,
+                            type: "string",
+                            role: "json",
                         },
                         native: {},
                     });
