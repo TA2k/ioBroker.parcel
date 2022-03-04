@@ -1226,12 +1226,14 @@ class Parcel extends utils.Adapter {
             this.mergedJson = this.mergedJson.concat(data.sendungen);
         }
         if (id === "amz" && data && data.sendungen) {
-            for (const sendung of data.sendungen) {
+            const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.name, status: sendung.status, source: "AMZ" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
-            }
-            this.mergedJson = this.mergedJson.concat(data.sendungen);
+
+                return sendungsObject;
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
         if (id === "17track" && data.accepted) {
             const sendungsArray = data.accepted.map((sendung) => {
@@ -1748,7 +1750,7 @@ class Parcel extends utils.Adapter {
                         });
                 }
             } else {
-                if (id.indexOf("dhl.briefe") !== -1 && id.indexOf("image_url") !== -1 && id.indexOf("oldAdvices") === -1)  {
+                if (id.indexOf("dhl.briefe") !== -1 && id.indexOf("image_url") !== -1 && id.indexOf("oldAdvices") === -1) {
                     let imageBase64 = this.images[state.val];
                     if (!imageBase64) {
                         const image = await this.requestClient({
