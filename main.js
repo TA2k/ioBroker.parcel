@@ -359,6 +359,13 @@ class Parcel extends utils.Adapter {
                         },
                         native: {},
                     });
+                    await this.setObjectNotExistsAsync("amazon.json", {
+                        type: "channel",
+                        common: {
+                            name: "Json Sendungen",
+                        },
+                        native: {},
+                    });
                     return;
                 }
                 if (res.data.indexOf("auth-mfa-otpcode") !== -1) {
@@ -1480,8 +1487,10 @@ class Parcel extends utils.Adapter {
         }
 
         this.json2iob.parse("amazon", amzResult, { forceIndex: true });
+
         this.mergeProviderJson("amz", amzResult);
         await this.setStateAsync("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+        await this.setStateAsync("amazon.json", JSON.stringify(amzResult), true);
     }
     async refreshToken() {
         if (Object.keys(this.sessions).length === 0) {
