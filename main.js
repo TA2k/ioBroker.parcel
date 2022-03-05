@@ -12,7 +12,7 @@ const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
 const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent");
-const { JSDOM } = require("jsdom");
+const { JSDOM } = require("@applitools/jsdom");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 
