@@ -1190,6 +1190,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL" };
 
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                sendungsObject.delivered = sendung.sendungsdetails.sendungsverlauf.fortschritt == sendung.sendungsdetails.sendungsverlauf.maximalFortschritt? true : false;
                 sendungsObject.direction = sendung.sendungsinfo.sendungsrichtung;
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
@@ -1220,6 +1221,7 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.description, status: sendung.lastStatusMessage || "", source: "Hermes" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                sendungsObject.delivered = sendung.lastStatusId == 5? true : false;
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1240,6 +1242,7 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.name, status: sendung.status, source: "AMZ" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                sendungsObject.delivered = sendung.detailedState.progressTracker.lastTransitionPercentComplete == 100? true : false;
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
