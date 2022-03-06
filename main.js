@@ -33,6 +33,7 @@ class Parcel extends utils.Adapter {
         this.sessions = {};
         this.mergedJson = [];
         this.inDelivery = [];
+        this.delivered = [];
         this.mergedJsonObject = {};
         this.images = {};
         this.alreadySentMessages = {};
@@ -1201,6 +1202,7 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.label || sendung.parcelNumber, status: sendung.status, source: "GLS", direction: sendung.type };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                sendungsObject.delivered = this.deliveredCheck(sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });
@@ -1211,6 +1213,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.id, name: sendung.shipFromName, status: sendung.locStatus || sendung.status, source: "UPS" };
 
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                sendungsObject.delivered = this.deliveredCheck(sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1233,6 +1236,7 @@ class Parcel extends utils.Adapter {
             for (const sendung of data.sendungen) {
                 sendung.source = "DPD";
                 sendung.inDelivery = this.inDeliveryCheck(sendung);
+                sendung.delivered = this.deliveredCheck(sendung);
 
                 this.mergedJsonObject[sendung.id] = sendung;
             }
@@ -1254,6 +1258,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "", source: "17track" };
                 if (!this.mergedJsonObject[sendung.id]) {
                     sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                    sendungsObject.delivered = this.deliveredCheck(sendungsObject);
                     this.mergedJsonObject[sendung.id] = sendungsObject;
                 }
                 return sendungsObject;
@@ -1269,6 +1274,7 @@ class Parcel extends utils.Adapter {
                     const sendungsObject = { id: sendung.FTrackNo, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "", source: "17tuser" };
                     if (!this.mergedJsonObject[sendung.id]) {
                         sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                        sendungsObject.delivered = this.deliveredCheck(sendungsObject);
                         this.mergedJsonObject[sendung.id] = sendungsObject;
                     }
                     return sendungsObject;
@@ -1309,7 +1315,7 @@ class Parcel extends utils.Adapter {
         if (
             sendungsObject.status.toLocaleLowerCase().includes("in zustellung") ||
             sendungsObject.status.toLocaleLowerCase().includes("zustellung heute") ||
-            sendungsObject.status.toLocaleLowerCase().includes("heute zugestell") ||
+            //sendungsObject.status.toLocaleLowerCase().includes("heute zugestell") ||
             sendungsObject.status.toLocaleLowerCase().includes("wird zugestellt") ||
             sendungsObject.status.toLocaleLowerCase().includes("zustellfahrzeug")
         ) {
@@ -1317,13 +1323,31 @@ class Parcel extends utils.Adapter {
                 sendungsObject.status.toLocaleLowerCase().includes("geliefert heute") ||
                 sendungsObject.status.toLocaleLowerCase().includes("geliefert. heute zugestellt") ||
                 sendungsObject.status.toLocaleLowerCase().includes("unterschrieben von") ||
-                sendungsObject.status.toLocaleLowerCase().includes("hausbewohner übergeben")
+                sendungsObject.status.toLocaleLowerCase().includes("zustellung erfolgreich") ||
+                sendungsObject.status.toLocaleLowerCase().includes("paket zugestellt")
             ) {
                 return false;
             }
             this.inDelivery.push(sendungsObject);
             return true;
         }
+        return false;
+    }
+    deliveredCheck(sendungsObject) {
+        if (!sendungsObject.status) {
+            return false;
+        }
+        if (
+            sendungsObject.status.toLocaleLowerCase().includes("geliefert heute") ||
+            sendungsObject.status.toLocaleLowerCase().includes("geliefert. heute zugestellt") ||
+            sendungsObject.status.toLocaleLowerCase().includes("unterschrieben von") ||
+            sendungsObject.status.toLocaleLowerCase().includes("hausbewohner übergeben") ||
+            sendungsObject.status.toLocaleLowerCase().includes("zustellung erfolgreich") ||
+            sendungsObject.status.toLocaleLowerCase().includes("paket zugestellt")
+        ) {
+            return true;
+        }
+        this.delivered.push(sendungsObject);
         return false;
     }
 
