@@ -1191,7 +1191,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL" };
 
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
-                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                 sendungsObject.direction = sendung.sendungsinfo.sendungsrichtung;
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
@@ -1202,7 +1202,7 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.label || sendung.parcelNumber, status: sendung.status, source: "GLS", direction: sendung.type };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
-                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });
@@ -1213,7 +1213,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.id, name: sendung.shipFromName, status: sendung.locStatus || sendung.status, source: "UPS" };
 
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
-                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1228,7 +1228,7 @@ class Parcel extends utils.Adapter {
                 }
                 const sendungsObject = { id: sendung.id, name: name, status: sendung.lastStatusMessage || "", source: "Hermes" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
-                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1240,7 +1240,7 @@ class Parcel extends utils.Adapter {
             for (const sendung of data.sendungen) {
                 sendung.source = "DPD";
                 sendung.inDelivery = this.inDeliveryCheck(sendung);
-                sendung.delivered = this.deliveryStatusCheck(sendung, id);
+                sendung.delivered = this.deliveryStatusCheck(sendung, id, sendungsObject);
 
                 this.mergedJsonObject[sendung.id] = sendung;
             }
@@ -1251,7 +1251,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.id, name: sendung.name, status: sendung.status, source: "AMZ" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
 
-                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1263,7 +1263,7 @@ class Parcel extends utils.Adapter {
                 const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "", source: "17track" };
                 if (!this.mergedJsonObject[sendung.id]) {
                     sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
-                    sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                    sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                     this.mergedJsonObject[sendung.id] = sendungsObject;
                 }
                 return sendungsObject;
@@ -1279,7 +1279,7 @@ class Parcel extends utils.Adapter {
                     const sendungsObject = { id: sendung.FTrackNo, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "", source: "17tuser" };
                     if (!this.mergedJsonObject[sendung.id]) {
                         sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
-                        sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                        sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                         this.mergedJsonObject[sendung.id] = sendungsObject;
                     }
                     return sendungsObject;
@@ -1348,7 +1348,7 @@ class Parcel extends utils.Adapter {
         }
         return false;
     }
-    deliveryStatusCheck(sendung, id) {
+    deliveryStatusCheck(sendung, id, sendungsObject) {
         try {
             if (sendung) {
                 if (id === "dhl" && sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.fortschritt) {
@@ -1376,6 +1376,15 @@ class Parcel extends utils.Adapter {
                     }
                 }
             }
+            if (sendungsObject) {
+                if (this.inDeliveryCheck(sendungsObject)) {
+                    return 40;
+                }
+                if (this.deliveredCheck(sendungsObject)) {
+                    return 50;
+                }
+            }
+
             return this.delivery_status["UNKOWN"];
         } catch (error) {
             this.log.error(error);
