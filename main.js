@@ -1222,7 +1222,11 @@ class Parcel extends utils.Adapter {
         }
         if (id === "hermes" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
-                const sendungsObject = { id: sendung.id, name: sendung.description, status: sendung.lastStatusMessage || "", source: "Hermes" };
+                let name = sendung.descriptions;
+                if (sendung.sender && sendung.sender.lastName) {
+                    name = name + " " + sendung.sender.lastName;
+                }
+                const sendungsObject = { id: sendung.id, name: name, status: sendung.lastStatusMessage || "", source: "Hermes" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
@@ -1345,27 +1349,38 @@ class Parcel extends utils.Adapter {
         return false;
     }
     deliveryStatusCheck(sendung, id) {
-        if (sendung) {
-            if (id === "dhl" && sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.fortschritt) {
-                const dhl_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
-                if (dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt]) {
-                    return dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt];
+        try {
+            if (sendung) {
+                if (id === "dhl" && sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.fortschritt) {
+                    const dhl_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
+                    if (dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt]) {
+                        return dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt];
+                    }
+                }
+                if (id === "hermes" && sendung.lastStatusId) {
+                    const hermes_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
+                    if (hermes_status[sendung.lastStatusId]) {
+                        return hermes_status[sendung.lastStatusId];
+                    }
+                }
+                if (id === "gls" && sendung.status) {
+                    const gls_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, DELIVERED: 50 };
+                    if (gls_status[sendung.lastStatusId]) {
+                        return gls_status[sendung.lastStatusId];
+                    }
+                }
+                if (id === "amz" && sendung.detailedState && sendung.detailedState.progressTracker && sendung.detailedState.progressTracker.numberOfReachedMilestones) {
+                    const amz_status = { 0: 10, 1: 10, 2: 30, 3: 40, 4: 50 };
+                    if (amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones]) {
+                        return amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones];
+                    }
                 }
             }
-            if (id === "hermes" && sendung.lastStatusId) {
-                const hermes_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
-                if (hermes_status[sendung.lastStatusId]) {
-                    return hermes_status[sendung.lastStatusId];
-                }
-            }
-            if (id === "amz" && sendung.detailedState && sendung.detailedState.progressTracker && sendung.detailedState.progressTracker.numberOfReachedMilestones) {
-                const amz_status = { 0: 10, 1: 10, 2: 30, 3: 40, 4: 50 };
-                if (amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones]) {
-                    return amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones];
-                }
-            }
+            return this.delivery_status["UNKOWN"];
+        } catch (error) {
+            this.log.error(error);
+            return this.delivery_status["UNKOWN"];
         }
-        return this.delivery_status["UNKOWN"];
     }
 
     async activateToken(grant_token, url) {
