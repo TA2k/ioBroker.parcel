@@ -1347,25 +1347,25 @@ class Parcel extends utils.Adapter {
     deliveryStatusCheck(sendung, id) {
         if (sendung) {
             if (id === "dhl" && sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.fortschritt) {
-                const dhl_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
+                const dhl_status = { 0: 10, 1: 50, 2: 20, 3: 30, 4: 40, 5: 0 };
                 if (dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt]) {
                     return dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt];
                 }
             }
             if (id === "hermes" && sendung.lastStatusId) {
-                const hermes_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
+                const hermes_status = { 0: 10, 1: 50, 2: 20, 3: 30, 4: 40, 5: 0 };
                 if (hermes_status[sendung.lastStatusId]) {
                     return hermes_status[sendung.lastStatusId];
                 }
             }
             if (id === "amz" && sendung.detailedState && sendung.detailedState.progressTracker && sendung.detailedState.progressTracker.numberOfReachedMilestones) {
-                const amz_status = { 0: 10, 1: 10, 2: 30, 3: 40, 4: 50 };
+                const amz_status = { 0: 10, 1: 50, 2: 30, 3: 40, 4: 0 };
                 if (amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones]) {
                     return amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones];
                 }
             }
         }
-        return this.delivery_status["UNKOWN"];
+        return this.delivery_status[5];
     }
 
     async activateToken(grant_token, url) {
