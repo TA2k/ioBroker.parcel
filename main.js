@@ -1223,8 +1223,8 @@ class Parcel extends utils.Adapter {
         if (id === "hermes" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
                 let name = sendung.description;
-                if (sendung.sender && sendung.sender.lastName) {
-                    name = name + " " + sendung.sender.lastName;
+                if (sendung.sender && sendung.sender.lastname) {
+                    name = name + " " + sendung.sender.lastname;
                 }
                 const sendungsObject = { id: sendung.id, name: name, status: sendung.lastStatusMessage || "", source: "Hermes" };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
