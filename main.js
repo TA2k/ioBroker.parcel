@@ -1085,6 +1085,7 @@ class Parcel extends utils.Adapter {
                         }
                         if (id === "hermes") {
                             try {
+                                res.data = JSON.parse(res.data);
                                 for (const parcel of res.data) {
                                     parcel.id = parcel.shipmentId;
                                 }
