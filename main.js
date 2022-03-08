@@ -1222,7 +1222,7 @@ class Parcel extends utils.Adapter {
         }
         if (id === "hermes" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
-                let name = sendung.descriptions;
+                let name = sendung.description;
                 if (sendung.sender && sendung.sender.lastName) {
                     name = name + " " + sendung.sender.lastName;
                 }
