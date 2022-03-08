@@ -1240,7 +1240,7 @@ class Parcel extends utils.Adapter {
             for (const sendung of data.sendungen) {
                 sendung.source = "DPD";
                 sendung.inDelivery = this.inDeliveryCheck(sendung);
-                sendung.delivered = this.deliveryStatusCheck(sendung, id);
+                sendung.delivery_status = this.deliveryStatusCheck(sendung, id);
                 this.log.debug(JSON.stringify(sendung));
 
                 this.mergedJsonObject[sendung.id] = sendung;
