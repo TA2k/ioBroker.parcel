@@ -37,7 +37,7 @@ class Parcel extends utils.Adapter {
         this.images = {};
         this.alreadySentMessages = {};
         this.firstStart = true;
-        this.delivery_status = { UNKOWN: 0, REGISTERED: 10, OUT_FOR_DELIVERY: 20, IN_TRANSIT: 30, IN_PREPARATION: 40, DELIVERED: 50 };
+        this.delivery_status = { ERROR: -1, NOT_READABLE: 5, REGISTERED: 10, OUT_FOR_DELIVERY: 20, IN_TRANSIT: 30, IN_PREPARATION: 40, DELIVERED: 0 };
     }
 
     /**
@@ -1190,7 +1190,7 @@ class Parcel extends utils.Adapter {
                 }
                 const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL" };
 
-                sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+                sendungsObject.inDelivery = this.inDeliveryCheck(sendung);
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
                 sendungsObject.direction = sendung.sendungsinfo.sendungsrichtung;
                 this.mergedJsonObject[sendung.id] = sendungsObject;
@@ -1202,7 +1202,7 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.label || sendung.parcelNumber, status: sendung.status, source: "GLS", direction: sendung.type };
                 sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
-                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id);
+                sendungsObject.delivery_status = this.deliveryStatusCheck(sendungsObject, id);
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });
@@ -1241,6 +1241,7 @@ class Parcel extends utils.Adapter {
                 sendung.source = "DPD";
                 sendung.inDelivery = this.inDeliveryCheck(sendung);
                 sendung.delivered = this.deliveryStatusCheck(sendung, id);
+                this.log.debug(JSON.stringify(sendung));
 
                 this.mergedJsonObject[sendung.id] = sendung;
             }
@@ -1352,34 +1353,35 @@ class Parcel extends utils.Adapter {
         try {
             if (sendung) {
                 if (id === "dhl" && sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.fortschritt) {
-                    const dhl_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
-                    if (dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt]) {
+                    const dhl_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 0 };
+                    //this.log.debug(JSON.stringify(sendung));
+                    if (dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt] !== undefined) {
                         return dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt];
                     }
                 }
                 if (id === "hermes" && sendung.lastStatusId) {
-                    const hermes_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
-                    if (hermes_status[sendung.lastStatusId]) {
+                    const hermes_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 0 };
+                    if (hermes_status[sendung.lastStatusId] !== undefined) {
                         return hermes_status[sendung.lastStatusId];
                     }
                 }
                 if (id === "gls" && sendung.status) {
-                    const gls_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, DELIVERED: 50 };
-                    if (gls_status[sendung.lastStatusId]) {
+                    const gls_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, DELIVERED: 0 };
+                    if (gls_status[sendung.lastStatusId] !== undefined) {
                         return gls_status[sendung.lastStatusId];
                     }
                 }
                 if (id === "amz" && sendung.detailedState && sendung.detailedState.progressTracker && sendung.detailedState.progressTracker.numberOfReachedMilestones) {
-                    const amz_status = { 0: 10, 1: 10, 2: 30, 3: 40, 4: 50 };
-                    if (amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones]) {
+                    const amz_status = { 0: 10, 1: 10, 2: 30, 3: 40, 4: 0 };
+                    if (amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones] !== undefined) {
                         return amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones];
                     }
                 }
             }
-            return this.delivery_status["UNKOWN"];
+            return this.delivery_status["NOT_READABLE"];
         } catch (error) {
             this.log.error(error);
-            return this.delivery_status["UNKOWN"];
+            return this.delivery_status["ERROR"];
         }
     }
 
