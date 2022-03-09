@@ -1475,6 +1475,10 @@ class Parcel extends utils.Adapter {
                     this.log.error(JSON.stringify(error.response.data));
                 }
             });
+        if (!orders) {
+            this.log.warn("No Amazon orders found");
+            return;
+        }
         this.log.debug("Found " + orders.length + " Amazon Orders");
         for (const order of orders) {
             if (order.url.indexOf("http") === -1) {
