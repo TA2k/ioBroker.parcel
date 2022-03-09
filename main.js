@@ -1241,8 +1241,7 @@ class Parcel extends utils.Adapter {
             for (const sendung of data.sendungen) {
                 sendung.source = "DPD";
                 sendung.inDelivery = this.inDeliveryCheck(sendung);
-                sendung.delivered = this.deliveryStatusCheck(sendung, id, sendung);
-
+                sendung.delivery_status = this.deliveryStatusCheck(sendung, id, sendung);
                 this.mergedJsonObject[sendung.id] = sendung;
             }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
@@ -1354,7 +1353,6 @@ class Parcel extends utils.Adapter {
             if (sendung) {
                 if (id === "dhl" && sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.fortschritt) {
                     const dhl_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 0 };
-                    //this.log.debug(JSON.stringify(sendung));
                     if (dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt] !== undefined) {
                         return dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt];
                     }
