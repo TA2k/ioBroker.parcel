@@ -37,7 +37,7 @@ class Parcel extends utils.Adapter {
         this.images = {};
         this.alreadySentMessages = {};
         this.firstStart = true;
-        this.delivery_status = { ERROR: -1, UNKNOWN: 5, REGISTERED: 10, OUT_FOR_DELIVERY: 20, IN_TRANSIT: 30, IN_PREPARATION: 40, DELIVERED: 1 };
+        this.delivery_status = { ERROR: -1, UNKNOWN: 5, REGISTERED: 10, IN_PREPARATION: 20, IN_TRANSIT: 30, OUT_FOR_DELIVERY: 40, DELIVERED: 1 };
     }
 
     /**
@@ -1352,25 +1352,52 @@ class Parcel extends utils.Adapter {
         try {
             if (sendung) {
                 if (id === "dhl" && sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.fortschritt) {
-                    const dhl_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 1 };
+                    const dhl_status = {
+                        0: this.delivery_status.REGISTERED,
+                        1: this.delivery_status.REGISTERED,
+                        2: this.delivery_status.IN_PREPARATION,
+                        3: this.delivery_status.IN_TRANSIT,
+                        4: this.delivery_status.OUT_FOR_DELIVERY,
+                        5: this.delivery_status.DELIVERED,
+                    };
                     if (dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt] !== undefined) {
                         return dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt];
                     }
                 }
                 if (id === "hermes" && sendung.lastStatusId) {
-                    const hermes_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, 5: 1 };
+                    const hermes_status = {
+                        0: this.delivery_status.REGISTERED,
+                        1: this.delivery_status.REGISTERED,
+                        2: this.delivery_status.IN_PREPARATION,
+                        3: this.delivery_status.IN_TRANSIT,
+                        4: this.delivery_status.OUT_FOR_DELIVERY,
+                        5: this.delivery_status.DELIVERED,
+                    };
                     if (hermes_status[sendung.lastStatusId] !== undefined) {
                         return hermes_status[sendung.lastStatusId];
                     }
                 }
                 if (id === "gls" && sendung.status) {
-                    const gls_status = { 0: 10, 1: 10, 2: 20, 3: 30, 4: 40, DELIVERED: 1 };
+                    const gls_status = {
+                        0: this.delivery_status.REGISTERED,
+                        1: this.delivery_status.REGISTERED,
+                        2: this.delivery_status.IN_PREPARATION,
+                        3: this.delivery_status.IN_TRANSIT,
+                        4: this.delivery_status.OUT_FOR_DELIVERY,
+                        DELIVERED: this.delivery_status.DELIVERED,
+                    };
                     if (gls_status[sendung.lastStatusId] !== undefined) {
                         return gls_status[sendung.lastStatusId];
                     }
                 }
                 if (id === "amz" && sendung.detailedState && sendung.detailedState.progressTracker && sendung.detailedState.progressTracker.numberOfReachedMilestones) {
-                    const amz_status = { 0: 10, 1: 10, 2: 30, 3: 40, 4: 1 };
+                    const amz_status = {
+                        0: this.delivery_status.REGISTERED,
+                        1: this.delivery_status.REGISTERED,
+                        2: this.delivery_status.IN_TRANSIT,
+                        3: this.delivery_status.OUT_FOR_DELIVERY,
+                        4: this.delivery_status.DELIVERED,
+                    };
                     if (amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones] !== undefined) {
                         return amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones];
                     }
@@ -1378,10 +1405,10 @@ class Parcel extends utils.Adapter {
             }
             if (sendungsObject) {
                 if (this.inDeliveryCheck(sendungsObject)) {
-                    return 40;
+                    return this.delivery_status.OUT_FOR_DELIVERY;
                 }
                 if (this.deliveredCheck(sendungsObject)) {
-                    return 1;
+                    return this.delivery_status.DELIVERED;
                 }
             }
 
