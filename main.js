@@ -1381,7 +1381,7 @@ class Parcel extends utils.Adapter {
                     return 40;
                 }
                 if (this.deliveredCheck(sendungsObject)) {
-                    return 0;
+                    return 1;
                 }
             }
 
