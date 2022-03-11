@@ -76,6 +76,7 @@ class Parcel extends utils.Adapter {
         if (this.config.t17username && this.config.t17password) {
             this.log.info("Login to T17 User");
             await this.login17T();
+        }
         if (this.config.aliUsername && this.config.aliPassword) {
             this.log.info("Login to AliExpres");
             await this.loginAli();
