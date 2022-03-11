@@ -511,6 +511,15 @@ class Parcel extends utils.Adapter {
                     this.log.error(JSON.stringify(error.response.data));
                 }
             });
+        await this.requestClient({
+            method: "get",
+            url: "https://my.dpd.de/myParcel.aspx?dpd_token=" + this.dpdToken,
+            jar: this.cookieJar,
+            withCredentials: true,
+        }).catch(async (error) => {
+            error.response && this.log.error(JSON.stringify(error.response.data));
+            this.log.error(error);
+        });
     }
     async loginGLS(silent) {
         await this.requestClient({
@@ -992,7 +1001,7 @@ class Parcel extends utils.Adapter {
             dpd: [
                 {
                     path: "dpd",
-                    url: "https://my.dpd.de/myParcel.aspx?dpd_token=" + this.dpdToken,
+                    url: "https://my.dpd.de/myParcel.aspx",//?dpd_token=" + this.dpdToken,
                     header: {
                         accept: "*/*",
                         "user-agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.45 Safari/537.36",
@@ -1085,13 +1094,15 @@ class Parcel extends utils.Adapter {
                         }
                         if (id === "hermes") {
                             try {
-                                if (typeof res.data === "string") {
-                                    res.data = JSON.parse(res.data);
+                                if (res.data) {
+                                    if (typeof res.data === "string") {
+                                        res.data = JSON.parse(res.data);
+                                    }
+                                    for (const parcel of res.data) {
+                                        parcel.id = parcel.shipmentId;
+                                    }
+                                    data = { sendungen: res.data };
                                 }
-                                for (const parcel of res.data) {
-                                    parcel.id = parcel.shipmentId;
-                                }
-                                data = { sendungen: res.data };
                             } catch (error) {
                                 this.log.error(error);
                                 this.log.error(res.data);
@@ -1116,11 +1127,12 @@ class Parcel extends utils.Adapter {
                             await this.activateToken(res.data.grantToken, res.data.accessTokenUrl);
                             await this.sleep(1000);
                         }
-
-                        await this.cleanupProvider(id, data);
-                        this.mergeProviderJson(id, data);
-                        this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
-                        data && this.setState(element.path + ".json", JSON.stringify(data), true);
+                        if (data) {
+                            await this.cleanupProvider(id, data);
+                            this.mergeProviderJson(id, data);
+                            this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
+                            data && this.setState(element.path + ".json", JSON.stringify(data), true);
+                        }
                     })
                     .catch((error) => {
                         if (error.response) {
@@ -1643,7 +1655,7 @@ class Parcel extends utils.Adapter {
                     });
             }
             if (id === "dpd") {
-                //  this.loginDPD(true);
+                this.loginDPD(true);
             }
             if (id === "17tuser") {
                 this.login17T(true);
