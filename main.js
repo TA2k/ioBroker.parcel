@@ -10,6 +10,7 @@ const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
 const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
+const getPwd = require("./lib/rsaKey");
 const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent");
 const { JSDOM } = require("@applitools/jsdom");
@@ -75,6 +76,9 @@ class Parcel extends utils.Adapter {
         if (this.config.t17username && this.config.t17password) {
             this.log.info("Login to T17 User");
             await this.login17T();
+        if (this.config.aliUsername && this.config.aliPassword) {
+            this.log.info("Login to AliExpres");
+            await this.loginAli();
         }
 
         if (this.config["17trackKey"]) {
@@ -229,6 +233,135 @@ class Parcel extends utils.Adapter {
                 });
         } else {
             this.log.info("Login to DHL with MFA token");
+            this.log.debug("MFA: " + this.config.dhlMfa);
+            await this.requestClient({
+                method: "post",
+                url: "https://www.dhl.de/int-erkennen/2fa",
+                headers: {
+                    Host: "www.dhl.de",
+                    "content-type": "application/json",
+                    accept: "*/*",
+                    "x-requested-with": "XMLHttpRequest",
+                    "accept-language": "de-de",
+                    origin: "https://www.dhl.de",
+                    "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                },
+                jar: this.cookieJar,
+                withCredentials: true,
+                data: JSON.stringify({
+                    value: this.config.dhlMfa,
+                    remember2fa: true,
+                    language: "de",
+                    context: "app",
+                    meta: "",
+                    intermediateMfaToken: mfaToken,
+                }),
+            })
+                .then(async (res) => {
+                    this.log.debug(JSON.stringify(res.data));
+                    this.log.info("Login to DHL successful");
+                    this.sessions["dhl"] = res.data;
+                    this.setState("info.connection", true, true);
+                    this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+                    await this.createDHLStates();
+                })
+                .catch(async (error) => {
+                    this.log.error(error);
+                    if (error.response) {
+                        this.setState("info.connection", false, true);
+                        this.log.error(JSON.stringify(error.response.data));
+                        const adapterConfig = "system.adapter." + this.name + "." + this.instance;
+                        this.log.error("MFA incorrect");
+                        this.getForeignObject(adapterConfig, (error, obj) => {
+                            if (obj && obj.native && obj.native.dhlMfa) {
+                                obj.native.dhlMfa = "";
+                                this.setForeignObject(adapterConfig, obj);
+                            }
+                        });
+                        return;
+                    }
+                });
+        }
+    }
+    async loginAli() {
+        const loginData = await this.requestClient({
+            method: "get",
+            url: "https://passport.aliexpress.com/mini_login.htm?lang=de_de&appName=aebuyer&appEntrance=default&styleType=auto&bizParams=&notLoadSsoView=false&notKeepLogin=false&isMobile=false&cssLink=https://i.alicdn.com/noah-static/4.0.2/common/css/reset-havana.css&cssUrl=https://i.alicdn.com/noah-static/4.0.2/common/css/reset-havana-new-page.css&showMobilePwdLogin=false&defaultCountryCode=DE&ut=&rnd=0.9085151696364684",
+            headers: {
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36",
+                "accept-language": "de-de",
+            },
+            jar: this.cookieJar,
+            withCredentials: true,
+        })
+            .then(async (res) => {
+                this.log.debug(JSON.stringify(res.data));
+                if (res.data.indexOf("window.viewData = ") !== -1) {
+                    try {
+                        const loginData = res.data.split("window.viewData = ")[1].split(";")[0].replace(/\\/g, "");
+                        return JSON.parse(loginData).loginFormData;
+                    } catch (error) {
+                        this.log.error(error);
+                    }
+                } else {
+                    this.log.error("Failed Step 1 Aliexpress");
+                }
+            })
+            .catch((error) => {
+                this.log.error(error);
+                if (error.response) {
+                    this.log.error(JSON.stringify(error.response.data));
+                }
+            });
+
+        if (!loginData) {
+            return;
+        }
+        if (!this.config.aliMfa) {
+            loginData.loginId = this.config.aliUsername;
+            loginData.password2 = getPwd(this.config.aliPassword);
+            await this.requestClient({
+                method: "post",
+                url: "https://passport.aliexpress.com/newlogin/login.do?appName=aebuyer&fromSite=13&_bx-v=2.0.39",
+                headers: {
+                    "content-type": "application/x-www-form-urlencoded",
+                    accept: "application/json, text/plain, */*",
+                    "accept-language": "de-de",
+                    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36",
+                },
+                jar: this.cookieJar,
+                withCredentials: true,
+                data: qs.stringify(loginData),
+            })
+                .then(async (res) => {
+                    if (res.data.url && res.data.url.indexOf("punish") !== -1) {
+                        this.log.error("Failed because of captcha");
+                    }
+                    //  this.log.debug(JSON.stringify(res.data));
+                })
+                .catch((error) => {
+                    this.log.error(error);
+                    if (error.response) {
+                        this.log.error(JSON.stringify(error.response.data));
+                    }
+                });
+            await this.requestClient({
+                method: "get",
+                url: "https://www.aliexpress.com/p/order/index.html",
+                jar: this.cookieJar,
+                withCredentials: true,
+            })
+                .then(async (res) => {
+                    //  this.log.debug(JSON.stringify(res.data));
+                    res.data.indexOf("Session has expired") !== -1 ? this.log.error("Session has expired") : this.log.info("Login to Aliexpress successful");
+                })
+                .catch(async (error) => {
+                    error.response && this.log.error(JSON.stringify(error.response.data));
+                    this.log.error(error);
+                });
+        } else {
+            this.log.info("Login to AliExpress with MFA token");
             this.log.debug("MFA: " + this.config.dhlMfa);
             await this.requestClient({
                 method: "post",
@@ -1001,7 +1134,7 @@ class Parcel extends utils.Adapter {
             dpd: [
                 {
                     path: "dpd",
-                    url: "https://my.dpd.de/myParcel.aspx",//?dpd_token=" + this.dpdToken,
+                    url: "https://my.dpd.de/myParcel.aspx", //?dpd_token=" + this.dpdToken,
                     header: {
                         accept: "*/*",
                         "user-agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.45 Safari/537.36",
