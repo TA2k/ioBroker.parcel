@@ -37,6 +37,7 @@ class Parcel extends utils.Adapter {
         this.mergedJsonObject = {};
         this.images = {};
         this.alreadySentMessages = {};
+        this.ignoredPath = [];
         this.firstStart = true;
         this.delivery_status = { ERROR: -1, UNKNOWN: 5, REGISTERED: 10, IN_PREPARATION: 20, IN_TRANSIT: 30, OUT_FOR_DELIVERY: 40, DELIVERED: 1 };
     }
@@ -289,9 +290,17 @@ class Parcel extends utils.Adapter {
             method: "get",
             url: "https://passport.aliexpress.com/mini_login.htm?lang=de_de&appName=aebuyer&appEntrance=default&styleType=auto&bizParams=&notLoadSsoView=false&notKeepLogin=false&isMobile=false&cssLink=https://i.alicdn.com/noah-static/4.0.2/common/css/reset-havana.css&cssUrl=https://i.alicdn.com/noah-static/4.0.2/common/css/reset-havana-new-page.css&showMobilePwdLogin=false&defaultCountryCode=DE&ut=&rnd=0.9085151696364684",
             headers: {
-                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": '"macOS"',
+                "upgrade-insecure-requests": "1",
                 "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36",
-                "accept-language": "de-de",
+                accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "sec-fetch-site": "same-site",
+                "sec-fetch-mode": "navigate",
+                "sec-fetch-dest": "iframe",
+                referer: "https://login.aliexpress.com/",
+                "accept-language": "de",
             },
             jar: this.cookieJar,
             withCredentials: true,
@@ -326,10 +335,18 @@ class Parcel extends utils.Adapter {
                 method: "post",
                 url: "https://passport.aliexpress.com/newlogin/login.do?appName=aebuyer&fromSite=13&_bx-v=2.0.39",
                 headers: {
-                    "content-type": "application/x-www-form-urlencoded",
+                    "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="100", "Google Chrome";v="100"',
                     accept: "application/json, text/plain, */*",
-                    "accept-language": "de-de",
+                    "content-type": "application/x-www-form-urlencoded",
+                    "sec-ch-ua-mobile": "?0",
                     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36",
+                    "sec-ch-ua-platform": '"macOS"',
+                    origin: "https://login.aliexpress.com",
+                    "sec-fetch-site": "same-site",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-dest": "empty",
+                    referer: "https://login.aliexpress.com/",
+                    "accept-language": "de",
                 },
                 jar: this.cookieJar,
                 withCredentials: true,
@@ -1193,6 +1210,10 @@ class Parcel extends utils.Adapter {
         for (const id of Object.keys(this.sessions)) {
             for (const element of statusArrays[id]) {
                 this.log.debug(element.url);
+                if (this.ignoredPath.includes(element.path)) {
+                    this.log.debug("Ignore: " + element.path);
+                    continue;
+                }
                 await this.requestClient({
                     method: element.method ? element.method : "get",
                     url: element.url,
@@ -1275,6 +1296,7 @@ class Parcel extends utils.Adapter {
                                     this.log.debug(error);
                                     return;
                                 }
+
                                 error.response && this.log.debug(JSON.stringify(error.response.data));
 
                                 this.log.info(element.path + " receive 401 error. Refresh Token in 60 seconds");
@@ -1285,6 +1307,10 @@ class Parcel extends utils.Adapter {
                                     }, 1000 * 60);
                                 }
                                 return;
+                            }
+                            if (error.response.status === 500 && element.path === "dhl.briefe") {
+                                this.log.info("Briefankündigung is not working. Stopped until restart");
+                                this.ignoredPath.push(element.path);
                             }
                         }
                         this.log.error(element.url);
