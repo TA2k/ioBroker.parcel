@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.10",
+        "version": "0.0.11",
         "news": {
+            "0.0.11": {
+                "en": "Briefankündigung wird gestoppt, falls sie nicht funktioniert"
+            },
             "0.0.10": {
                 "en": "in Zustellung DP, DPD Bugfix, detailierte DPs für Amazon, Option für keine Benachrichtigung bei Adapterstart"
             },
