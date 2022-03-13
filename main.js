@@ -1467,6 +1467,7 @@ class Parcel extends utils.Adapter {
         this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
         this.setState("allProviderObjects", JSON.stringify(this.mergedJsonObject), true);
         this.setState("inDelivery", JSON.stringify(this.inDelivery), true);
+        this.setState("inDeliveryCount", this.inDelivery.length, true);
 
         if (this.config.sendToActive) {
             const sendungen = this.mergedJsonObject;

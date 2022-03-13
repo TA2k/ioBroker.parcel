@@ -197,6 +197,18 @@
             "native": {}
         },
         {
+            "_id": "inDeliveryCount",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "Number of in delivery/Anzahl in Zustellung",
+                "type": "number",
+                "read": true,
+                "write": false
+            },
+            "native": {}
+        },
+        {
             "_id": "auth",
             "type": "channel",
             "common": {
