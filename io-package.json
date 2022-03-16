@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.11",
+        "version": "0.0.12",
         "news": {
+            "0.0.12": {
+                "en": "Add delivery status"
+            },
             "0.0.11": {
                 "en": "Briefankündigung wird gestoppt, falls sie nicht funktioniert"
             },
