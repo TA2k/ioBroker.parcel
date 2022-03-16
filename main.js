@@ -1259,8 +1259,8 @@ class Parcel extends utils.Adapter {
                                     data = { sendungen: res.data };
                                 }
                             } catch (error) {
-                                this.log.error(error);
-                                this.log.error(res.data);
+                                this.log.warn("Hermes response incomplete cannot parse result");
+                                this.log.debug(res.data);
                                 data = { sendungen: [] };
                             }
                         }
@@ -1308,7 +1308,7 @@ class Parcel extends utils.Adapter {
                                 }
                                 return;
                             }
-                            if (error.response.status === 500 && element.path === "dhl.briefe") {
+                            if (element.path === "dhl.briefe") {
                                 this.log.info("Briefankündigung is not working. Stopped until restart");
                                 this.ignoredPath.push(element.path);
                             }
@@ -1365,8 +1365,11 @@ class Parcel extends utils.Adapter {
                 }
                 const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL" };
 
-                sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                    sendungsObject.inDelivery = true;
+                    this.inDelivery.push(sendungsObject);
+                }
                 sendungsObject.direction = sendung.sendungsinfo.sendungsrichtung;
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
@@ -1376,8 +1379,12 @@ class Parcel extends utils.Adapter {
         if (id === "gls" && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.label || sendung.parcelNumber, status: sendung.status, source: "GLS", direction: sendung.type };
-                sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                    sendungsObject.inDelivery = true;
+                    this.inDelivery.push(sendungsObject);
+                }
                 this.mergedJsonObject[sendung.id] = sendungsObject;
                 return sendungsObject;
             });
@@ -1387,8 +1394,11 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.shipFromName, status: sendung.locStatus || sendung.status, source: "UPS" };
 
-                sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                    sendungsObject.inDelivery = true;
+                    this.inDelivery.push(sendungsObject);
+                }
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1402,8 +1412,12 @@ class Parcel extends utils.Adapter {
                     name = name + " " + sendung.sender.lastname;
                 }
                 const sendungsObject = { id: sendung.id, name: name, status: sendung.lastStatusMessage || "", source: "Hermes" };
-                sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
+
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                    sendungsObject.inDelivery = true;
+                    this.inDelivery.push(sendungsObject);
+                }
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1414,8 +1428,14 @@ class Parcel extends utils.Adapter {
         if (id === "dpd" && data && data.sendungen) {
             for (const sendung of data.sendungen) {
                 sendung.source = "DPD";
-                sendung.inDelivery = this.inDeliveryCheck(sendung);
                 sendung.delivery_status = this.deliveryStatusCheck(sendung, id, sendung);
+                if (sendung.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                    sendung.inDelivery = true;
+                    this.inDelivery.push(sendung);
+                }
+                if (!sendung.delivery_status) {
+                    this.log.warn("Missing status for " + JSON.stringify(sendung));
+                }
                 this.mergedJsonObject[sendung.id] = sendung;
             }
             this.mergedJson = this.mergedJson.concat(data.sendungen);
@@ -1423,9 +1443,12 @@ class Parcel extends utils.Adapter {
         if (id === "amz" && data && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
                 const sendungsObject = { id: sendung.id, name: sendung.name, status: sendung.status, source: "AMZ" };
-                sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
 
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                    sendungsObject.inDelivery = true;
+                    this.inDelivery.push(sendungsObject);
+                }
                 this.mergedJsonObject[sendung.id] = sendungsObject;
 
                 return sendungsObject;
@@ -1436,8 +1459,12 @@ class Parcel extends utils.Adapter {
             const sendungsArray = data.accepted.map((sendung) => {
                 const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "", source: "17track" };
                 if (!this.mergedJsonObject[sendung.id]) {
-                    sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
                     sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                    if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                        sendungsObject.inDelivery = true;
+                        this.inDelivery.push(sendungsObject);
+                    }
+
                     this.mergedJsonObject[sendung.id] = sendungsObject;
                 }
                 return sendungsObject;
@@ -1452,8 +1479,12 @@ class Parcel extends utils.Adapter {
                     }
                     const sendungsObject = { id: sendung.FTrackNo, name: sendung.FTrackInfoId, status: sendung.FLastEvent ? sendung.FLastEvent.z : "", source: "17tuser" };
                     if (!this.mergedJsonObject[sendung.id]) {
-                        sendungsObject.inDelivery = this.inDeliveryCheck(sendungsObject);
                         sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                        if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                            sendungsObject.inDelivery = true;
+                            this.inDelivery.push(sendungsObject);
+                        }
+
                         this.mergedJsonObject[sendung.id] = sendungsObject;
                     }
                     return sendungsObject;
@@ -1502,7 +1533,6 @@ class Parcel extends utils.Adapter {
             if (this.deliveredCheck(sendungsObject)) {
                 return false;
             }
-            this.inDelivery.push(sendungsObject);
             return true;
         }
         return false;
