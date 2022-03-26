@@ -1277,7 +1277,7 @@ class Parcel extends utils.Adapter {
                                 return sendung.sendungsinfo.sendungsliste !== "ARCHIVIERT";
                             });
                         }
-                        //filter archive message
+                        //activate briefe token
                         if (element.path === "dhl.briefe" && res.data.grantToken) {
                             await this.activateToken(res.data.grantToken, res.data.accessTokenUrl);
                             await this.sleep(1000);
@@ -2078,6 +2078,10 @@ class Parcel extends utils.Adapter {
                             jar: this.cookieJar,
                             withCredentials: true,
                         }).catch((error) => {
+                            if (error.response && error.response.status === 401) {
+                                this.log.debug(error);
+                                return;
+                            }
                             this.log.error(state.val + " " + error);
                         });
                         if (!image) {
