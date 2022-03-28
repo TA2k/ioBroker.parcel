@@ -1513,7 +1513,7 @@ class Parcel extends utils.Adapter {
                     continue;
                 }
                 const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
-                const sendUser = this.config.sendToInstance.replace(/ /g, "").split(",");
+                const sendUser = this.config.sendToUser.replace(/ /g, "").split(",");
                 for (const sendInstance of sendInstances) {
                     if (sendUser.length > 0) {
                         for (const user of sendUser) {
@@ -2105,7 +2105,7 @@ class Parcel extends utils.Adapter {
                             const uuid = uuidv4();
                             fs.writeFileSync("/tmp/" + uuid + ".jpg", imageBuffer.toString("base64"), "base64");
                             const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
-                            const sendUser = this.config.sendToInstance.replace(/ /g, "").split(",");
+                            const sendUser = this.config.sendToUser.replace(/ /g, "").split(",");
 
                             for (const sendInstance of sendInstances) {
                                 if (sendInstance.includes("pushover")) {
