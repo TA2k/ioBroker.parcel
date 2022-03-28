@@ -1513,8 +1513,15 @@ class Parcel extends utils.Adapter {
                     continue;
                 }
                 const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
+                const sendUser = this.config.sendToInstance.replace(/ /g, "").split(",");
                 for (const sendInstance of sendInstances) {
-                    await this.sendToAsync(sendInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
+                    if (sendUser.length > 0) {
+                        for (const user of sendUser) {
+                            await this.sendToAsync(sendInstance, { user: user, text: "📦 " + sendungen[id].name + "\n" + sendungen[id].status });
+                        }
+                    } else {
+                        await this.sendToAsync(sendInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
+                    }
                 }
             }
         }
@@ -1595,16 +1602,16 @@ class Parcel extends utils.Adapter {
                         return gls_status[sendung.lastStatusId];
                     }
                 }
-                if (id === "amz" && sendung.detailedState && sendung.detailedState.progressTracker && sendung.detailedState.progressTracker.numberOfReachedMilestones) {
+                if (id === "amz" && sendung.detailedState && sendung.detailedState.shortStatus) {
                     const amz_status = {
-                        0: this.delivery_status.REGISTERED,
-                        1: this.delivery_status.REGISTERED,
-                        2: this.delivery_status.IN_TRANSIT,
-                        3: this.delivery_status.OUT_FOR_DELIVERY,
-                        4: this.delivery_status.DELIVERED,
+                        ORDER_PLACED: this.delivery_status.REGISTERED, //ORDERED
+                        SHIPPING_SOON: this.delivery_status.IN_PREPARATION,
+                        IN_TRANSIT: this.delivery_status.IN_TRANSIT,
+                        OUT_FOR_DELIVERY: this.delivery_status.OUT_FOR_DELIVERY,
+                        DELIVERED: this.delivery_status.DELIVERED,
                     };
-                    if (amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones] !== undefined) {
-                        return amz_status[sendung.detailedState.progressTracker.numberOfReachedMilestones];
+                    if (amz_status[sendung.detailedState.shortStatus] !== undefined) {
+                        return amz_status[sendung.detailedState.shortStatus];
                     }
                 }
             }
@@ -2098,12 +2105,21 @@ class Parcel extends utils.Adapter {
                             const uuid = uuidv4();
                             fs.writeFileSync("/tmp/" + uuid + ".jpg", imageBuffer.toString("base64"), "base64");
                             const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
+                            const sendUser = this.config.sendToInstance.replace(/ /g, "").split(",");
+
                             for (const sendInstance of sendInstances) {
                                 if (sendInstance.includes("pushover")) {
                                     await this.sendToAsync(sendInstance, { file: "/tmp/" + uuid + ".jpg", title: "✉️Briefankündigung" });
                                 } else {
-                                    await this.sendToAsync(sendInstance, "✉️Briefankündigung");
-                                    await this.sendToAsync(sendInstance, "/tmp/" + uuid + ".jpg");
+                                    if (sendUser.length > 0) {
+                                        for (const user of sendUser) {
+                                            await this.sendToAsync(sendInstance, { user: user, text: "✉️Briefankündigung" });
+                                            await this.sendToAsync(sendInstance, { user: user, text: "/tmp/" + uuid + ".jpg" });
+                                        }
+                                    } else {
+                                        await this.sendToAsync(sendInstance, "✉️Briefankündigung");
+                                        await this.sendToAsync(sendInstance, "/tmp/" + uuid + ".jpg");
+                                    }
                                 }
                                 fs.unlinkSync("/tmp/" + uuid + ".jpg");
                             }
