@@ -918,8 +918,10 @@ class Parcel extends utils.Adapter {
                     res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken
                 ) {
                     this.upsAddressToken = res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken;
+                } else if (res.data.FlexibleAuthentication && res.data.FlexibleAuthentication.AuthenticationToken) {
+                    this.upsAddressToken = res.data.FlexibleAuthentication.AuthenticationToken;
                 } else {
-                    this.log.warn("No UPS address found");
+                    this.log.warn("No UPS address or AuthenticationToken found");
                     this.log.info(JSON.stringify(res.data));
                 }
             })
