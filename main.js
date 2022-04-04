@@ -448,6 +448,7 @@ class Parcel extends utils.Adapter {
                 return res.data;
             })
             .catch((error) => {
+                this.log.error("Amazon login failed");
                 this.log.error(error);
                 if (error.response) {
                     this.log.error(JSON.stringify(error.response.data));
@@ -1593,12 +1594,13 @@ class Parcel extends utils.Adapter {
                 }
                 if (id === "gls" && sendung.status) {
                     const gls_status = {
-                        0: this.delivery_status.REGISTERED,
+                        PREADVICE: this.delivery_status.REGISTERED,
                         1: this.delivery_status.REGISTERED,
-                        2: this.delivery_status.IN_PREPARATION,
-                        3: this.delivery_status.IN_TRANSIT,
-                        4: this.delivery_status.OUT_FOR_DELIVERY,
+                        INWAREHOUSE: this.delivery_status.IN_TRANSIT,
+                        INTRANSIT: this.delivery_status.IN_TRANSIT,
+                        INDELIVERY: this.delivery_status.OUT_FOR_DELIVERY,
                         DELIVERED: this.delivery_status.DELIVERED,
+                        DELIVEREDPS: this.delivery_status.DELIVERED,
                     };
                     if (gls_status[sendung.lastStatusId] !== undefined) {
                         return gls_status[sendung.lastStatusId];
