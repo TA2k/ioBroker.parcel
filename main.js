@@ -1592,6 +1592,20 @@ class Parcel extends utils.Adapter {
                         return hermes_status[sendung.lastStatusId];
                     }
                 }
+                if (id === "dpd" && sendung.statusId) {
+                    const dpd_status = {
+                        0: this.delivery_status.REGISTERED,
+                        1: this.delivery_status.IN_PREPARATION,
+                        2: this.delivery_status.IN_TRANSIT,
+                        3: this.delivery_status.IN_TRANSIT,
+                        4: this.delivery_status.OUT_FOR_DELIVERY,
+                        5: this.delivery_status.OUT_FOR_DELIVERY,
+                        6: this.delivery_status.DELIVERED,
+                    };
+                    if (dpd_status[sendung.statusId] !== undefined) {
+                        return dpd_status[sendung.statusId];
+                    }
+                }
                 if (id === "gls" && sendung.status) {
                     const gls_status = {
                         PREADVICE: this.delivery_status.REGISTERED,
@@ -1628,7 +1642,7 @@ class Parcel extends utils.Adapter {
                 }
             }
 
-            return this.delivery_status["UNKOWN"];
+            return this.delivery_status.UNKNOWN;
         } catch (error) {
             this.log.error(error);
             return this.delivery_status["ERROR"];
@@ -1670,10 +1684,15 @@ class Parcel extends utils.Adapter {
         parcelList.querySelectorAll(".btnSelectParcel").forEach((parcel) => {
             const parcelInfo = parcel.firstElementChild;
             this.log.debug(parcelInfo.textContent);
+            let statusId = parcelInfo.querySelector("img").src;
+            if (statusId) {
+                statusId = statusId.replace("images/status_", "").replace(".svg", "");
+            }
             result.sendungen.push({
                 id: parcelInfo.querySelector(".parcelNo").textContent,
                 name: parcelInfo.querySelector(".parcelName").textContent,
                 status: parcelInfo.querySelector(".parcelDeliveryStatus").textContent,
+                statusId: statusId,
             });
         });
         return result;
