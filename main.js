@@ -16,6 +16,8 @@ const { HttpsCookieAgent } = require("http-cookie-agent");
 const { JSDOM } = require("@applitools/jsdom");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
+const { sep } = require("path");
+const { tmpdir } = require("os");
 
 class Parcel extends utils.Adapter {
     /**
@@ -40,6 +42,7 @@ class Parcel extends utils.Adapter {
         this.ignoredPath = [];
         this.firstStart = true;
         this.delivery_status = { ERROR: -1, UNKNOWN: 5, REGISTERED: 10, IN_PREPARATION: 20, IN_TRANSIT: 30, OUT_FOR_DELIVERY: 40, DELIVERED: 1 };
+        this.tmpDir = tmpdir();
     }
 
     /**
@@ -2126,25 +2129,25 @@ class Parcel extends utils.Adapter {
                                 return;
                             }
                             const uuid = uuidv4();
-                            fs.writeFileSync("/tmp/" + uuid + ".jpg", imageBuffer.toString("base64"), "base64");
+                            fs.writeFileSync(`${this.tmpDir}${sep}${uuid}.jpg`, imageBuffer.toString("base64"), "base64");
                             const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
                             const sendUser = this.config.sendToUser.replace(/ /g, "").split(",");
 
                             for (const sendInstance of sendInstances) {
                                 if (sendInstance.includes("pushover")) {
-                                    await this.sendToAsync(sendInstance, { file: "/tmp/" + uuid + ".jpg", title: "✉️Briefankündigung" });
+                                    await this.sendToAsync(sendInstance, { file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
                                 } else {
                                     if (sendUser.length > 0) {
                                         for (const user of sendUser) {
                                             await this.sendToAsync(sendInstance, { user: user, text: "✉️Briefankündigung" });
-                                            await this.sendToAsync(sendInstance, { user: user, text: "/tmp/" + uuid + ".jpg" });
+                                            await this.sendToAsync(sendInstance, { user: user, text: `${this.tmpDir}${sep}${uuid}.jpg` });
                                         }
                                     } else {
                                         await this.sendToAsync(sendInstance, "✉️Briefankündigung");
-                                        await this.sendToAsync(sendInstance, "/tmp/" + uuid + ".jpg");
+                                        await this.sendToAsync(sendInstance, `${this.tmpDir}${sep}${uuid}.jpg`);
                                     }
                                 }
-                                fs.unlinkSync("/tmp/" + uuid + ".jpg");
+                                fs.unlinkSync(`${this.tmpDir}${sep}${uuid}.jpg`);
                             }
                         }
                     }
