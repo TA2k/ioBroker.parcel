@@ -1602,8 +1602,8 @@ class Parcel extends utils.Adapter {
                         DELIVERED: this.delivery_status.DELIVERED,
                         DELIVEREDPS: this.delivery_status.DELIVERED,
                     };
-                    if (gls_status[sendung.lastStatusId] !== undefined) {
-                        return gls_status[sendung.lastStatusId];
+                    if (gls_status[sendung.status] !== undefined) {
+                        return gls_status[sendung.status];
                     }
                 }
                 if (id === "amz" && sendung.detailedState && sendung.detailedState.shortStatus) {
