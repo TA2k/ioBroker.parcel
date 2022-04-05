@@ -1432,19 +1432,19 @@ class Parcel extends utils.Adapter {
         }
 
         if (id === "dpd" && data && data.sendungen) {
-            for (const sendung of data.sendungen) {
-                sendung.source = "DPD";
-                sendung.delivery_status = this.deliveryStatusCheck(sendung, id, sendung);
-                if (sendung.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
-                    sendung.inDelivery = true;
-                    this.inDelivery.push(sendung);
+            const sendungsArray = data.sendungen.map((sendung) => {
+                const sendungsObject = { id: sendung.id, name: sendung.name, status: sendung.status || "", source: "DPD" };
+
+                sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+                if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+                    sendungsObject.inDelivery = true;
+                    this.inDelivery.push(sendungsObject);
                 }
-                if (!sendung.delivery_status) {
-                    this.log.warn("Missing status for " + JSON.stringify(sendung));
-                }
-                this.mergedJsonObject[sendung.id] = sendung;
-            }
-            this.mergedJson = this.mergedJson.concat(data.sendungen);
+                this.mergedJsonObject[sendung.id] = sendungsObject;
+
+                return sendungsObject;
+            });
+            this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
         if (id === "amz" && data && data.sendungen) {
             const sendungsArray = data.sendungen.map((sendung) => {
