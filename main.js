@@ -922,10 +922,8 @@ class Parcel extends utils.Adapter {
                     res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken
                 ) {
                     this.upsAddressToken = res.data.GetEnrollmentsResponse.MYCEnrollmentSummaries.MYCEnrollmentSummary.AddressToken;
-                } else if (res.data.FlexibleAuthentication && res.data.FlexibleAuthentication.AuthenticationToken) {
-                    this.upsAddressToken = res.data.FlexibleAuthentication.AuthenticationToken;
                 } else {
-                    this.log.warn("No UPS address or AuthenticationToken found");
+                    this.log.warn("No UPS address found. Please activate UPS My Choice in the UPS App");
                     this.log.info(JSON.stringify(res.data));
                 }
             })
@@ -1108,7 +1106,7 @@ class Parcel extends utils.Adapter {
                 });
         }
         if (this.sessions["amz"]) {
-            this.getAmazonPackages();
+            await this.getAmazonPackages();
         }
         const statusArrays = {
             dhl: [
@@ -1325,6 +1323,11 @@ class Parcel extends utils.Adapter {
                     });
             }
         }
+        this.log.debug("Write states");
+        this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
+        this.setState("allProviderObjects", JSON.stringify(this.mergedJsonObject), true);
+        this.setState("inDelivery", JSON.stringify(this.inDelivery), true);
+        this.setState("inDeliveryCount", this.inDelivery.length, true);
     }
     async cleanupProvider(id, data) {
         if (id === "dhl" && data.hasOwnProperty("grantToken")) {
@@ -1500,11 +1503,6 @@ class Parcel extends utils.Adapter {
             });
             this.mergedJson = this.mergedJson.concat(sendungsArray);
         }
-
-        this.setState("allProviderJson", JSON.stringify(this.mergedJson), true);
-        this.setState("allProviderObjects", JSON.stringify(this.mergedJsonObject), true);
-        this.setState("inDelivery", JSON.stringify(this.inDelivery), true);
-        this.setState("inDeliveryCount", this.inDelivery.length, true);
 
         if (this.config.sendToActive) {
             const sendungen = this.mergedJsonObject;
