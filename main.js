@@ -6,6 +6,17 @@
 
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
+
+//disable canvas because of missing rebuild
+var Module = require("module");
+var originalRequire = Module.prototype.require;
+Module.prototype.require = function () {
+    if (arguments[0] === "canvas") {
+        return { createCanvas: null, createImageData: null, loadImage: null };
+    }
+    return originalRequire.apply(this, arguments);
+};
+
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
 const qs = require("qs");
