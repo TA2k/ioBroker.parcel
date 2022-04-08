@@ -1,6 +1,6 @@
 {
     "name": "iobroker.parcel",
-    "version": "0.0.13",
+    "version": "0.0.14",
     "description": "Parcel tracking",
     "author": {
         "name": "TA2k",
@@ -25,10 +25,10 @@
         "url": "https://github.com/TA2k/ioBroker.parcel"
     },
     "dependencies": {
-        "@applitools/jsdom": "^1.0.4",
         "@iobroker/adapter-core": "^2.6.0",
         "axios": "^0.25.0",
         "http-cookie-agent": "^1.0.5",
+        "jsdom": "^19.0.0",
         "json-bigint": "^1.0.0",
         "qs": "^6.10.3",
         "tough-cookie": "^4.0.0",
