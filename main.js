@@ -1521,10 +1521,18 @@ class Parcel extends utils.Adapter {
                 for (const sendInstance of sendInstances) {
                     if (sendUser.length > 0) {
                         for (const user of sendUser) {
-                            await this.sendToAsync(sendInstance, { user: user, text: "📦 " + sendungen[id].name + "\n" + sendungen[id].status });
+                            if (sendInstance.includes("pushover")) {
+                                await this.sendToAsync(sendInstance, { user: user, message: "📦 " + sendungen[id].name + "\n" + sendungen[id].status, title: "Paketstatus" });
+                            } else {
+                                await this.sendToAsync(sendInstance, { user: user, text: "📦 " + sendungen[id].name + "\n" + sendungen[id].status });
+                            }
                         }
                     } else {
-                        await this.sendToAsync(sendInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
+                        if (sendInstance.includes("pushover")) {
+                            await this.sendToAsync(sendInstance, { message: "📦 " + sendungen[id].name + "\n" + sendungen[id].status, title: "Paketstatus" });
+                        } else {
+                            await this.sendToAsync(sendInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
+                        }
                     }
                 }
             }
