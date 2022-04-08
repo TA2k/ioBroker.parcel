@@ -8,8 +8,8 @@
 // you need to create an adapter
 
 //disable canvas because of missing rebuild
-var Module = require("module");
-var originalRequire = Module.prototype.require;
+const Module = require("module");
+const originalRequire = Module.prototype.require;
 Module.prototype.require = function () {
     if (arguments[0] === "canvas") {
         return { createCanvas: null, createImageData: null, loadImage: null };
@@ -24,7 +24,7 @@ const Json2iob = require("./lib/json2iob");
 const getPwd = require("./lib/rsaKey");
 const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent");
-const { JSDOM } = require("@applitools/jsdom");
+const { JSDOM } = require("jsdom");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const { sep } = require("path");

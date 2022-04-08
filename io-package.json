@@ -1,9 +1,9 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.14",
+        "version": "0.0.15",
         "news": {
-            "0.0.14": {
+            "0.0.15": {
                 "en": "Fix DPD states and remove canvas dependency"
             },
             "0.0.13": {
