@@ -1383,7 +1383,11 @@ class Parcel extends utils.Adapter {
                 if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.kurzStatus) {
                     status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
                 }
-                const sendungsObject = { id: sendung.id, name: sendung.sendungsinfo.sendungsname, status: status, source: "DHL" };
+                let name = sendung.sendungsinfo.sendungsname;
+                if (sendung.sendungsdetails && sendung.sendungsdetails.liveTrackingVerfuegbar && sendung.sendungsdetails.liveTracking) {
+                    name = name + " " + sendung.sendungsdetails.liveTracking.countdown + " Stopps";
+                }
+                const sendungsObject = { id: sendung.id, name: name, status: status, source: "DHL" };
 
                 sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
                 if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
