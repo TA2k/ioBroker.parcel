@@ -1538,7 +1538,7 @@ class Parcel extends utils.Adapter {
                 const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
                 const sendUser = this.config.sendToUser.replace(/ /g, "").split(",");
                 for (const sendInstance of sendInstances) {
-                    const text = "📦 " + sendungen[id].name + "\n" + sendungen[id].status + " " + sendungen[id].source;
+                    const text = "📦 " + sendungen[id].source + " " + sendungen[id].name + "\n" + sendungen[id].status;
                     if (sendUser.length > 0) {
                         for (const user of sendUser) {
                             if (sendInstance.includes("pushover")) {
