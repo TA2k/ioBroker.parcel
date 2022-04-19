@@ -1538,19 +1538,20 @@ class Parcel extends utils.Adapter {
                 const sendInstances = this.config.sendToInstance.replace(/ /g, "").split(",");
                 const sendUser = this.config.sendToUser.replace(/ /g, "").split(",");
                 for (const sendInstance of sendInstances) {
+                    const text = "📦 " + sendungen[id].name + "\n" + sendungen[id].status + " " + sendungen[id].source;
                     if (sendUser.length > 0) {
                         for (const user of sendUser) {
                             if (sendInstance.includes("pushover")) {
-                                await this.sendToAsync(sendInstance, { user: user, message: "📦 " + sendungen[id].name + "\n" + sendungen[id].status, title: "Paketstatus" });
+                                await this.sendToAsync(sendInstance, { user: user, message: text, title: "Paketstatus" });
                             } else {
-                                await this.sendToAsync(sendInstance, { user: user, text: "📦 " + sendungen[id].name + "\n" + sendungen[id].status });
+                                await this.sendToAsync(sendInstance, { user: user, text: text });
                             }
                         }
                     } else {
                         if (sendInstance.includes("pushover")) {
-                            await this.sendToAsync(sendInstance, { message: "📦 " + sendungen[id].name + "\n" + sendungen[id].status, title: "Paketstatus" });
+                            await this.sendToAsync(sendInstance, { message: text, title: "Paketstatus" });
                         } else {
-                            await this.sendToAsync(sendInstance, "📦 " + sendungen[id].name + "\n" + sendungen[id].status);
+                            await this.sendToAsync(sendInstance, text);
                         }
                     }
                 }
