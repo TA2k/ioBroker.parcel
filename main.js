@@ -1543,6 +1543,11 @@ class Parcel extends utils.Adapter {
                         for (const user of sendUser) {
                             if (sendInstance.includes("pushover")) {
                                 await this.sendToAsync(sendInstance, { user: user, message: text, title: "Paketstatus" });
+                            } else if (sendInstance.includes("signal-cmb")) {
+                                await this.sendToAsync(sendInstance, "send", {
+                                    text: text,
+                                    phone: user,
+                                });
                             } else {
                                 await this.sendToAsync(sendInstance, { user: user, text: text });
                             }
@@ -1550,6 +1555,10 @@ class Parcel extends utils.Adapter {
                     } else {
                         if (sendInstance.includes("pushover")) {
                             await this.sendToAsync(sendInstance, { message: text, title: "Paketstatus" });
+                        } else if (sendInstance.includes("signal-cmb")) {
+                            await this.sendToAsync(sendInstance, "send", {
+                                text: text,
+                            });
                         } else {
                             await this.sendToAsync(sendInstance, text);
                         }
@@ -2160,20 +2169,37 @@ class Parcel extends utils.Adapter {
                             const sendUser = this.config.sendToUser.replace(/ /g, "").split(",");
 
                             for (const sendInstance of sendInstances) {
-                                if (sendInstance.includes("pushover")) {
-                                    await this.sendToAsync(sendInstance, { file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
-                                } else {
-                                    if (sendUser.length > 0) {
-                                        for (const user of sendUser) {
+                                if (sendUser.length > 0) {
+                                    for (const user of sendUser) {
+                                        if (sendInstance.includes("pushover")) {
+                                            await this.sendToAsync(sendInstance, { user: user, file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
+                                        } else if (sendInstance.includes("signal-cmb")) {
+                                            await this.sendToAsync(sendInstance, "send", {
+                                                text: "✉️Briefankündigung",
+                                                phone: user,
+                                            });
+                                        } else {
                                             await this.sendToAsync(sendInstance, { user: user, text: "✉️Briefankündigung" });
                                             await this.sendToAsync(sendInstance, { user: user, text: `${this.tmpDir}${sep}${uuid}.jpg` });
                                         }
+                                    }
+                                } else {
+                                    if (sendInstance.includes("pushover")) {
+                                        await this.sendToAsync(sendInstance, { file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
+                                    } else if (sendInstance.includes("signal-cmb")) {
+                                        await this.sendToAsync(sendInstance, "send", {
+                                            text: "✉️Briefankündigung",
+                                        });
                                     } else {
                                         await this.sendToAsync(sendInstance, "✉️Briefankündigung");
                                         await this.sendToAsync(sendInstance, `${this.tmpDir}${sep}${uuid}.jpg`);
                                     }
                                 }
+                            }
+                            try {
                                 fs.unlinkSync(`${this.tmpDir}${sep}${uuid}.jpg`);
+                            } catch (error) {
+                                this.log.error(error);
                             }
                         }
                     }
