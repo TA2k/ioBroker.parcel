@@ -14,7 +14,8 @@
 
 ## parcel adapter for ioBroker
 
-Parcel tracking
+Parcel tracking / Sendungsverfolgung 
+Verfolge mit deinem ioBroker SmartHome deine Pakete von Amazon, DHL, DPD, Hermes, UPS und GLS. Außerdem wirst du über die Briefverfolgung von der deutschen Post informiert. Direkt per Push auf Telegram, Pushover oder Signal.
 
 ## Loginablauf
 
