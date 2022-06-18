@@ -1389,7 +1389,7 @@ class Parcel extends utils.Adapter {
                 if (sendung.sendungsdetails && sendung.sendungsdetails.liveTrackingVerfuegbar && sendung.sendungsdetails.liveTracking) {
                     status = status + " " + sendung.sendungsdetails.liveTracking.countdown + " Stopps";
                 }
-                const name = sendung.sendungsinfo.sendungsname;
+                const name = sendung.sendungsinfo.sendungsname || "Unbekannt";
 
                 const sendungsObject = { id: sendung.id, name: name, status: status, source: "DHL" };
 
