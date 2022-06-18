@@ -836,7 +836,7 @@ class Parcel extends utils.Adapter {
                 UPSSecurity: {
                     UsernameToken: {},
                     ServiceAccessToken: {
-                        AccessLicenseNumber: "BDB176074C16EB9D",
+                        AccessLicenseNumber: "2DBACFA7974B3252",
                     },
                 },
                 LoginSubmitUserIdRequest: {
