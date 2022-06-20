@@ -1,9 +1,9 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.16",
+        "version": "0.0.17",
         "news": {
-            "0.0.16": {
+            "0.0.17": {
                 "en": "Fix UPS login"
             },
             "0.0.15": {

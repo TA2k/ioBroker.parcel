@@ -62,6 +62,10 @@ Den Datenpunkt parcel.0.dhl.briefe....image ein "String img src" element als Obj
 
 ## Changelog
 
+### 0.0.17
+
+* Fix UPS Login
+  
 ### 0.0.1
 
 * (TA2k) initial release
