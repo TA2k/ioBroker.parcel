@@ -1,10 +1,10 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.17",
+        "version": "0.0.18",
         "news": {
-            "0.0.17": {
-                "en": "Fix UPS login"
+            "0.0.18": {
+                "en": "Fix UPS/GLS login"
             },
             "0.0.15": {
                 "en": "Fix DPD states and remove canvas dependency"
