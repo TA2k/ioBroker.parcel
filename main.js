@@ -697,10 +697,10 @@ class Parcel extends utils.Adapter {
                 "Accept-Language": "de-de",
                 "X-Selected-Language": "DE",
                 "Content-Type": "application/json",
-                Origin: "https://gls-one.de",
-                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+                Origin: "https://www.gls-one.de",
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 GLS_App.iOS/v1.3.1",
                 "X-Client-Id": "iOS",
-                Referer: "https://gls-one.de/de?platform=iOS",
+                Referer: "https://www.gls-one.de/de?platform=iOS",
             },
             data: JSON.stringify({
                 username: this.config.glsusername,
