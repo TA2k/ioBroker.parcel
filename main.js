@@ -907,7 +907,7 @@ class Parcel extends utils.Adapter {
                         AuthenticationToken: this.upsAuthToken,
                     },
                     ServiceAccessToken: {
-                        AccessLicenseNumber: "BDB176074C16EB9D",
+                        AccessLicenseNumber: "2DBACFA7974B3252",
                     },
                 },
                 GetEnrollmentsRequest: {
@@ -1210,7 +1210,7 @@ class Parcel extends utils.Adapter {
                     header: {
                         Connection: "keep-alive",
                         Accept: "application/json",
-                        AccessLicenseNumber: "BDB176074C16EB9D",
+                        AccessLicenseNumber: "2DBACFA7974B3252",
                         AuthenticationToken: this.upsAuthToken,
                         addresstoken: this.upsAddressToken,
                         transID: uuidv4().substring(0, 25),
