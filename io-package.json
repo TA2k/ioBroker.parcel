@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.18",
+        "version": "0.0.19",
         "news": {
+            "0.0.19": {
+                "en": "Fix GLS Parcel"
+            },
             "0.0.18": {
                 "en": "Fix UPS/GLS login"
             },
