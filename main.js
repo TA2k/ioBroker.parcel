@@ -80,45 +80,45 @@ class Parcel extends utils.Adapter {
       }),
     });
 
-    // if (this.config.dhlusername && this.config.dhlpassword) {
-    //     this.log.info("Login to DHL");
-    //     await this.loginDHL();
-    // }
-    // if (this.config.dpdusername && this.config.dpdpassword) {
-    //     this.log.info("Login to DPD");
-    //     await this.loginDPD();
-    // }
-    // if (this.config.t17username && this.config.t17password) {
-    //     this.log.info("Login to T17 User");
-    //     await this.login17T();
-    // }
-    // if (this.config.aliUsername && this.config.aliPassword) {
-    //     this.log.info("Login to AliExpres");
-    //     await this.loginAli();
-    // }
+    if (this.config.dhlusername && this.config.dhlpassword) {
+      this.log.info("Login to DHL");
+      await this.loginDHL();
+    }
+    if (this.config.dpdusername && this.config.dpdpassword) {
+      this.log.info("Login to DPD");
+      await this.loginDPD();
+    }
+    if (this.config.t17username && this.config.t17password) {
+      this.log.info("Login to T17 User");
+      await this.login17T();
+    }
+    if (this.config.aliUsername && this.config.aliPassword) {
+      this.log.info("Login to AliExpres");
+      await this.loginAli();
+    }
 
-    // if (this.config["17trackKey"]) {
-    //     this.sessions["17track"] = this.config["17trackKey"];
-    //     this.login17TApi();
-    //     this.setState("info.connection", true, true);
-    // }
-    // if (this.config.amzusername && this.config.amzpassword) {
-    //     this.log.info("Login to Amazon");
-    //     await this.loginAmz();
-    // }
+    if (this.config["17trackKey"]) {
+      this.sessions["17track"] = this.config["17trackKey"];
+      this.login17TApi();
+      this.setState("info.connection", true, true);
+    }
+    if (this.config.amzusername && this.config.amzpassword) {
+      this.log.info("Login to Amazon");
+      await this.loginAmz();
+    }
 
     if (this.config.glsusername && this.config.glspassword) {
       this.log.info("Login to GLS");
       await this.loginGLS();
     }
-    // if (this.config.upsusername && this.config.upspassword) {
-    //     this.log.info("Login to UPS");
-    //     await this.loginUPS();
-    // }
-    // if (this.config.hermesusername && this.config.hermespassword) {
-    //     this.log.info("Login to Hermes");
-    //     await this.loginHermes();
-    // }
+    if (this.config.upsusername && this.config.upspassword) {
+      this.log.info("Login to UPS");
+      await this.loginUPS();
+    }
+    if (this.config.hermesusername && this.config.hermespassword) {
+      this.log.info("Login to Hermes");
+      await this.loginHermes();
+    }
 
     this.updateInterval = null;
     this.reLoginTimeout = null;
