@@ -23,7 +23,7 @@ const qs = require("qs");
 const Json2iob = require("./lib/json2iob");
 const getPwd = require("./lib/rsaKey");
 const tough = require("tough-cookie");
-const { HttpsCookieAgent } = require("http-cookie-agent");
+const { HttpsCookieAgent } = require("http-cookie-agent/http");
 const { JSDOM } = require("jsdom");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
@@ -73,8 +73,6 @@ class Parcel extends utils.Adapter {
       this.cookieJar = tough.CookieJar.fromJSON(cookieState.val);
     }
     this.requestClient = axios.create({
-      jar: this.cookieJar,
-      withCredentials: true,
       httpsAgent: new HttpsCookieAgent({
         jar: this.cookieJar,
       }),
@@ -1723,8 +1721,6 @@ class Parcel extends utils.Adapter {
       data: JSON.stringify({
         grant_token: grant_token,
       }),
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -2177,8 +2173,6 @@ class Parcel extends utils.Adapter {
               method: "get",
               url: state.val,
               responseType: "arraybuffer",
-              jar: this.cookieJar,
-              withCredentials: true,
             }).catch((error) => {
               if (error.response && error.response.status === 401) {
                 this.log.debug(error);
