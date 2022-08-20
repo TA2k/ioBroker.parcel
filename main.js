@@ -2160,7 +2160,7 @@ class Parcel extends utils.Adapter {
           if (!imageBase64) {
             const image = await this.requestClient({
               method: "get",
-              url: state.val,
+              url: state.val.replace("/v1.0", ""),
               responseType: "arraybuffer",
             }).catch((error) => {
               if (error.response && error.response.status === 401) {
@@ -2176,6 +2176,22 @@ class Parcel extends utils.Adapter {
             const imageBuffer = Buffer.from(image.data, "binary");
             imageBase64 = "data:" + image.headers["content-type"] + ";base64, " + imageBuffer.toString("base64");
             this.images[state.val] = imageBase64;
+            const pathArray = id.split(".");
+            pathArray.pop();
+            pathArray.push("image");
+            await this.setObjectNotExistsAsync(pathArray.join("."), {
+              type: "state",
+              common: {
+                name: "Image",
+                write: false,
+                read: true,
+                type: "string",
+                role: "state",
+              },
+              native: {},
+            });
+
+            this.setState(pathArray.join("."), imageBase64, true);
             if (this.config.sendToActive) {
               if (this.config.noFirstStartSend && this.firstStart) {
                 return;
@@ -2220,22 +2236,6 @@ class Parcel extends utils.Adapter {
               }
             }
           }
-          const pathArray = id.split(".");
-          pathArray.pop();
-          pathArray.push("image");
-          await this.setObjectNotExistsAsync(pathArray.join("."), {
-            type: "state",
-            common: {
-              name: "Image",
-              write: false,
-              read: true,
-              type: "string",
-              role: "state",
-            },
-            native: {},
-          });
-
-          this.setState(pathArray.join("."), imageBase64, true);
         }
       }
     }
