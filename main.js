@@ -462,33 +462,35 @@ class Parcel extends utils.Adapter {
         }
       });
     let form = this.extractHidden(body);
-    form.email = this.config.amzusername;
-    body = await this.requestClient({
-      method: "post",
-      url: "https://www.amazon.de/ap/signin",
-      headers: {
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "content-type": "application/x-www-form-urlencoded",
-        origin: "https://www.amazon.de",
-        "accept-language": "de-de",
-        "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-        referer: "https://www.amazon.de/ap/signin",
-      },
-      data: qs.stringify(form),
-      jar: this.cookieJar,
-      withCredentials: true,
-    })
-      .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
-        return res.data;
+    if (form.email == !this.config.amzusername) {
+      form.email = this.config.amzusername;
+      body = await this.requestClient({
+        method: "post",
+        url: "https://www.amazon.de/ap/signin",
+        headers: {
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "content-type": "application/x-www-form-urlencoded",
+          origin: "https://www.amazon.de",
+          "accept-language": "de-de",
+          "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+          referer: "https://www.amazon.de/ap/signin",
+        },
+        data: qs.stringify(form),
+        jar: this.cookieJar,
+        withCredentials: true,
       })
-      .catch((error) => {
-        this.log.error(error);
-        if (error.response) {
-          this.log.error(JSON.stringify(error.response.data));
-        }
-      });
-    form = this.extractHidden(body);
+        .then(async (res) => {
+          this.log.debug(JSON.stringify(res.data));
+          return res.data;
+        })
+        .catch((error) => {
+          this.log.error(error);
+          if (error.response) {
+            this.log.error(JSON.stringify(error.response.data));
+          }
+        });
+      form = this.extractHidden(body);
+    }
     form.password = this.config.amzpassword;
     await this.requestClient({
       method: "post",
