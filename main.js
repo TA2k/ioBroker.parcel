@@ -73,9 +73,8 @@ class Parcel extends utils.Adapter {
       this.cookieJar = tough.CookieJar.fromJSON(cookieState.val);
     }
     this.requestClient = axios.create({
-      httpsAgent: new HttpsCookieAgent({
-        jar: this.cookieJar,
-      }),
+      withCredentials: true,
+      httpsAgent: new HttpsCookieAgent({ cookies: { jar: this.cookieJar } }),
     });
 
     if (this.config.dhlusername && this.config.dhlpassword) {
@@ -216,8 +215,7 @@ class Parcel extends utils.Adapter {
           origin: "https://www.dhl.de",
           "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
         },
-        jar: this.cookieJar,
-        withCredentials: true,
+
         data: JSON.stringify({
           id: this.config.dhlusername,
           password: this.config.dhlpassword,
@@ -261,8 +259,7 @@ class Parcel extends utils.Adapter {
           origin: "https://www.dhl.de",
           "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
         },
-        jar: this.cookieJar,
-        withCredentials: true,
+
         data: JSON.stringify({
           value: this.config.dhlMfa,
           remember2fa: true,
@@ -362,8 +359,7 @@ class Parcel extends utils.Adapter {
           referer: "https://login.aliexpress.com/",
           "accept-language": "de",
         },
-        jar: this.cookieJar,
-        withCredentials: true,
+
         data: qs.stringify(loginData),
       })
         .then(async (res) => {
@@ -381,8 +377,6 @@ class Parcel extends utils.Adapter {
       await this.requestClient({
         method: "get",
         url: "https://www.aliexpress.com/p/order/index.html",
-        jar: this.cookieJar,
-        withCredentials: true,
       })
         .then(async (res) => {
           //  this.log.debug(JSON.stringify(res.data));
@@ -407,8 +401,7 @@ class Parcel extends utils.Adapter {
           origin: "https://www.dhl.de",
           "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
         },
-        jar: this.cookieJar,
-        withCredentials: true,
+
         data: JSON.stringify({
           value: this.config.dhlMfa,
           remember2fa: true,
@@ -1102,8 +1095,6 @@ class Parcel extends utils.Adapter {
       dataDhl = await this.requestClient({
         method: "get",
         url: "https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app",
-        jar: this.cookieJar,
-        withCredentials: true,
       })
         .then(async (res) => {
           this.log.debug(JSON.stringify(res.data));
@@ -1242,8 +1233,7 @@ class Parcel extends utils.Adapter {
           method: element.method ? element.method : "get",
           url: element.url,
           headers: element.header,
-          jar: this.cookieJar,
-          withCredentials: true,
+
           data: element.data,
         })
           .then(async (res) => {
@@ -1815,8 +1805,6 @@ class Parcel extends utils.Adapter {
           accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "accept-language": "de-de",
         },
-        jar: this.cookieJar,
-        withCredentials: true,
       })
         .then(async (res) => {
           // this.log.debug(JSON.stringify(res.data));
@@ -1908,8 +1896,7 @@ class Parcel extends utils.Adapter {
         await this.requestClient({
           method: "post",
           url: "https://www.dhl.de/int-erkennen/refresh",
-          jar: this.cookieJar,
-          withCredentials: true,
+
           headers: {
             "content-type": "application/json",
             accept: "*/*",
