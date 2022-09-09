@@ -1552,7 +1552,7 @@ class Parcel extends utils.Adapter {
           if (sendUser.length > 0) {
             for (const user of sendUser) {
               if (sendInstance.includes("pushover")) {
-                await this.sendToAsync(sendInstance, { user: user, message: text, title: "Paketstatus" });
+                await this.sendToAsync(sendInstance, { device: user, message: text, title: "Paketstatus" });
               } else if (sendInstance.includes("signal-cmb")) {
                 await this.sendToAsync(sendInstance, "send", {
                   text: text,
@@ -2205,7 +2205,7 @@ class Parcel extends utils.Adapter {
                 if (sendUser.length > 0) {
                   for (const user of sendUser) {
                     if (sendInstance.includes("pushover")) {
-                      await this.sendToAsync(sendInstance, { user: user, file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
+                      await this.sendToAsync(sendInstance, { device: user, file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
                     } else if (sendInstance.includes("signal-cmb")) {
                       await this.sendToAsync(sendInstance, "send", {
                         text: "✉️Briefankündigung",
