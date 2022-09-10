@@ -1,286 +1,287 @@
 {
-    "common": {
-        "name": "parcel",
-        "version": "0.0.20",
-        "news": {
-            "0.0.20": {
-                "en": "Fix GLS Parcel"
-            },
-            "0.0.18": {
-                "en": "Fix UPS/GLS login"
-            },
-            "0.0.15": {
-                "en": "Fix DPD states and remove canvas dependency"
-            },
-            "0.0.13": {
-                "en": "Fix Amazon delivery state, add telegram user"
-            },
-            "0.0.12": {
-                "en": "Add delivery status"
-            },
-            "0.0.11": {
-                "en": "Briefankündigung wird gestoppt, falls sie nicht funktioniert"
-            },
-            "0.0.10": {
-                "en": "in Zustellung DP, DPD Bugfix, detailierte DPs für Amazon, Option für keine Benachrichtigung bei Adapterstart"
-            },
-            "0.0.8": {
-                "en": "Hermes hinzugefügt"
-            },
-            "0.0.7": {
-                "en": "Datenpunkt für in Zustellung hinzugefügt, Fix für wiederholende Benachrichtigungen"
-            },
-            "0.0.6": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "zh-cn": "首次出版"
-            }
-        },
-        "title": "Parcel tracking",
-        "titleLang": {
-            "en": "Parcel tracking",
-            "de": "Paket Sendungsverfolgung",
-            "ru": "Отслеживание посылок",
-            "pt": "Rastreamento de encomendas",
-            "nl": "Pakket volgen",
-            "fr": "Suivi colis",
-            "it": "Tracciamento del pacco",
-            "es": "Seguimiento de paquetes",
-            "pl": "Śledzenie przesyłek",
-            "zh-cn": "包裹追踪"
-        },
-        "desc": {
-            "en": "Parcel tracking",
-            "de": "Paket Sendungsverfolgung",
-            "ru": "Отслеживание посылок",
-            "pt": "Rastreamento de encomendas",
-            "nl": "Pakket volgen",
-            "fr": "Suivi colis",
-            "it": "Tracciamento del pacco",
-            "es": "Seguimiento de paquetes",
-            "pl": "Śledzenie przesyłek",
-            "zh-cn": "包裹追踪"
-        },
-        "authors": [
-            "TA2k <tombox2020@gmail.com>"
-        ],
-        "keywords": [
-            "parcel",
-            "tracking",
-            "paketverfolgung",
-            "sendungsverfolgung",
-            "dhl",
-            "gls",
-            "ups",
-            "hermes",
-            "paket",
-            "17Track",
-            "Amazon",
-            "dpd",
-            "briefe"
-        ],
-        "license": "MIT",
-        "platform": "Javascript/Node.js",
-        "main": "main.js",
-        "icon": "parcel.png",
-        "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/TA2k/ioBroker.parcel/master/admin/parcel.png",
-        "readme": "https://github.com/TA2k/ioBroker.parcel/blob/master/README.md",
-        "loglevel": "info",
-        "mode": "daemon",
-        "type": "misc-data",
-        "compact": true,
-        "connectionType": "cloud",
-        "dataSource": "poll",
-        "materialize": true,
-        "plugins": {
-            "sentry": {
-                "dsn": "https://6296452769de44959c1809642564a7e3@sentry.iobroker.net/171"
-            }
-        },
-        "dependencies": [
-            {
-                "js-controller": ">=3.2.0"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=4.0.9"
-            }
-        ]
+  "common": {
+    "name": "parcel",
+    "version": "0.0.21",
+    "news": {
+      "0.0.21": {
+        "en": "Fix Brief images and pushover user"
+      },
+      "0.0.20": {
+        "en": "Fix GLS Parcel"
+      },
+      "0.0.18": {
+        "en": "Fix UPS/GLS login"
+      },
+      "0.0.15": {
+        "en": "Fix DPD states and remove canvas dependency"
+      },
+      "0.0.13": {
+        "en": "Fix Amazon delivery state, add telegram user"
+      },
+      "0.0.12": {
+        "en": "Add delivery status"
+      },
+      "0.0.11": {
+        "en": "Briefankündigung wird gestoppt, falls sie nicht funktioniert"
+      },
+      "0.0.10": {
+        "en": "in Zustellung DP, DPD Bugfix, detailierte DPs für Amazon, Option für keine Benachrichtigung bei Adapterstart"
+      },
+      "0.0.8": {
+        "en": "Hermes hinzugefügt"
+      },
+      "0.0.7": {
+        "en": "Datenpunkt für in Zustellung hinzugefügt, Fix für wiederholende Benachrichtigungen"
+      },
+      "0.0.6": {
+        "en": "initial release",
+        "de": "Erstveröffentlichung",
+        "ru": "Начальная версия",
+        "pt": "lançamento inicial",
+        "nl": "Eerste uitgave",
+        "fr": "Première version",
+        "it": "Versione iniziale",
+        "es": "Versión inicial",
+        "pl": "Pierwsze wydanie",
+        "zh-cn": "首次出版"
+      }
     },
-    "encryptedNative": [
-        "dhlpassword",
-        "amzpassword",
-        "dpdpassword",
-        "t17password",
-        "upspassword",
-        "hermespassword",
-        "postchpassword",
-        "postatpassword",
-        "glspassword"
-    ],
-    "protectedNative": [
-        "dhlpassword",
-        "amzpassword",
-        "dpdpassword",
-        "t17password",
-        "upspassword",
-        "hermespassword",
-        "postchpassword",
-        "postatpassword",
-        "glspassword"
-    ],
-    "native": {
-        "amzusername": "",
-        "amzpassword": "",
-        "glsusername": "",
-        "glspassword": "",
-        "upsusername": "",
-        "upspassword": "",
-        "hermespassword": "",
-        "hermesusername": "",
-        "postchusername": "",
-        "postchpassword": "",
-        "postatusername": "",
-        "postatpassword": "",
-        "amzotp": "",
-        "t17username": "",
-        "t17password": "",
-        "dpdusername": "",
-        "dpdpassword": "",
-        "dhlusername": "",
-        "dhlpassword": "",
-        "dhlMfa": "",
-        "17trackKey": "",
-        "sendToActive": false,
-        "noFirstStartSend": false,
-        "sendToInstance": "telegram.0",
-        "sendToUser": "",
-        "interval": 10
+    "title": "Parcel tracking",
+    "titleLang": {
+      "en": "Parcel tracking",
+      "de": "Paket Sendungsverfolgung",
+      "ru": "Отслеживание посылок",
+      "pt": "Rastreamento de encomendas",
+      "nl": "Pakket volgen",
+      "fr": "Suivi colis",
+      "it": "Tracciamento del pacco",
+      "es": "Seguimiento de paquetes",
+      "pl": "Śledzenie przesyłek",
+      "zh-cn": "包裹追踪"
     },
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "allProviderJson",
-            "type": "state",
-            "common": {
-                "role": "json",
-                "name": "Tracking List of all Providers",
-                "type": "string",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "allProviderObjects",
-            "type": "state",
-            "common": {
-                "role": "json",
-                "name": "Tracking Dictionary of all Providers",
-                "type": "string",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "inDelivery",
-            "type": "state",
-            "common": {
-                "role": "json",
-                "name": "Today in delivery/Heute in Zustellung",
-                "type": "string",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "inDeliveryCount",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Number of in delivery/Anzahl in Zustellung",
-                "type": "number",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "auth",
-            "type": "channel",
-            "common": {
-                "name": "Auth Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "auth.dhlMfaToken",
-            "type": "state",
-            "common": {
-                "role": "state",
-                "name": "DHL Mfa Token",
-                "type": "string",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "auth.cookie",
-            "type": "state",
-            "common": {
-                "role": "state",
-                "name": "Cookie state",
-                "type": "string",
-                "read": true,
-                "write": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "Device or service connected",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "refresh",
-            "type": "state",
-            "common": {
-                "role": "boolean",
-                "name": "Force data refresh",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": false
-            },
-            "native": {}
-        }
+    "desc": {
+      "en": "Parcel tracking",
+      "de": "Paket Sendungsverfolgung",
+      "ru": "Отслеживание посылок",
+      "pt": "Rastreamento de encomendas",
+      "nl": "Pakket volgen",
+      "fr": "Suivi colis",
+      "it": "Tracciamento del pacco",
+      "es": "Seguimiento de paquetes",
+      "pl": "Śledzenie przesyłek",
+      "zh-cn": "包裹追踪"
+    },
+    "authors": ["TA2k <tombox2020@gmail.com>"],
+    "keywords": [
+      "parcel",
+      "tracking",
+      "paketverfolgung",
+      "sendungsverfolgung",
+      "dhl",
+      "gls",
+      "ups",
+      "hermes",
+      "paket",
+      "17Track",
+      "Amazon",
+      "dpd",
+      "briefe"
+    ],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "main": "main.js",
+    "icon": "parcel.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/TA2k/ioBroker.parcel/master/admin/parcel.png",
+    "readme": "https://github.com/TA2k/ioBroker.parcel/blob/master/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "misc-data",
+    "compact": true,
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "materialize": true,
+    "plugins": {
+      "sentry": {
+        "dsn": "https://6296452769de44959c1809642564a7e3@sentry.iobroker.net/171"
+      }
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=3.2.0"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=4.0.9"
+      }
     ]
+  },
+  "encryptedNative": [
+    "dhlpassword",
+    "amzpassword",
+    "dpdpassword",
+    "t17password",
+    "upspassword",
+    "hermespassword",
+    "postchpassword",
+    "postatpassword",
+    "glspassword"
+  ],
+  "protectedNative": [
+    "dhlpassword",
+    "amzpassword",
+    "dpdpassword",
+    "t17password",
+    "upspassword",
+    "hermespassword",
+    "postchpassword",
+    "postatpassword",
+    "glspassword"
+  ],
+  "native": {
+    "amzusername": "",
+    "amzpassword": "",
+    "glsusername": "",
+    "glspassword": "",
+    "upsusername": "",
+    "upspassword": "",
+    "hermespassword": "",
+    "hermesusername": "",
+    "postchusername": "",
+    "postchpassword": "",
+    "postatusername": "",
+    "postatpassword": "",
+    "amzotp": "",
+    "t17username": "",
+    "t17password": "",
+    "dpdusername": "",
+    "dpdpassword": "",
+    "dhlusername": "",
+    "dhlpassword": "",
+    "dhlMfa": "",
+    "17trackKey": "",
+    "sendToActive": false,
+    "noFirstStartSend": false,
+    "sendToInstance": "telegram.0",
+    "sendToUser": "",
+    "interval": 10
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "allProviderJson",
+      "type": "state",
+      "common": {
+        "role": "json",
+        "name": "Tracking List of all Providers",
+        "type": "string",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "allProviderObjects",
+      "type": "state",
+      "common": {
+        "role": "json",
+        "name": "Tracking Dictionary of all Providers",
+        "type": "string",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "inDelivery",
+      "type": "state",
+      "common": {
+        "role": "json",
+        "name": "Today in delivery/Heute in Zustellung",
+        "type": "string",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "inDeliveryCount",
+      "type": "state",
+      "common": {
+        "role": "value",
+        "name": "Number of in delivery/Anzahl in Zustellung",
+        "type": "number",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "auth",
+      "type": "channel",
+      "common": {
+        "name": "Auth Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "auth.dhlMfaToken",
+      "type": "state",
+      "common": {
+        "role": "state",
+        "name": "DHL Mfa Token",
+        "type": "string",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "auth.cookie",
+      "type": "state",
+      "common": {
+        "role": "state",
+        "name": "Cookie state",
+        "type": "string",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "refresh",
+      "type": "state",
+      "common": {
+        "role": "boolean",
+        "name": "Force data refresh",
+        "type": "boolean",
+        "read": true,
+        "write": true,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
 }
