@@ -1,8 +1,11 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "news": {
+      "0.0.22": {
+        "en": "Fix Amazon Login"
+      },
       "0.0.21": {
         "en": "Fix Brief images and pushover user"
       },
