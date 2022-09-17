@@ -462,7 +462,7 @@ class Parcel extends utils.Adapter {
         }
       });
     let form = this.extractHidden(body);
-    if (form.email == !this.config.amzusername) {
+    if (form.email !== this.config.amzusername) {
       form.email = this.config.amzusername;
       body = await this.requestClient({
         method: "post",
