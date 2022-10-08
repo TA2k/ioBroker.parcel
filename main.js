@@ -52,7 +52,15 @@ class Parcel extends utils.Adapter {
     this.alreadySentMessages = {};
     this.ignoredPath = [];
     this.firstStart = true;
-    this.delivery_status = { ERROR: -1, UNKNOWN: 5, REGISTERED: 10, IN_PREPARATION: 20, IN_TRANSIT: 30, OUT_FOR_DELIVERY: 40, DELIVERED: 1 };
+    this.delivery_status = {
+      ERROR: -1,
+      UNKNOWN: 5,
+      REGISTERED: 10,
+      IN_PREPARATION: 20,
+      IN_TRANSIT: 30,
+      OUT_FOR_DELIVERY: 40,
+      DELIVERED: 1,
+    };
     this.tmpDir = tmpdir();
   }
 
@@ -1302,7 +1310,10 @@ class Parcel extends utils.Adapter {
             if (data) {
               await this.cleanupProvider(id, data);
               this.mergeProviderJson(id, data);
-              this.json2iob.parse(element.path, data, { forceIndex: forceIndex, preferedArrayName: preferedArrayName });
+              this.json2iob.parse(element.path, data, {
+                forceIndex: forceIndex,
+                preferedArrayName: preferedArrayName,
+              });
               data && this.setState(element.path + ".json", JSON.stringify(data), true);
             }
           })
@@ -1425,7 +1436,12 @@ class Parcel extends utils.Adapter {
     }
     if (id === "ups" && data.sendungen) {
       const sendungsArray = data.sendungen.map((sendung) => {
-        const sendungsObject = { id: sendung.id, name: sendung.shipFromName, status: sendung.locStatus || sendung.status, source: "UPS" };
+        const sendungsObject = {
+          id: sendung.id,
+          name: sendung.shipFromName,
+          status: sendung.locStatus || sendung.status,
+          source: "UPS",
+        };
 
         sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
         if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
@@ -1444,7 +1460,12 @@ class Parcel extends utils.Adapter {
         if (sendung.sender && sendung.sender.lastname) {
           name = name + " " + sendung.sender.lastname;
         }
-        const sendungsObject = { id: sendung.id, name: name, status: sendung.lastStatusMessage || "", source: "Hermes" };
+        const sendungsObject = {
+          id: sendung.id,
+          name: name,
+          status: sendung.lastStatusMessage || "",
+          source: "Hermes",
+        };
 
         sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
         if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
@@ -1460,7 +1481,12 @@ class Parcel extends utils.Adapter {
 
     if (id === "dpd" && data && data.sendungen) {
       const sendungsArray = data.sendungen.map((sendung) => {
-        const sendungsObject = { id: sendung.id, name: sendung.name, status: sendung.status || "", source: "DPD" };
+        const sendungsObject = {
+          id: sendung.id,
+          name: sendung.name,
+          status: sendung.status || "",
+          source: "DPD",
+        };
 
         sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
         if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
@@ -1490,7 +1516,12 @@ class Parcel extends utils.Adapter {
     }
     if (id === "17track" && data.accepted) {
       const sendungsArray = data.accepted.map((sendung) => {
-        const sendungsObject = { id: sendung.number, name: sendung.number, status: sendung.track.z0 ? sendung.track.z0.z : "", source: "17track" };
+        const sendungsObject = {
+          id: sendung.number,
+          name: sendung.number,
+          status: sendung.track.z0 ? sendung.track.z0.z : "",
+          source: "17track",
+        };
         if (!this.mergedJsonObject[sendung.id]) {
           sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
           if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
@@ -1552,7 +1583,11 @@ class Parcel extends utils.Adapter {
           if (sendUser.length > 0) {
             for (const user of sendUser) {
               if (sendInstance.includes("pushover")) {
-                await this.sendToAsync(sendInstance, { device: user, message: text, title: "Paketstatus" });
+                await this.sendToAsync(sendInstance, {
+                  device: user,
+                  message: text,
+                  title: "Paketstatus",
+                });
               } else if (sendInstance.includes("signal-cmb")) {
                 await this.sendToAsync(sendInstance, "send", {
                   text: text,
@@ -2141,7 +2176,12 @@ class Parcel extends utils.Adapter {
             url: "https://buyer.17track.net/orderapi/call",
             header: { "content-type": "application/x-www-form-urlencoded" },
 
-            data: JSON.stringify({ version: "1.0", timeZoneOffset: -60, method: "AddTrackNo", param: { TrackNos: [state.val] } }),
+            data: JSON.stringify({
+              version: "1.0",
+              timeZoneOffset: -60,
+              method: "AddTrackNo",
+              param: { TrackNos: [state.val] },
+            }),
           })
             .then(async (res) => {
               this.log.info(JSON.stringify(res.data));
@@ -2160,7 +2200,7 @@ class Parcel extends utils.Adapter {
           if (!imageBase64) {
             const image = await this.requestClient({
               method: "get",
-              url: state.val.replace("/v1.0", ""),
+              url: state.val,
               responseType: "arraybuffer",
             }).catch((error) => {
               if (error.response && error.response.status === 401) {
@@ -2205,20 +2245,33 @@ class Parcel extends utils.Adapter {
                 if (sendUser.length > 0) {
                   for (const user of sendUser) {
                     if (sendInstance.includes("pushover")) {
-                      await this.sendToAsync(sendInstance, { device: user, file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
+                      await this.sendToAsync(sendInstance, {
+                        device: user,
+                        file: `${this.tmpDir}${sep}${uuid}.jpg`,
+                        title: "✉️Briefankündigung",
+                      });
                     } else if (sendInstance.includes("signal-cmb")) {
                       await this.sendToAsync(sendInstance, "send", {
                         text: "✉️Briefankündigung",
                         phone: user,
                       });
                     } else {
-                      await this.sendToAsync(sendInstance, { user: user, text: "✉️Briefankündigung" });
-                      await this.sendToAsync(sendInstance, { user: user, text: `${this.tmpDir}${sep}${uuid}.jpg` });
+                      await this.sendToAsync(sendInstance, {
+                        user: user,
+                        text: "✉️Briefankündigung",
+                      });
+                      await this.sendToAsync(sendInstance, {
+                        user: user,
+                        text: `${this.tmpDir}${sep}${uuid}.jpg`,
+                      });
                     }
                   }
                 } else {
                   if (sendInstance.includes("pushover")) {
-                    await this.sendToAsync(sendInstance, { file: `${this.tmpDir}${sep}${uuid}.jpg`, title: "✉️Briefankündigung" });
+                    await this.sendToAsync(sendInstance, {
+                      file: `${this.tmpDir}${sep}${uuid}.jpg`,
+                      title: "✉️Briefankündigung",
+                    });
                   } else if (sendInstance.includes("signal-cmb")) {
                     await this.sendToAsync(sendInstance, "send", {
                       text: "✉️Briefankündigung",
