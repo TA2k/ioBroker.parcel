@@ -517,7 +517,7 @@ class Parcel extends utils.Adapter {
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
-        if (res.data.indexOf("your-orders-content-container__content") !== -1) {
+        if (res.data.indexOf("js-yo-main-content") !== -1) {
           this.log.info("Login to Amazon successful");
           this.sessions["amz"] = true;
           this.setState("info.connection", true, true);
@@ -565,7 +565,7 @@ class Parcel extends utils.Adapter {
           })
             .then(async (res) => {
               this.log.debug(JSON.stringify(res.data));
-              if (res.data.indexOf("your-orders-content-container__content") !== -1) {
+              if (res.data.indexOf("js-yo-main-content") !== -1) {
                 this.log.info("Login to Amazon successful");
                 this.sessions["amz"] = true;
                 this.setState("info.connection", true, true);
