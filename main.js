@@ -783,7 +783,7 @@ class Parcel extends utils.Adapter {
         "user-agent": "Hermes/33 CFNetwork/1240.0.4 Darwin/20.6.0",
         "accept-language": "de-de",
       },
-      data: `{"username":"${this.config.hermesusername}","password":"${this.config.hermespassword}"}`,
+      data: { username: this.config.hermesusername, password: this.config.hermespassword },
 
       jar: this.cookieJar,
       withCredentials: true,
