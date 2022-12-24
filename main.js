@@ -17,6 +17,11 @@ Module.prototype.require = function () {
   return originalRequire.apply(this, arguments);
 };
 
+//Properly escape special chars
+String.prototype.escapeSpecialCharsInJSONString = function() {
+	return JSON.stringify(this).slice(1, -1);
+};
+
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
 const qs = require("qs");
@@ -783,7 +788,7 @@ class Parcel extends utils.Adapter {
         "user-agent": "Hermes/33 CFNetwork/1240.0.4 Darwin/20.6.0",
         "accept-language": "de-de",
       },
-      data: `{"username":"${this.config.hermesusername}","password":"${this.config.hermespassword}"}`,
+      data: `{"username":"${this.config.hermesusername.escapeSpecialCharsInJSONString()}","password":"${this.config.hermespassword.escapeSpecialCharsInJSONString()}"}`,
 
       jar: this.cookieJar,
       withCredentials: true,
