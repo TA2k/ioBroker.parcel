@@ -1804,14 +1804,27 @@ class Parcel extends utils.Adapter {
         const dom = new JSDOM(res.data);
         const document = dom.window.document;
         const elements = [];
-        const orders = document.querySelectorAll(".a-box.shipment");
+        const orders = document.querySelectorAll(".order-card.js-order-card");
 
         for (const order of orders) {
           const descHandle = order.querySelector(
-            ".a-fixed-right-grid-col.a-col-left .a-row div:first-child .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal"
+            ".a-fixed-right-grid-col.a-col-left .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal"
           );
           const desc = descHandle ? descHandle.textContent.replace(/\n */g, "") : "";
-          const url = order.querySelector(".track-package-button a") ? order.querySelector(".track-package-button a").getAttribute("href") : "";
+          let url = order.querySelector(".track-package-button a") ? order.querySelector(".track-package-button a").getAttribute("href") : "";
+          if (!url) {
+            const allLinks = order.querySelectorAll(".a-button-inner a");
+            for (const link of allLinks) {
+              if (link.textContent.includes("Lieferung verfolgen")) {
+                url = link.getAttribute("href");
+              }
+            }
+          }
+          if (!url) {
+            url = order.querySelector(".yohtmlc-shipment-level-connections .a-button-inner a")
+              ? order.querySelector(".yohtmlc-shipment-level-connections .a-button-inner a").getAttribute("href")
+              : "";
+          }
           if (url) {
             elements.push({ desc: desc, url: url });
           }
@@ -1844,7 +1857,7 @@ class Parcel extends utils.Adapter {
         },
       })
         .then(async (res) => {
-          // this.log.debug(JSON.stringify(res.data));
+          this.log.debug(JSON.stringify(res.data));
           const dom = new JSDOM(res.data);
           const document = dom.window.document;
           const statusHandle =
