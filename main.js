@@ -1799,7 +1799,7 @@ class Parcel extends utils.Adapter {
       withCredentials: true,
     })
       .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
+        // this.log.debug(JSON.stringify(res.data));
 
         const dom = new JSDOM(res.data);
         const document = dom.window.document;
@@ -1857,7 +1857,7 @@ class Parcel extends utils.Adapter {
         },
       })
         .then(async (res) => {
-          this.log.debug(JSON.stringify(res.data));
+          // this.log.debug(JSON.stringify(res.data));
           const dom = new JSDOM(res.data);
           const document = dom.window.document;
           const statusHandle =
