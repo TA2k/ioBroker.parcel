@@ -1715,6 +1715,7 @@ class Parcel extends utils.Adapter {
             IN_TRANSIT: this.delivery_status.IN_TRANSIT,
             OUT_FOR_DELIVERY: this.delivery_status.OUT_FOR_DELIVERY,
             DELIVERED: this.delivery_status.DELIVERED,
+            PICKED_UP: this.delivery_status.DELIVERED,
           };
           if (amz_status[sendung.detailedState.shortStatus] !== undefined) {
             return amz_status[sendung.detailedState.shortStatus];
@@ -1878,7 +1879,7 @@ class Parcel extends utils.Adapter {
                 stopsStatus = stateObject.mapTracking.calloutMessage;
               }
             } catch (error) {
-              this.log.error(errror);
+              this.log.error(error);
             }
           }
 
