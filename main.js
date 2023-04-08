@@ -20,6 +20,7 @@ Module.prototype.require = function () {
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
 const qs = require("qs");
+const crypto = require("crypto");
 const Json2iob = require("./lib/json2iob");
 const getPwd = require("./lib/rsaKey");
 const tough = require("tough-cookie");
@@ -87,7 +88,7 @@ class Parcel extends utils.Adapter {
 
     if (this.config.dhlusername && this.config.dhlpassword) {
       this.log.info("Login to DHL");
-      await this.loginDHL();
+      await this.loginDHLNew();
     }
     if (this.config.dpdusername && this.config.dpdpassword) {
       this.log.info("Login to DPD");
@@ -142,6 +143,48 @@ class Parcel extends utils.Adapter {
     } else {
       this.log.warn("No login session found");
     }
+  }
+  async loginDhlNew() {
+    const mfaTokenState = await this.getStateAsync("auth.dhlMfaToken");
+    const mfaToken = mfaTokenState ? mfaTokenState.val : null;
+    const [code_verifier, codeChallenge] = this.getCodeChallenge();
+    await this.requestClient({
+      method: "get",
+      maxBodyLength: Infinity,
+      url: "https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize",
+      params: {
+        redirect_uri: "dhllogin://de.deutschepost.dhl/login",
+        state: "eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9",
+        client_id: "83471082-5c13-4fce-8dcb-19d2a3fca413",
+        response_type: "code",
+        scope: "openid offline_access",
+        claims:
+          '{"id_token":{"email":null,"post_number":null,"twofa":null,"service_mask":null,"deactivate_account":null,"last_login":null,"customer_type":null,"display_name":null}}',
+        nonce: "",
+        login_hint: "",
+        prompt: "login",
+        ui_locales: "de-DE",
+        code_challenge: codeChallenge,
+        code_challenge_method: 'S256"',
+      },
+      headers: {
+        Host: "login.dhl.de",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+        "Accept-Language": "de-de",
+        Connection: "keep-alive",
+      },
+    })
+      .then(async (res) => {
+        this.log.debug(res.data);
+        return true;
+      })
+      .catch((error) => {
+        this.log.error(error);
+        error.response && this.log.error(JSON.stringify(error.response.data));
+      });
   }
   async loginDHL() {
     const mfaTokenState = await this.getStateAsync("auth.dhlMfaToken");
@@ -2086,17 +2129,17 @@ class Parcel extends utils.Adapter {
 
     return matches;
   }
-  // getCodeChallenge() {
-  //     let hash = "";
-  //     let result = "";
-  //     const chars = "0123456789abcdef";
-  //     result = "";
-  //     for (let i = 64; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-  //     hash = crypto.createHash("sha256").update(result).digest("base64");
-  //     hash = hash.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  getCodeChallenge() {
+    let hash = "";
+    let result = "";
+    const chars = "0123456789abcdef";
+    result = "";
+    for (let i = 64; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    hash = crypto.createHash("sha256").update(result).digest("base64");
+    hash = hash.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
-  //     return [result, hash];
-  // }
+    return [result, hash];
+  }
   /**
    * Is called when adapter shuts down - callback has to be called under any circumstances!
    * @param {() => void} callback
