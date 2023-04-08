@@ -88,8 +88,9 @@ class Parcel extends utils.Adapter {
 
     if (this.config.dhlusername && this.config.dhlpassword) {
       this.log.info("Login to DHL");
-      await this.loginDHLNew();
+      await this.loginDhlNew();
     }
+
     if (this.config.dpdusername && this.config.dpdpassword) {
       this.log.info("Login to DPD");
       await this.loginDPD();
@@ -148,7 +149,8 @@ class Parcel extends utils.Adapter {
     const mfaTokenState = await this.getStateAsync("auth.dhlMfaToken");
     const mfaToken = mfaTokenState ? mfaTokenState.val : null;
     const [code_verifier, codeChallenge] = this.getCodeChallenge();
-    await this.requestClient({
+    const transactionId = this.randomString(40);
+    const initUrl = await this.requestClient({
       method: "get",
       maxBodyLength: Infinity,
       url: "https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize",
@@ -178,12 +180,226 @@ class Parcel extends utils.Adapter {
       },
     })
       .then(async (res) => {
+        // this.log.debug(res.data);
+        return res.request.path;
+      })
+      .catch((error) => {
+        this.log.error(error);
+        error.response && this.log.error(JSON.stringify(error.response.data));
+      });
+    const initParams = qs.parse(initUrl.split("?")[1]);
+    const signin = await this.requestClient({
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://login-api.dhl.de/widget/traditional_signin.jsonp",
+      headers: {
+        Host: "login-api.dhl.de",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Origin: "https://login.dhl.de",
+        Connection: "keep-alive",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+        Referer: "https://login.dhl.de/",
+        "Accept-Language": "de-de",
+      },
+      data: {
+        utf8: "✓",
+        capture_screen: "signIn",
+        js_version: "d445bf4",
+        capture_transactionId: transactionId,
+        form: "signInForm",
+        flow: "ciam_flow_001",
+        client_id: "f8s9584t9f9kz5wg9agkp259hc924uq9",
+        redirect_uri: "https://login.dhl.de" + initUrl,
+        response_type: "token",
+        flow_version: "20230309140056615616",
+        settings_version: "",
+        locale: "de-DE",
+        recaptchaVersion: "2",
+        emailOrPostNumber: this.config.dhlusername,
+        currentPassword: this.config.dhlpassword,
+      },
+    })
+      .then(async (res) => {
         this.log.debug(res.data);
         return true;
       })
       .catch((error) => {
         this.log.error(error);
         error.response && this.log.error(JSON.stringify(error.response.data));
+      });
+    if (!signin) {
+      this.log.error("DHL Signin failed");
+      return;
+    }
+    const preSession = await this.requestClient({
+      method: "get",
+      maxBodyLength: Infinity,
+      url: "https://login-api.dhl.de/widget/get_result.jsonp?transactionId=" + transactionId + "&cache=" + Date.now(),
+      headers: {
+        Host: "login-api.dhl.de",
+        Connection: "keep-alive",
+        Accept: "*/*",
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+        "Accept-Language": "de-de",
+        Referer: "https://login.dhl.de/",
+      },
+    })
+      .then(async (res) => {
+        this.log.debug(res.data);
+        return JSON.parse(res.data.split(")(")[1].split(");")[0]);
+      })
+      .catch((error) => {
+        this.log.error(error);
+        error.response && this.log.error(JSON.stringify(error.response.data));
+      });
+    const accessToken2 = await this.requestClient({
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/auth-ui/token-url",
+      params: {
+        __aic_csrf: initParams.__aic_csrf,
+        claims:
+          '{"id_token":{"customer_type":null,"deactivate_account":null,"display_name":null,"email":null,"last_login":null,"post_number":null,"service_mask":null,"twofa":null}}',
+        client_id: "83471082-5c13-4fce-8dcb-19d2a3fca413",
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256",
+        login_hint: "",
+        nonce: "",
+        prompt: "login",
+        redirect_uri: "dhllogin://de.deutschepost.dhl/login",
+        response_type: "code",
+        scope: "openid",
+        state: "eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9",
+        ui_locales: 'de-DE",',
+      },
+      headers: {
+        Host: "login.dhl.de",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Origin: "https://login.dhl.de",
+        Connection: "keep-alive",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+        "Accept-Language": "de-de",
+      },
+      data: {
+        screen: "signIn",
+        authenticated: "True",
+        registering: "False",
+        accessToken: preSession.result.accessToken,
+        _csrf_token: this.cookieJar.store.idx["login.dhl.de"]["/"]._csrf_token.value,
+      },
+    })
+      .then(async (res) => {
+        // this.log.debug(res.data);
+
+        return res.data.split("existingToken: '")[1].split("'")[0];
+      })
+      .catch((error) => {
+        this.log.error(error);
+        error.response && this.log.error(JSON.stringify(error.response.data));
+      });
+    const idtoken = await this.requestClient({
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/auth-ui/token-url",
+      maxRedirects: 0,
+      params: {
+        __aic_csrf: initParams.__aic_csrf,
+        claims:
+          '{"id_token":{"customer_type":null,"deactivate_account":null,"display_name":null,"email":null,"last_login":null,"post_number":null,"service_mask":null,"twofa":null}}',
+        client_id: "83471082-5c13-4fce-8dcb-19d2a3fca413",
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256",
+        login_hint: "",
+        nonce: "",
+        prompt: "login",
+        redirect_uri: "dhllogin://de.deutschepost.dhl/login",
+        response_type: "code",
+        scope: "openid",
+        state: "eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9",
+        ui_locales: "de-DE",
+      },
+      headers: {
+        Host: "login.dhl.de",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Origin: "https://login.dhl.de",
+        Connection: "keep-alive",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+        "Accept-Language": "de-de",
+      },
+      data: {
+        screen: "loginSuccess",
+        accessToken: accessToken2,
+        _csrf_token: this.cookieJar.store.idx["login.dhl.de"]["/"]._csrf_token.value,
+      },
+    })
+      .then(async (res) => {
+        this.log.debug(res.data);
+        return res.data;
+      })
+      .catch((error) => {
+        if (error.response && error.response.status === 302) {
+          return error.response.headers.location.split("id_token_hint=")[1].split("&")[0];
+        }
+        this.log.error(error);
+        error.response && this.log.error(JSON.stringify(error.response.data));
+      });
+    const codeUrl = await this.requestClient({
+      method: "get",
+      maxBodyLength: Infinity,
+      url:
+        'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize?claims={"id_token":{"customer_type":null,"deactivate_account":null,"display_name":null,"email":null,"last_login":null,"post_number":null,"service_mask":null,"twofa":null}}&client_id=83471082-5c13-4fce-8dcb-19d2a3fca413&code_challenge=' +
+        codeChallenge +
+        "&code_challenge_method=S256&prompt=none&redirect_uri=dhllogin://de.deutschepost.dhl/login&response_type=code&scope=openid&state=eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9&ui_locales=de-DE&id_token_hint=" +
+        idtoken,
+    })
+      .then(async (res) => {
+        this.log.debug(JSON.stringify(res.data));
+      })
+      .catch((error) => {
+        if (error.message.includes("Unsupported protocol")) {
+          return qs.parse(error.request._options.query);
+        }
+        this.log.error(error);
+        if (error.response) {
+          this.log.error(JSON.stringify(error.response.data));
+        }
+      });
+    await this.requestClient({
+      method: "post",
+      url: "https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/token",
+      headers: {
+        Host: "login.dhl.de",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json, text/plain, */*",
+        Origin: "https://login.dhl.de",
+        Connection: "keep-alive",
+        Authorization: "Basic ODM0NzEwODItNWMxMy00ZmNlLThkY2ItMTlkMmEzZmNhNDEzOg==",
+        "User-Agent": "DHLPaket_PROD/1367 CFNetwork/1240.0.4 Darwin/20.6.0",
+        "Accept-Language": "de-de",
+      },
+      data: {
+        redirect_uri: "dhllogin://de.deutschepost.dhl/login",
+        grant_type: "authorization_code",
+        code_verifier: code_verifier,
+        code: codeUrl.code,
+      },
+    })
+      .then(async (res) => {
+        this.log.debug(JSON.stringify(res.data));
+        this.sessions["dhl"] = res.data;
+      })
+      .catch((error) => {
+        this.log.error(error);
+        if (error.response) {
+          this.log.error(JSON.stringify(error.response.data));
+        }
       });
   }
   async loginDHL() {
@@ -2128,6 +2344,15 @@ class Parcel extends utils.Adapter {
     }
 
     return matches;
+  }
+  randomString(length) {
+    let result = "";
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
   }
   getCodeChallenge() {
     let hash = "";
