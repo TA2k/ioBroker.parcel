@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.25",
+        "version": "0.0.26",
         "news": {
+            "0.0.26": {
+                "en": "Fix DHL Login",
+                "de": "DHL Login gefixt"
+            },
             "0.0.25": {
                 "en": "Fix new Amazon UI parsing",
                 "de": "Neues Amazon UI parsing gefixt"
