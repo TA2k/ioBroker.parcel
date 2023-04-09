@@ -146,6 +146,29 @@ class Parcel extends utils.Adapter {
     }
   }
   async loginDhlNew() {
+    const validCookies = await this.requestClient({
+      method: "get",
+      url: "https://www.dhl.de/int-stammdaten/public/customerMasterData",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-api-key": "a0d5b9049ba8918871e6e20bd5c49974",
+        "accept-language": "de-de",
+        "user-agent": "DHLPaket_PROD/1367 CFNetwork/1240.0.4 Darwin/20.6.0",
+      },
+    })
+      .then((res) => {
+        return true;
+      })
+      .catch((err) => {
+        return false;
+      });
+    if (validCookies) {
+      this.log.info("Valid dhl cookies found");
+
+      this.setState("info.connection", true, true);
+      return;
+    }
     const mfaTokenState = await this.getStateAsync("auth.dhlMfaToken");
     const mfaToken = mfaTokenState ? mfaTokenState.val : null;
     const [code_verifier, codeChallenge] = this.getCodeChallenge();
@@ -393,7 +416,10 @@ class Parcel extends utils.Adapter {
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
+        this.log.info("Login to DHL successful");
         this.sessions["dhl"] = res.data;
+        this.setState("info.connection", true, true);
+        this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
       })
       .catch((error) => {
         this.log.error(error);
