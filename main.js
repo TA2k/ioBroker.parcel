@@ -158,6 +158,7 @@ class Parcel extends utils.Adapter {
       },
     })
       .then((res) => {
+        this.log.debug(res.data);
         return true;
       })
       .catch((err) => {
@@ -418,8 +419,12 @@ class Parcel extends utils.Adapter {
         this.log.debug(JSON.stringify(res.data));
         this.log.info("Login to DHL successful");
         this.sessions["dhl"] = res.data;
+        await this.cookieJar.setCookie("dhli=" + res.data.id_token + "; path=/; domain=dhl.de", "https:/dhl.de");
+        await this.cookieJar.setCookie("dhli=" + res.data.id_token + "; path=/; domain=www.dhl.de", "https:/www.dhl.de");
         this.setState("info.connection", true, true);
         this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
+        await this.createDHLStates();
+        return true;
       })
       .catch((error) => {
         this.log.error(error);
