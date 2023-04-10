@@ -2127,6 +2127,7 @@ class Parcel extends utils.Adapter {
         return elements;
       })
       .catch((error) => {
+        this.log.error("Failed to get Amazon Orders");
         this.log.error(error);
         if (error.response) {
           this.log.error(JSON.stringify(error.response.data));
