@@ -164,15 +164,16 @@ class Parcel extends utils.Adapter {
       .catch((err) => {
         return false;
       });
-    if (validCookies) {
-      this.log.info("Valid dhl cookies found");
+    // if (validCookies) {
+    //   this.log.info("Valid dhl cookies found");
 
-      this.setState("info.connection", true, true);
-      return;
-    }
+    //   this.setState("info.connection", true, true);
+    //   return;
+    // }
     const mfaTokenState = await this.getStateAsync("auth.dhlMfaToken");
     const mfaToken = mfaTokenState ? mfaTokenState.val : null;
     const [code_verifier, codeChallenge] = this.getCodeChallenge();
+
     const transactionId = this.randomString(40);
     const initUrl = await this.requestClient({
       method: "get",
@@ -279,8 +280,8 @@ class Parcel extends utils.Adapter {
         this.log.error(error);
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
-    if (!preSession.result) {
-      this.log.error("DHL PreSession failed");
+    if (!preSession || !preSession.result) {
+      this.log.error("DHL PreSession failed. Please check username password");
       return;
     }
     const accessToken2 = await this.requestClient({
@@ -2248,14 +2249,12 @@ class Parcel extends utils.Adapter {
             Accept: "application/json, text/plain, */*",
             Origin: "https://login.dhl.de",
             Connection: "keep-alive",
-            Authorization: "Basic ODM0NzEwODItNWMxMy00ZmNlLThkY2ItMTlkMmEzZmNhNDEzOg==",
             "User-Agent": "DHLPaket_PROD/1367 CFNetwork/1240.0.4 Darwin/20.6.0",
             "Accept-Language": "de-de",
           },
           data: {
-            client_id: "dhllogin://de.deutschepost.dhl/login",
+            client_id: "83471082-5c13-4fce-8dcb-19d2a3fca413",
             grant_type: "refresh_token",
-            // code_verifier: code_verifier,
             refresh_token: this.sessions["dhl"].refresh_token,
           },
         })

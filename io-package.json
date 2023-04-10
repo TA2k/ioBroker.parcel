@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.26",
+        "version": "0.0.27",
         "news": {
+            "0.0.27": {
+                "en": "Fix DHL Refresh token",
+                "de": "DHL Refresh token gefixt"
+            },
             "0.0.26": {
                 "en": "Fix DHL Login",
                 "de": "DHL Login gefixt"
