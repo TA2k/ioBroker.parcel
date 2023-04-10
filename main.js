@@ -279,6 +279,10 @@ class Parcel extends utils.Adapter {
         this.log.error(error);
         error.response && this.log.error(JSON.stringify(error.response.data));
       });
+    if (!preSession.result) {
+      this.log.error("DHL PreSession failed");
+      return;
+    }
     const accessToken2 = await this.requestClient({
       method: "post",
       maxBodyLength: Infinity,
@@ -2236,25 +2240,29 @@ class Parcel extends utils.Adapter {
       if (id === "dhl") {
         await this.requestClient({
           method: "post",
-          url: "https://www.dhl.de/int-erkennen/refresh",
-
+          url: "https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/token",
           headers: {
-            "content-type": "application/json",
-            accept: "*/*",
-            "x-requested-with": "XMLHttpRequest",
-            "accept-language": "de-de",
-            origin: "https://www.dhl.de",
-            "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-            referer: "https://www.dhl.de/",
+            Host: "login.dhl.de",
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json, text/plain, */*",
+            Origin: "https://login.dhl.de",
+            Connection: "keep-alive",
+            Authorization: "Basic ODM0NzEwODItNWMxMy00ZmNlLThkY2ItMTlkMmEzZmNhNDEzOg==",
+            "User-Agent": "DHLPaket_PROD/1367 CFNetwork/1240.0.4 Darwin/20.6.0",
+            "Accept-Language": "de-de",
           },
-          data: JSON.stringify({
-            force: false,
-            meta: this.sessions["dhl"].meta,
-          }),
+          data: {
+            client_id: "dhllogin://de.deutschepost.dhl/login",
+            grant_type: "refresh_token",
+            // code_verifier: code_verifier,
+            refresh_token: this.sessions["dhl"].refresh_token,
+          },
         })
-          .then((res) => {
+          .then(async (res) => {
             this.log.debug(JSON.stringify(res.data));
             this.sessions["dhl"] = res.data;
+            await this.cookieJar.setCookie("dhli=" + res.data.id_token + "; path=/; domain=dhl.de", "https:/dhl.de");
+            await this.cookieJar.setCookie("dhli=" + res.data.id_token + "; path=/; domain=www.dhl.de", "https:/www.dhl.de");
             this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
             this.setState("info.connection", true, true);
           })
