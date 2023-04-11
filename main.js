@@ -758,7 +758,10 @@ class Parcel extends utils.Adapter {
         return res.data;
       })
       .catch((error) => {
-        this.log.error("Amazon login failed");
+        this.log.error("Amazon first login step failed");
+        this.log.error(
+          "https://www.amazon.de/ap/signin?_encoding=UTF8&accountStatusPolicy=P1&openid.assoc_handle=deflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.de%2Fgp%2Fcss%2Forder-history%3Fie%3DUTF8%26ref_%3Dnav_orders_first&pageId=webcs-yourorder&showRmrMe=1"
+        );
         this.log.error(error);
         if (error.response) {
           this.log.error(JSON.stringify(error.response.data));
@@ -787,6 +790,7 @@ class Parcel extends utils.Adapter {
           return res.data;
         })
         .catch((error) => {
+          this.log.error("Failed to post with username load https://www.amazon.de/ap/signin");
           this.log.error(error);
           if (error.response) {
             this.log.error(JSON.stringify(error.response.data));
@@ -878,6 +882,7 @@ class Parcel extends utils.Adapter {
               this.setState("info.connection", false, true);
             })
             .catch(async (error) => {
+              this.log.error("MFA: Failed to post https://www.amazon.de/ap/signin");
               if (error.response) {
                 this.setState("info.connection", false, true);
                 this.log.error(JSON.stringify(error.response.data));
@@ -901,6 +906,7 @@ class Parcel extends utils.Adapter {
         return;
       })
       .catch(async (error) => {
+        this.log.error("Failed to post with password to https://www.amazon.de/ap/signin");
         if (error.response) {
           this.setState("info.connection", false, true);
           this.log.error(JSON.stringify(error.response.data));
