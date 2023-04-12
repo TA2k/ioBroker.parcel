@@ -795,7 +795,9 @@ class Parcel extends utils.Adapter {
           if (error.response) {
             this.log.error(JSON.stringify(error.response.data));
           }
-          this.log.info("Delete amazon cookie please restart the adapter to trigger relogin");
+          this.log.info(
+            "Delete amazon cookie please restart the adapter to trigger relogin. If this is not working please manualy delete parcel.0.auth.cookie"
+          );
           delete this.cookieJar.store.idx["amazon.de"];
         });
       form = this.extractHidden(body);
