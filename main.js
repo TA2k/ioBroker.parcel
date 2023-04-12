@@ -140,7 +140,7 @@ class Parcel extends utils.Adapter {
       }, this.config.interval * 60 * 1000);
       this.refreshTokenInterval = setInterval(() => {
         this.refreshToken();
-      }, 3500 * 1000);
+      }, 29 * 60 * 1000);
     } else {
       this.log.warn("No login session found");
     }
