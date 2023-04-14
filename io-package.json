@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "parcel",
-        "version": "0.0.27",
+        "version": "0.0.28",
         "news": {
+            "0.0.28": {
+                "en": "Fix Amazon Login"
+            },
             "0.0.27": {
                 "en": "Fix DHL Refresh token",
                 "de": "DHL Refresh token gefixt"
