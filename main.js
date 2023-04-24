@@ -741,6 +741,24 @@ class Parcel extends utils.Adapter {
   }
 
   async loginAmz() {
+    await this.setObjectNotExistsAsync("amazon", {
+      type: "device",
+      common: {
+        name: "Amazon Tracking",
+      },
+      native: {},
+    });
+    await this.setObjectNotExistsAsync("amazon.json", {
+      type: "state",
+      common: {
+        name: "Json Sendungen",
+        write: false,
+        read: true,
+        type: "string",
+        role: "json",
+      },
+      native: {},
+    });
     let body = await this.requestClient({
       method: "get",
       url: "https://www.amazon.de/ap/signin?_encoding=UTF8&accountStatusPolicy=P1&openid.assoc_handle=deflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.de%2Fgp%2Fcss%2Forder-history%3Fie%3DUTF8%26ref_%3Dnav_orders_first&pageId=webcs-yourorder&showRmrMe=1",
@@ -824,24 +842,7 @@ class Parcel extends utils.Adapter {
           this.sessions["amz"] = true;
           this.setState("info.connection", true, true);
           this.setState("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
-          await this.setObjectNotExistsAsync("amazon", {
-            type: "device",
-            common: {
-              name: "Amazon Tracking",
-            },
-            native: {},
-          });
-          await this.setObjectNotExistsAsync("amazon.json", {
-            type: "state",
-            common: {
-              name: "Json Sendungen",
-              write: false,
-              read: true,
-              type: "string",
-              role: "json",
-            },
-            native: {},
-          });
+
           return;
         }
         if (res.data.indexOf("auth-mfa-otpcode") !== -1) {
