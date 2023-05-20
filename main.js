@@ -2108,6 +2108,12 @@ class Parcel extends utils.Adapter {
         // this.log.debug(JSON.stringify(res.data));
 
         const dom = new JSDOM(res.data);
+
+        if (res.data.includes("auth-workflow")) {
+          this.log.debug("Amazon Login required");
+          this.loginAmz();
+          return;
+        }
         const document = dom.window.document;
         const elements = [];
         const orders = document.querySelectorAll(".order-card.js-order-card");
@@ -2149,6 +2155,9 @@ class Parcel extends utils.Adapter {
       return;
     }
     this.log.debug("Found " + orders.length + " Amazon Orders");
+    if (orders.length === 0) {
+      this.log.debug(res.data);
+    }
     for (const order of orders) {
       if (order.url.indexOf("http") === -1) {
         order.url = "https://www.amazon.de" + order.url;
