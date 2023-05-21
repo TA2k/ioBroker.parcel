@@ -2105,7 +2105,7 @@ class Parcel extends utils.Adapter {
       withCredentials: true,
     })
       .then(async (res) => {
-        // this.log.debug(JSON.stringify(res.data));
+        this.log.debug(JSON.stringify(res.data));
 
         const dom = new JSDOM(res.data);
 
