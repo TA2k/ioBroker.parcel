@@ -827,6 +827,7 @@ class Parcel extends utils.Adapter {
       form = this.extractHidden(body);
     }
     form.password = this.config.amzpassword;
+    form.rememberMe = "true";
     await this.requestClient({
       method: "post",
       url: "https://www.amazon.de/ap/signin",
