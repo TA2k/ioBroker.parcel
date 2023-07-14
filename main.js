@@ -2103,65 +2103,10 @@ class Parcel extends utils.Adapter {
     this.log.debug("Get Amazon Packages");
     const amzResult = { sendungen: [] };
 
-    const orders = await this.requestClient({
-      method: "get",
-      url: "https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first&disableCsd=missing-library",
-      headers: {
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-
-        "accept-language": "de-de",
-      },
-      jar: this.cookieJar,
-      withCredentials: true,
-    })
-      .then(async (res) => {
-        // this.log.debug(JSON.stringify(res.data));
-
-        const dom = new JSDOM(res.data);
-
-        if (res.data.includes("auth-workflow")) {
-          this.log.debug("Amazon Login required");
-          this.loginAmz();
-          return;
-        }
-        const document = dom.window.document;
-        const elements = [];
-        const orders = document.querySelectorAll(".order-card.js-order-card");
-
-        for (const order of orders) {
-          const descHandle = order.querySelector(
-            ".a-fixed-right-grid-col.a-col-left .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal",
-          );
-          const desc = descHandle ? descHandle.textContent.replace(/\n */g, "") : "";
-          let url = order.querySelector(".track-package-button a")
-            ? order.querySelector(".track-package-button a").getAttribute("href")
-            : "";
-          if (!url) {
-            const allLinks = order.querySelectorAll(".a-button-inner a");
-            for (const link of allLinks) {
-              if (link.textContent.includes("Lieferung verfolgen")) {
-                url = link.getAttribute("href");
-              }
-            }
-          }
-          if (!url) {
-            url = order.querySelector(".yohtmlc-shipment-level-connections .a-button-inner a")
-              ? order.querySelector(".yohtmlc-shipment-level-connections .a-button-inner a").getAttribute("href")
-              : "";
-          }
-          if (url) {
-            elements.push({ desc: desc, url: url });
-          }
-        }
-        return elements;
-      })
-      .catch((error) => {
-        this.log.error("Failed to get Amazon Orders");
-        this.log.error(error);
-        if (error.response) {
-          this.log.error(JSON.stringify(error.response.data));
-        }
-      });
+    let orders = await this.getAmazonOrders();
+    if (!orders) {
+      orders = await this.getAmazonOrders();
+    }
     if (!orders) {
       this.log.info("No Amazon orders found");
       return;
@@ -2264,6 +2209,67 @@ class Parcel extends utils.Adapter {
     await this.setStateAsync("auth.cookie", JSON.stringify(this.cookieJar.toJSON()), true);
     await this.setStateAsync("amazon.json", JSON.stringify(amzResult), true);
   }
+  async getAmazonOrders() {
+    return await this.requestClient({
+      method: "get",
+      url: "https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first&disableCsd=missing-library",
+      headers: {
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
+        "accept-language": "de-de",
+      },
+      jar: this.cookieJar,
+      withCredentials: true,
+    })
+      .then(async (res) => {
+        // this.log.debug(JSON.stringify(res.data));
+        const dom = new JSDOM(res.data);
+
+        if (res.data.includes("auth-workflow")) {
+          this.log.debug("Amazon Login required");
+          await this.loginAmz();
+          return;
+        }
+        const document = dom.window.document;
+        const elements = [];
+        const orders = document.querySelectorAll(".order-card.js-order-card");
+
+        for (const order of orders) {
+          const descHandle = order.querySelector(
+            ".a-fixed-right-grid-col.a-col-left .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal",
+          );
+          const desc = descHandle ? descHandle.textContent.replace(/\n */g, "") : "";
+          let url = order.querySelector(".track-package-button a")
+            ? order.querySelector(".track-package-button a").getAttribute("href")
+            : "";
+          if (!url) {
+            const allLinks = order.querySelectorAll(".a-button-inner a");
+            for (const link of allLinks) {
+              if (link.textContent.includes("Lieferung verfolgen")) {
+                url = link.getAttribute("href");
+              }
+            }
+          }
+          if (!url) {
+            url = order.querySelector(".yohtmlc-shipment-level-connections .a-button-inner a")
+              ? order.querySelector(".yohtmlc-shipment-level-connections .a-button-inner a").getAttribute("href")
+              : "";
+          }
+          if (url) {
+            elements.push({ desc: desc, url: url });
+          }
+        }
+        return elements;
+      })
+      .catch((error) => {
+        this.log.error("Failed to get Amazon Orders");
+        this.log.error(error);
+        if (error.response) {
+          this.log.error(JSON.stringify(error.response.data));
+        }
+      });
+  }
+
   async refreshToken() {
     if (Object.keys(this.sessions).length === 0) {
       this.log.error("No session found relogin");
