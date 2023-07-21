@@ -1,8 +1,11 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.0.30",
+    "version": "0.0.31",
     "news": {
+      "0.0.31": {
+        "en": "Fix Amazon relogin"
+      },
       "0.0.30": {
         "en": "Fix Hermes Login"
       },
