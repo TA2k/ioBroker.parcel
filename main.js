@@ -2217,15 +2217,12 @@ class Parcel extends utils.Adapter {
         authority: "www.amazon.de",
         accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-
         "accept-language": "de-de",
         "cache-control": "max-age=0",
         "user-agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
         "viewport-width": "1272",
       },
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         // this.log.debug(JSON.stringify(res.data));
