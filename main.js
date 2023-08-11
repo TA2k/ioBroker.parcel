@@ -21,7 +21,7 @@ const utils = require("@iobroker/adapter-core");
 const axios = require("axios");
 const qs = require("qs");
 const crypto = require("crypto");
-const Json2iob = require("./lib/json2iob");
+const Json2iob = require("json2iob");
 const getPwd = require("./lib/rsaKey");
 const tough = require("tough-cookie");
 const { HttpsCookieAgent } = require("http-cookie-agent/http");
@@ -86,42 +86,42 @@ class Parcel extends utils.Adapter {
       httpsAgent: new HttpsCookieAgent({ cookies: { jar: this.cookieJar } }),
     });
 
-    if (this.config.dhlusername && this.config.dhlpassword) {
-      this.log.info("Login to DHL");
-      await this.loginDhlNew();
-    }
+    // if (this.config.dhlusername && this.config.dhlpassword) {
+    //   this.log.info("Login to DHL");
+    //   await this.loginDhlNew();
+    // }
 
-    if (this.config.dpdusername && this.config.dpdpassword) {
-      this.log.info("Login to DPD");
-      await this.loginDPD();
-    }
-    if (this.config.t17username && this.config.t17password) {
-      this.log.info("Login to T17 User");
-      await this.login17T();
-    }
-    if (this.config.aliUsername && this.config.aliPassword) {
-      this.log.info("Login to AliExpres");
-      await this.loginAli();
-    }
+    // if (this.config.dpdusername && this.config.dpdpassword) {
+    //   this.log.info("Login to DPD");
+    //   await this.loginDPD();
+    // }
+    // if (this.config.t17username && this.config.t17password) {
+    //   this.log.info("Login to T17 User");
+    //   await this.login17T();
+    // }
+    // if (this.config.aliUsername && this.config.aliPassword) {
+    //   this.log.info("Login to AliExpres");
+    //   await this.loginAli();
+    // }
 
-    if (this.config["17trackKey"]) {
-      this.sessions["17track"] = this.config["17trackKey"];
-      this.login17TApi();
-      this.setState("info.connection", true, true);
-    }
-    if (this.config.amzusername && this.config.amzpassword) {
-      this.log.info("Login to Amazon");
-      await this.loginAmz();
-    }
+    // if (this.config["17trackKey"]) {
+    //   this.sessions["17track"] = this.config["17trackKey"];
+    //   this.login17TApi();
+    //   this.setState("info.connection", true, true);
+    // }
+    // if (this.config.amzusername && this.config.amzpassword) {
+    //   this.log.info("Login to Amazon");
+    //   await this.loginAmz();
+    // }
 
-    if (this.config.glsusername && this.config.glspassword) {
-      this.log.info("Login to GLS");
-      await this.loginGLS();
-    }
-    if (this.config.upsusername && this.config.upspassword) {
-      this.log.info("Login to UPS");
-      await this.loginUPS();
-    }
+    // if (this.config.glsusername && this.config.glspassword) {
+    //   this.log.info("Login to GLS");
+    //   await this.loginGLS();
+    // }
+    // if (this.config.upsusername && this.config.upspassword) {
+    //   this.log.info("Login to UPS");
+    //   await this.loginUPS();
+    // }
     if (this.config.hermesusername && this.config.hermespassword) {
       this.log.info("Login to Hermes");
       await this.loginHermes();
@@ -1089,12 +1089,12 @@ class Parcel extends utils.Adapter {
   async loginHermes() {
     await this.requestClient({
       method: "post",
-      url: "https://mobile-app-api.a0930.prd.hc.de/api/v11/users/login",
+      url: "https://mobile-app-api.a0930.prd.hc.de/api/v12/users/login",
       headers: {
         accept: "application/json",
         "api-key": "acefe97f-89fc-4f4e-9543-fc6b90f68928",
         "content-type": "application/json; charset=utf-8",
-        "user-agent": "Hermes - ios - 11.1.2 (2386)",
+        "user-agent": "Hermes - ios - 12.1.1 (2689)",
         "accept-language": "de-de",
       },
       data: { username: this.config.hermesusername, password: this.config.hermespassword },
@@ -1514,11 +1514,11 @@ class Parcel extends utils.Adapter {
       hermes: [
         {
           path: "hermes",
-          url: "https://mobile-app-api.a0930.prd.hc.de/api/v11/shipments",
+          url: "https://mobile-app-api.a0930.prd.hc.de/api/v12/shipments",
           header: {
             accept: "application/json",
             "api-key": "acefe97f-89fc-4f4e-9543-fc6b90f68928",
-            "user-agent": "Hermes - ios - 11.1.2 (2386)",
+            "user-agent": "Hermes - ios - 12.1.1 (2689)",
             "accept-language": "de-de",
             authorization: "Bearer " + this.hermesAuthToken,
           },
@@ -1594,7 +1594,7 @@ class Parcel extends utils.Adapter {
                     res.data = JSON.parse(res.data);
                   }
                   for (const parcel of res.data) {
-                    parcel.id = parcel.shipmentId;
+                    parcel.id = parcel.shipmentId || parcel.externalId;
                   }
                   data = { sendungen: res.data };
                 }
@@ -1770,28 +1770,33 @@ class Parcel extends utils.Adapter {
       this.mergedJson = this.mergedJson.concat(sendungsArray);
     }
     if (id === "hermes" && data.sendungen) {
-      const sendungsArray = data.sendungen.map((sendung) => {
-        let name = sendung.description;
-        if (sendung.sender && sendung.sender.lastname) {
-          name = name + " " + sendung.sender.lastname;
-        }
-        const sendungsObject = {
-          id: sendung.id,
-          name: name,
-          status: sendung.lastStatusMessage || "",
-          source: "Hermes",
-        };
+      try {
+        const sendungsArray = data.sendungen.map((sendung) => {
+          let name = sendung.description;
+          if (sendung.sender && sendung.sender.lastname) {
+            name = name + " " + sendung.sender.lastname;
+          }
+          const sendungsObject = {
+            id: sendung.id,
+            name: name,
+            status: sendung.status.text.longText || "",
+            source: "Hermes",
+          };
 
-        sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
-        if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
-          sendungsObject.inDelivery = true;
-          this.inDelivery.push(sendungsObject);
-        }
-        this.mergedJsonObject[sendung.id] = sendungsObject;
+          sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+          if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
+            sendungsObject.inDelivery = true;
+            this.inDelivery.push(sendungsObject);
+          }
+          this.mergedJsonObject[sendung.id] = sendungsObject;
 
-        return sendungsObject;
-      });
-      this.mergedJson = this.mergedJson.concat(sendungsArray);
+          return sendungsObject;
+        });
+        this.mergedJson = this.mergedJson.concat(sendungsArray);
+      } catch (error) {
+        this.log.info("Hermes response incomplete cannot parse result");
+        this.log.info(error);
+      }
     }
 
     if (id === "dpd" && data && data.sendungen) {
@@ -1982,17 +1987,17 @@ class Parcel extends utils.Adapter {
             return dhl_status[sendung.sendungsdetails.sendungsverlauf.fortschritt];
           }
         }
-        if (id === "hermes" && sendung.lastStatusId) {
+        if (id === "hermes" && sendung.status) {
           const hermes_status = {
-            0: this.delivery_status.REGISTERED,
+            AM_PKS_ABGEGEBEN: this.delivery_status.REGISTERED,
             1: this.delivery_status.REGISTERED,
             2: this.delivery_status.IN_PREPARATION,
             3: this.delivery_status.IN_TRANSIT,
             4: this.delivery_status.OUT_FOR_DELIVERY,
             5: this.delivery_status.DELIVERED,
           };
-          if (hermes_status[sendung.lastStatusId] !== undefined) {
-            return hermes_status[sendung.lastStatusId];
+          if (hermes_status[sendung.status.parcelStatus] !== undefined) {
+            return hermes_status[sendung.status.parcelStatus];
           }
         }
         if (id === "dpd" && sendung.statusId) {
@@ -2334,12 +2339,12 @@ class Parcel extends utils.Adapter {
       if (id === "hermes") {
         await this.requestClient({
           method: "post",
-          url: "https://mobile-app-api.a0930.prd.hc.de/api/v11/users/refreshtoken",
+          url: "https://mobile-app-api.a0930.prd.hc.de/api/v12/users/refreshtoken",
           headers: {
             "Content-Type": "application/json; charset=utf-8",
             Accept: "application/json",
             "api-key": "acefe97f-89fc-4f4e-9543-fc6b90f68928",
-            "User-Agent": "Hermes - ios - 11.1.2 (2386)",
+            "User-Agent": "Hermes - ios - 12.1.1 (2689)",
             "Accept-Language": "de-de",
           },
           data: `{"refreshToken":"${this.sessions["hermes"].refreshToken}"}`,
