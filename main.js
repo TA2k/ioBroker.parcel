@@ -86,42 +86,42 @@ class Parcel extends utils.Adapter {
       httpsAgent: new HttpsCookieAgent({ cookies: { jar: this.cookieJar } }),
     });
 
-    // if (this.config.dhlusername && this.config.dhlpassword) {
-    //   this.log.info("Login to DHL");
-    //   await this.loginDhlNew();
-    // }
+    if (this.config.dhlusername && this.config.dhlpassword) {
+      this.log.info("Login to DHL");
+      await this.loginDhlNew();
+    }
 
-    // if (this.config.dpdusername && this.config.dpdpassword) {
-    //   this.log.info("Login to DPD");
-    //   await this.loginDPD();
-    // }
-    // if (this.config.t17username && this.config.t17password) {
-    //   this.log.info("Login to T17 User");
-    //   await this.login17T();
-    // }
-    // if (this.config.aliUsername && this.config.aliPassword) {
-    //   this.log.info("Login to AliExpres");
-    //   await this.loginAli();
-    // }
+    if (this.config.dpdusername && this.config.dpdpassword) {
+      this.log.info("Login to DPD");
+      await this.loginDPD();
+    }
+    if (this.config.t17username && this.config.t17password) {
+      this.log.info("Login to T17 User");
+      await this.login17T();
+    }
+    if (this.config.aliUsername && this.config.aliPassword) {
+      this.log.info("Login to AliExpres");
+      await this.loginAli();
+    }
 
-    // if (this.config["17trackKey"]) {
-    //   this.sessions["17track"] = this.config["17trackKey"];
-    //   this.login17TApi();
-    //   this.setState("info.connection", true, true);
-    // }
-    // if (this.config.amzusername && this.config.amzpassword) {
-    //   this.log.info("Login to Amazon");
-    //   await this.loginAmz();
-    // }
+    if (this.config["17trackKey"]) {
+      this.sessions["17track"] = this.config["17trackKey"];
+      this.login17TApi();
+      this.setState("info.connection", true, true);
+    }
+    if (this.config.amzusername && this.config.amzpassword) {
+      this.log.info("Login to Amazon");
+      await this.loginAmz();
+    }
 
-    // if (this.config.glsusername && this.config.glspassword) {
-    //   this.log.info("Login to GLS");
-    //   await this.loginGLS();
-    // }
-    // if (this.config.upsusername && this.config.upspassword) {
-    //   this.log.info("Login to UPS");
-    //   await this.loginUPS();
-    // }
+    if (this.config.glsusername && this.config.glspassword) {
+      this.log.info("Login to GLS");
+      await this.loginGLS();
+    }
+    if (this.config.upsusername && this.config.upspassword) {
+      this.log.info("Login to UPS");
+      await this.loginUPS();
+    }
     if (this.config.hermesusername && this.config.hermespassword) {
       this.log.info("Login to Hermes");
       await this.loginHermes();
@@ -1991,14 +1991,17 @@ class Parcel extends utils.Adapter {
           const hermes_status = {
             AM_PKS_ABGEGEBEN: this.delivery_status.REGISTERED,
             1: this.delivery_status.REGISTERED,
-            2: this.delivery_status.IN_PREPARATION,
-            3: this.delivery_status.IN_TRANSIT,
-            4: this.delivery_status.OUT_FOR_DELIVERY,
-            5: this.delivery_status.DELIVERED,
+            PAKETSHOP_AN_FAHRER_UEBERGEBEN: this.delivery_status.IN_PREPARATION,
+            UNTERWEGS: this.delivery_status.IN_TRANSIT,
+            ZUSTELLTOUR: this.delivery_status.OUT_FOR_DELIVERY,
+            ZUGESTELLT: this.delivery_status.DELIVERED,
           };
           if (hermes_status[sendung.status.parcelStatus] !== undefined) {
             return hermes_status[sendung.status.parcelStatus];
           }
+          // if (hermes_status[sendung.status.parcelStatus] !== undefined) {
+          //   return hermes_status[sendung.status.parcelStatus];
+          // }
         }
         if (id === "dpd" && sendung.statusId) {
           const dpd_status = {
