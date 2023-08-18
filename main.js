@@ -2374,17 +2374,6 @@ class Parcel extends utils.Adapter {
       },
       native: {},
     });
-    await this.setObjectNotExistsAsync("dhl.json", {
-      type: "state",
-      common: {
-        name: "Json Sendungen",
-        write: false,
-        read: true,
-        type: "string",
-        role: "json",
-      },
-      native: {},
-    });
 
     await this.setObjectNotExistsAsync("dhl.json", {
       type: "state",
