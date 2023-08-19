@@ -1628,7 +1628,7 @@ class Parcel extends utils.Adapter {
               this.json2iob.parse(element.path, data, {
                 forceIndex: forceIndex,
                 preferedArrayName: preferedArrayName,
-                deleteBeforeUpdate: true,
+                dontSaveCreatedObjects: true,
               });
               data && this.setState(element.path + ".json", JSON.stringify(data), true);
             }
