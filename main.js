@@ -2143,13 +2143,21 @@ class Parcel extends utils.Adapter {
           const dom = new JSDOM(res.data);
           const document = dom.window.document;
           const statusHandle =
-            document.querySelector(".milestone-primaryMessage.alpha") || document.querySelector(".milestone-primaryMessage") || null;
-          const additionalStatus = document.querySelector("#primaryStatus")
+            document.querySelector(".pt-status-main-status") ||
+            document.querySelector(".milestone-primaryMessage.alpha") ||
+            document.querySelector(".milestone-primaryMessage") ||
+            null;
+          let additionalStatus = document.querySelector("#primaryStatus")
             ? document.querySelector("#primaryStatus").textContent.replace(/\n */g, "")
             : "";
           const secondaryStatus = document.querySelector("#secondaryStatus")
             ? document.querySelector("#secondaryStatus").textContent.replace(/\n */g, "")
             : "";
+          if (!additionalStatus) {
+            additionalStatus = document.querySelector(".pt-status-secondary-status")
+              ? document.querySelector(".pt-status-secondary-status").textContent.replace(/\n */g, "")
+              : "";
+          }
           let stopsStatus = "";
           let stateObject = {};
           if (document.querySelector(`script[data-a-state='{"key":"page-state"}']`)) {
@@ -2181,8 +2189,8 @@ class Parcel extends utils.Adapter {
           }
 
           return {
-            id: document.querySelector(".carrierRelatedInfo-trackingId-text")
-              ? document.querySelector(".carrierRelatedInfo-trackingId-text").textContent.replace("Trackingnummer ", "")
+            id: document.querySelector(".pt-delivery-card-trackingId")
+              ? document.querySelector(".pt-delivery-card-trackingId").textContent.replace("Trackingnummer ", "")
               : "",
             name: document.querySelector(".carrierRelatedInfo-mfn-providerTitle")
               ? document.querySelector(".carrierRelatedInfo-mfn-providerTitle").textContent.replace(/\\n */g, "")
