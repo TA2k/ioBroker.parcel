@@ -2150,12 +2150,22 @@ class Parcel extends utils.Adapter {
           let additionalStatus = document.querySelector("#primaryStatus")
             ? document.querySelector("#primaryStatus").textContent.replace(/\n */g, "")
             : "";
-          const secondaryStatus = document.querySelector("#secondaryStatus")
+          let secondaryStatus = document.querySelector("#secondaryStatus")
             ? document.querySelector("#secondaryStatus").textContent.replace(/\n */g, "")
             : "";
-          if (!additionalStatus) {
-            additionalStatus = document.querySelector(".pt-status-secondary-status")
+          if (!secondaryStatus) {
+            secondaryStatus = document.querySelector(".pt-promise-details-slot")
+              ? document.querySelector(".pt-promise-details-slot").textContent.replace(/\n */g, "")
+              : "";
+          }
+          if (!secondaryStatus) {
+            secondaryStatus = document.querySelector(".pt-status-secondary-status")
               ? document.querySelector(".pt-status-secondary-status").textContent.replace(/\n */g, "")
+              : "";
+          }
+          if (!additionalStatus) {
+            additionalStatus = document.querySelector(".pt-promise-main-slot")
+              ? document.querySelector(".pt-promise-main-slot").textContent.replace(/\n */g, "")
               : "";
           }
           let stopsStatus = "";
@@ -2173,6 +2183,12 @@ class Parcel extends utils.Adapter {
           }
 
           let status = statusHandle ? statusHandle.textContent.replace(/\n */g, "") : "";
+          if (!status) {
+            status = stateObject.promise?.promiseMessage;
+          }
+          if (!additionalStatus) {
+            additionalStatus = stateObject.promise?.pdwHelpIconMessage;
+          }
           if (!status) {
             status = additionalStatus;
           }
