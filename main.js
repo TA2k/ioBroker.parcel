@@ -910,6 +910,7 @@ class Parcel extends utils.Adapter {
             this.log.error('Captcha required. Please enter Captcha after logout and login.');
             return;
           }
+          this.log.error('To reset login, delete parcel.0.auth.cookie');
 
           return;
         }
