@@ -56,33 +56,6 @@
       },
       "0.0.13": {
         "en": "Fix Amazon delivery state, add telegram user"
-      },
-      "0.0.12": {
-        "en": "Add delivery status"
-      },
-      "0.0.11": {
-        "en": "Briefankündigung wird gestoppt, falls sie nicht funktioniert"
-      },
-      "0.0.10": {
-        "en": "in Zustellung DP, DPD Bugfix, detailierte DPs für Amazon, Option für keine Benachrichtigung bei Adapterstart"
-      },
-      "0.0.8": {
-        "en": "Hermes hinzugefügt"
-      },
-      "0.0.7": {
-        "en": "Datenpunkt für in Zustellung hinzugefügt, Fix für wiederholende Benachrichtigungen"
-      },
-      "0.0.6": {
-        "en": "initial release",
-        "de": "Erstveröffentlichung",
-        "ru": "Начальная версия",
-        "pt": "lançamento inicial",
-        "nl": "Eerste uitgave",
-        "fr": "Première version",
-        "it": "Versione iniziale",
-        "es": "Versión inicial",
-        "pl": "Pierwsze wydanie",
-        "zh-cn": "首次出版"
       }
     },
     "title": "Parcel tracking",
