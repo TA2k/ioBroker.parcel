@@ -913,6 +913,8 @@ class Parcel extends utils.Adapter {
             'Amazon cookie are removed. Please restart the adapter to trigger a relogin. If this is not working please manually delete parcel.0.auth.cookie',
           );
           delete this.cookieJar.store.idx['amazon.de'];
+          this.log.info('Start relogin');
+          await this.loginAmz();
 
           return;
         }
