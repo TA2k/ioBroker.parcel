@@ -907,10 +907,10 @@ class Parcel extends utils.Adapter {
         if (res.data.indexOf('Amazon Anmelden') !== -1) {
           this.log.error('Login to Amazon failed, please login to Amazon manually and check the login');
           if (res.data.indexOf('captcha-placeholder') !== -1) {
-            this.log.warn('Captcha required. Please enter Captcha after logout and login.');
+            this.log.warn('Captcha required. Please login into your account to check the state of the account');
           }
           this.log.info(
-            'Amazon cookie are removed please restart the adapter to trigger relogin. If this is not working please manualy delete parcel.0.auth.cookie',
+            'Amazon cookie are removed. Please restart the adapter to trigger a relogin. If this is not working please manually delete parcel.0.auth.cookie',
           );
           delete this.cookieJar.store.idx['amazon.de'];
 
