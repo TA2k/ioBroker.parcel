@@ -907,7 +907,9 @@ class Parcel extends utils.Adapter {
         if (res.data.indexOf('Amazon Anmelden') !== -1) {
           this.log.error('Login to Amazon failed, please login to Amazon manually and check the login');
           if (res.data.indexOf('captcha-placeholder') !== -1) {
-            this.log.warn('Captcha required. Please login into your account to check the state of the account');
+            this.log.warn(
+              'Captcha required. Please login into your account to check the state of the account. If this is not wokring please pause the adapter for 24h.',
+            );
           }
           this.log.info(
             'Amazon cookie are removed. Please restart the adapter to trigger a relogin. If this is not working please manually delete parcel.0.auth.cookie',
@@ -1428,7 +1430,12 @@ class Parcel extends utils.Adapter {
       dataDhl = await this.requestClient({
         method: 'get',
         url: 'https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app',
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+        'accept-language': 'de-de',
       })
+
         .then(async (res) => {
           this.log.debug(JSON.stringify(res.data));
           if (res.data && res.data.sendungen) {
@@ -1441,6 +1448,7 @@ class Parcel extends utils.Adapter {
           return [];
         })
         .catch((error) => {
+          this.log.error('Failed to get https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app');
           this.log.error(error);
           error.response && this.log.error(JSON.stringify(error.response.data));
           return [];
