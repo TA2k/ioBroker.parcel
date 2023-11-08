@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.1.6",
+    "version": "0.2.0",
     "news": {
+      "0.2.0": {
+        "en": "Fix for Briefankündigung",
+        "de": "Briefankündigung wieder aktiviert"
+      },
       "0.1.6": {
         "en": "Fix DHL and UPS",
         "de": "DHL und UPS gefixt"
