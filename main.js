@@ -2605,19 +2605,19 @@ class Parcel extends utils.Adapter {
             //   }
             //   this.log.error(state.val + ' ' + error);
             // });
-            const image = dhlDecrypt(state.val).catch((error) => {
+            const image = await dhlDecrypt(state.val, this.requestClient).catch((error) => {
               if (error.response && error.response.status === 401) {
                 this.log.debug(error);
                 return;
               }
               this.log.error(state.val + ' ' + error);
             });
-            if (!image || !image.data) {
+            if (!image) {
               this.log.debug('No image received for ' + state.val);
               return;
             }
-            const imageBuffer = Buffer.from(image.data, 'binary');
-            imageBase64 = 'data:' + image.headers['content-type'] + ';base64, ' + imageBuffer.toString('base64');
+            const imageBuffer = Buffer.from(image, 'binary');
+            imageBase64 = 'data:image/png;base64, ' + imageBuffer.toString('base64');
             this.images[state.val] = imageBase64;
             const pathArray = id.split('.');
             pathArray.pop();
