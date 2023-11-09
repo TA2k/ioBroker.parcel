@@ -1695,17 +1695,17 @@ class Parcel extends utils.Adapter {
   async cleanupProvider(id, data) {
     if (id === 'dhl' && data.hasOwnProperty('grantToken')) {
       await this.delObjectAsync('dhl.briefe', { recursive: true });
-      // await this.setObjectNotExistsAsync("dhl.briefe.json", {
-      //   type: "state",
-      //   common: {
-      //     name: "Json Briefe",
-      //     write: false,
-      //     read: true,
-      //     type: "string",
-      //     role: "json",
-      //   },
-      //   native: {},
-      // });
+      await this.setObjectNotExistsAsync('dhl.briefe.json', {
+        type: 'state',
+        common: {
+          name: 'Json Briefe',
+          write: false,
+          read: true,
+          type: 'string',
+          role: 'json',
+        },
+        native: {},
+      });
     }
     if ((id === 'dhl' || id === 'dpd' || id === 'amz' || id === 'gls' || id === 'ups' || id === 'hermes') && data && data.sendungen) {
       const states = await this.getStatesAsync(id + '.sendungen*.id');
