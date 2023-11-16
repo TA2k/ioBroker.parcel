@@ -2319,6 +2319,8 @@ class Parcel extends utils.Adapter {
 
         if (res.data.includes('auth-workflow')) {
           this.log.debug('Amazon Login required');
+
+          this.log.debug(res.data);
           await this.loginAmz();
           return;
         }
