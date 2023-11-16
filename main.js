@@ -847,7 +847,7 @@ class Parcel extends utils.Adapter {
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
         if (res.data.indexOf('js-yo-main-content') !== -1) {
-          this.log.info('Login to Amazon successful');
+          this.log.info('Relogin to Amazon successful');
           this.sessions['amz'] = true;
           this.setState('info.connection', true, true);
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
