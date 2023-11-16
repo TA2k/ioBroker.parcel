@@ -2235,7 +2235,11 @@ class Parcel extends utils.Adapter {
           if (stopsStatus) {
             status = status + '. ' + stopsStatus;
           }
-
+          if (!status) {
+            this.log.info('No status found for ' + order.url);
+            this.log.debug(res.data);
+            return;
+          }
           return {
             id: document.querySelector('.pt-delivery-card-trackingId')
               ? document.querySelector('.pt-delivery-card-trackingId').textContent.replace('Trackingnummer ', '')
