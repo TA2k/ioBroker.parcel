@@ -2160,8 +2160,33 @@ class Parcel extends utils.Adapter {
         method: 'get',
         url: order.url,
         headers: {
-          accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'accept-language': 'de-de',
+          authority: 'www.amazon.de',
+          accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+          'accept-language': 'de,en;q=0.9,es;q=0.8,hi;q=0.7,kn;q=0.6',
+          'cache-control': 'no-cache',
+          'device-memory': '8',
+          downlink: '2',
+          dpr: '2',
+          ect: '4g',
+          pragma: 'no-cache',
+          referer: 'https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first',
+          rtt: '50',
+          'sec-ch-device-memory': '8',
+          'sec-ch-dpr': '2',
+          'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"macOS"',
+          'sec-ch-ua-platform-version': '"14.1.1"',
+          'sec-ch-viewport-width': '1264',
+          'sec-fetch-dest': 'document',
+          'sec-fetch-mode': 'navigate',
+          'sec-fetch-site': 'same-origin',
+          'sec-fetch-user': '?1',
+          'upgrade-insecure-requests': '1',
+          'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+          'viewport-width': '1264',
         },
       })
         .then(async (res) => {
@@ -2216,6 +2241,12 @@ class Parcel extends utils.Adapter {
             const shippingInfo = document.querySelector('.js-shipment-info-container');
             if (shippingInfo) {
               status = shippingInfo.textContent.replace(/\n */g, '');
+            }
+          }
+          if (!status) {
+            const returnInfo = document.querySelector('.a-alert-container .a-text-bold');
+            if (returnInfo) {
+              status = returnInfo.textContent.replace(/\n */g, '');
             }
           }
           if (!additionalStatus) {
