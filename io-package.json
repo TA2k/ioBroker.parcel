@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "news": {
+      "0.2.2": {
+        "en": "Improvment for Amazon Login and fix for Briefaanündigung Image",
+        "de": "Verbesserung für Amazon Login und Fix für Briefankündigung Image State"
+      },
       "0.2.1": {
         "en": "Fix for Briefankündigung",
         "de": "Briefankündigung wieder aktiviert"
