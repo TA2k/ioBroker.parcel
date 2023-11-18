@@ -18,7 +18,7 @@ Module.prototype.require = function () {
 };
 
 const utils = require('@iobroker/adapter-core');
-const axios = require('axios');
+const axios = require('axios').default;
 const qs = require('qs');
 const crypto = require('crypto');
 const Json2iob = require('json2iob');
@@ -64,6 +64,7 @@ class Parcel extends utils.Adapter {
       DELIVERED: 1,
     };
     this.tmpDir = tmpdir();
+    this.requestClient = axios.create();
   }
 
   /**
@@ -403,6 +404,10 @@ class Parcel extends utils.Adapter {
           this.log.error(JSON.stringify(error.response.data));
         }
       });
+    if (!codeUrl) {
+      this.log.error('DHL codeUrl failed');
+      return;
+    }
     await this.requestClient({
       method: 'post',
       url: 'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/token',
@@ -451,8 +456,6 @@ class Parcel extends utils.Adapter {
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
         'accept-language': 'de-de',
       },
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -482,8 +485,6 @@ class Parcel extends utils.Adapter {
         force: false,
         meta: '',
       }),
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -620,8 +621,6 @@ class Parcel extends utils.Adapter {
         referer: 'https://login.aliexpress.com/',
         'accept-language': 'de',
       },
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -699,6 +698,7 @@ class Parcel extends utils.Adapter {
     } else {
       this.log.info('Login to AliExpress with MFA token');
       this.log.debug('MFA: ' + this.config.dhlMfa);
+      const mfaToken = '';
       await this.requestClient({
         method: 'post',
         url: 'https://www.dhl.de/int-erkennen/2fa',
@@ -775,8 +775,6 @@ class Parcel extends utils.Adapter {
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
         'accept-language': 'de-de',
       },
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -807,8 +805,6 @@ class Parcel extends utils.Adapter {
           referer: 'https://www.amazon.de/ap/signin',
         },
         data: qs.stringify(form),
-        jar: this.cookieJar,
-        withCredentials: true,
       })
         .then(async (res) => {
           this.log.debug(JSON.stringify(res.data));
@@ -841,8 +837,6 @@ class Parcel extends utils.Adapter {
         referer: 'https://www.amazon.de/ap/signin',
       },
       data: qs.stringify(form),
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -872,8 +866,6 @@ class Parcel extends utils.Adapter {
               referer: 'https://www.amazon.de/ap/signin',
             },
             data: qs.stringify(form),
-            jar: this.cookieJar,
-            withCredentials: true,
           })
             .then(async (res) => {
               this.log.debug(JSON.stringify(res.data));
@@ -943,8 +935,6 @@ class Parcel extends utils.Adapter {
     await this.requestClient({
       method: 'get',
       url: 'https://my.dpd.de/logout.aspx',
-      jar: this.cookieJar,
-      withCredentials: true,
     }).catch(async (error) => {
       error.response && this.log.error(JSON.stringify(error.response.data));
       this.log.error(error);
@@ -964,8 +954,6 @@ class Parcel extends utils.Adapter {
         dpg_username: this.config.dpdusername,
         dpg_password: this.config.dpdpassword,
       }),
-      jar: this.cookieJar,
-      withCredentials: true,
       maxRedirects: 0,
     })
       .then(async (res) => {
@@ -1010,8 +998,6 @@ class Parcel extends utils.Adapter {
     await this.requestClient({
       method: 'get',
       url: 'https://my.dpd.de/myParcel.aspx?dpd_token=' + this.dpdToken,
-      jar: this.cookieJar,
-      withCredentials: true,
     }).catch(async (error) => {
       error.response && this.log.error(JSON.stringify(error.response.data));
       this.log.error(error);
@@ -1037,8 +1023,6 @@ class Parcel extends utils.Adapter {
         username: this.config.glsusername,
         password: this.config.glspassword,
       }),
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.sessions['gls'] = res.data;
@@ -1066,8 +1050,6 @@ class Parcel extends utils.Adapter {
         'X-Client-Id': 'iOS',
         'X-Auth-Token': this.glstoken,
       },
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         !silent && this.log.info('Login to GLS successful');
@@ -1110,9 +1092,6 @@ class Parcel extends utils.Adapter {
         'accept-language': 'de-de',
       },
       data: { username: this.config.hermesusername, password: this.config.hermespassword },
-
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -1178,8 +1157,6 @@ class Parcel extends utils.Adapter {
           IsMobile: 'true',
         },
       }),
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -1259,8 +1236,6 @@ class Parcel extends utils.Adapter {
           },
         },
       }),
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -1357,8 +1332,6 @@ class Parcel extends utils.Adapter {
         '","Password":"' +
         this.config.t17password +
         '","CaptchaCode":""},"sourcetype":0,"timeZoneOffset":-60}',
-      jar: this.cookieJar,
-      withCredentials: true,
     })
       .then(async (res) => {
         this.log.debug(JSON.stringify(res.data));
@@ -2138,6 +2111,7 @@ class Parcel extends utils.Adapter {
     this.log.debug('Get Amazon Packages');
     const amzResult = { sendungen: [] };
 
+    await this.loginAmz();
     let orders = await this.getAmazonOrders();
     if (!orders) {
       orders = await this.getAmazonOrders();
@@ -2315,7 +2289,6 @@ class Parcel extends utils.Adapter {
       url: 'https://www.amazon.de/gp/css/order-history?ref_=nav_orders_first',
       headers: {
         authority: 'www.amazon.de',
-
         Connection: 'keep-alive',
         'Cache-Control': 'no-cache',
         accept:
@@ -2647,8 +2620,7 @@ class Parcel extends utils.Adapter {
           await this.requestClient({
             method: 'post',
             url: 'https://buyer.17track.net/orderapi/call',
-            header: { 'content-type': 'application/x-www-form-urlencoded' },
-
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             data: JSON.stringify({
               version: '1.0',
               timeZoneOffset: -60,
@@ -2768,6 +2740,8 @@ class Parcel extends utils.Adapter {
                 this.log.error(error);
               }
             }
+          } else {
+            this.setState(id.replace('image_url', 'image'), imageBase64, true);
           }
         }
       }

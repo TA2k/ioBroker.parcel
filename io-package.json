@@ -166,6 +166,9 @@
   "native": {
     "amzusername": "",
     "amzpassword": "",
+    "aliUsername": "",
+    "aliPassword": "",
+    "aliMfa": "",
     "glsusername": "",
     "glspassword": "",
     "upsusername": "",
