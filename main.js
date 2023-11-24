@@ -2741,6 +2741,17 @@ class Parcel extends utils.Adapter {
               }
             }
           } else {
+            await this.extendObjectAsync(id.replace('image_url', 'image'), {
+              type: 'state',
+              common: {
+                name: 'Image Base64 Decrypted from URL',
+                write: false,
+                read: true,
+                type: 'string',
+                role: 'state',
+              },
+              native: {},
+            });
             this.setState(id.replace('image_url', 'image'), imageBase64, true);
           }
         }
