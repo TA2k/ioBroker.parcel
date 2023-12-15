@@ -1936,11 +1936,11 @@ class Parcel extends utils.Adapter {
                   url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation/?trackingnumber=' + id;
                 }
                 let name = sendungen[id].name;
-                if (name.replace) {
+                if (name != null && name.replace) {
                   name = name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 }
                 let status = sendungen[id].status;
-                if (status.replace) {
+                if (status != null && status.replace) {
                   status = status.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 }
                 text = '📦 <a href="' + url + '">' + sendungen[id].source + '</a> ' + name + '\n' + status;
