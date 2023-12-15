@@ -1829,7 +1829,7 @@ class Parcel extends utils.Adapter {
           name: sendung.name,
           status: sendung.status,
           source: 'AMZ',
-          tracking: sendung.detailedState.orderId,
+          tracking: sendung.detailedState.signInRedirectUrl,
         };
 
         sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
@@ -1929,7 +1929,7 @@ class Parcel extends utils.Adapter {
                   url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=' + trackingId;
                 }
                 if (sendungen[id].source === 'AMZ') {
-                  url = 'https://www.amazon.de/gp/your-account/order-details?orderID=' + trackingId;
+                  url = 'https://www.amazon.de' + trackingId;
                 }
                 if (sendungen[id].source === 'GLS') {
                   url = 'https://gls-group.eu/DE/de/paketverfolgung?match=' + trackingId;
