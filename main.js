@@ -1938,7 +1938,7 @@ class Parcel extends utils.Adapter {
                   }
 
                   text =
-                    '<MarkdownV2>📦 ![' +
+                    '<MarkdownV2>📦 [' +
                     sendungen[id].source +
                     '](' +
                     url +
