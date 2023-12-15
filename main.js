@@ -1780,6 +1780,7 @@ class Parcel extends utils.Adapter {
           }
           const sendungsObject = {
             id: sendung.id,
+            tracking: sendung.order,
             name: name,
             status: sendung.status.text.longText || '',
             source: 'Hermes',
@@ -1823,7 +1824,13 @@ class Parcel extends utils.Adapter {
     }
     if (id === 'amz' && data && data.sendungen) {
       const sendungsArray = data.sendungen.map((sendung) => {
-        const sendungsObject = { id: sendung.id, name: sendung.name, status: sendung.status, source: 'AMZ' };
+        const sendungsObject = {
+          id: sendung.id,
+          name: sendung.name,
+          status: sendung.status,
+          source: 'AMZ',
+          tracking: sendung.detailedState.orderId,
+        };
 
         sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
         if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
@@ -1917,23 +1924,24 @@ class Parcel extends utils.Adapter {
                 });
               } else if (sendInstance.includes('telegram')) {
                 let url = '';
+                let trackingId = sendungen[id].tracking || id;
                 if (sendungen[id].source === 'DHL') {
-                  url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=' + id;
+                  url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=' + trackingId;
                 }
                 if (sendungen[id].source === 'AMZ') {
-                  url = 'https://www.amazon.de/gp/your-account/order-details?orderID=' + id;
+                  url = 'https://www.amazon.de/gp/your-account/order-details?orderID=' + trackingId;
                 }
                 if (sendungen[id].source === 'GLS') {
-                  url = 'https://gls-group.eu/DE/de/paketverfolgung?match=' + id;
+                  url = 'https://gls-group.eu/DE/de/paketverfolgung?match=' + trackingId;
                 }
                 if (sendungen[id].source === 'DPD') {
-                  url = 'https://tracking.dpd.de/parcelstatus?query=' + id;
+                  url = 'https://tracking.dpd.de/parcelstatus?query=' + trackingId;
                 }
                 if (sendungen[id].source === 'UPS') {
-                  url = 'https://www.ups.com/track?loc=de_DE&tracknum=' + id;
+                  url = 'https://www.ups.com/track?loc=de_DE&tracknum=' + trackingId;
                 }
                 if (sendungen[id].source === 'Hermes') {
-                  url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation/?trackingnumber=' + id;
+                  url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation/?trackingnumber=' + trackingId;
                 }
                 let name = sendungen[id].name;
                 if (name != null && name.replace) {
