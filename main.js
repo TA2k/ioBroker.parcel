@@ -1915,39 +1915,38 @@ class Parcel extends utils.Adapter {
                   text: text,
                   phone: user,
                 });
-              } else {
-                if (sendInstance.includes('telegram')) {
-                  let url = '';
-                  if (sendungen[id].source === 'DHL') {
-                    url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=' + id;
-                  }
-                  if (sendungen[id].source === 'AMZ') {
-                    url = 'https://www.amazon.de/gp/your-account/order-details?orderID=' + id;
-                  }
-                  if (sendungen[id].source === 'GLS') {
-                    url = 'https://gls-group.eu/DE/de/paketverfolgung?match=' + id;
-                  }
-                  if (sendungen[id].source === 'DPD') {
-                    url = 'https://tracking.dpd.de/parcelstatus?query=' + id;
-                  }
-                  if (sendungen[id].source === 'UPS') {
-                    url = 'https://www.ups.com/track?loc=de_DE&tracknum=' + id;
-                  }
-                  if (sendungen[id].source === 'Hermes') {
-                    url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation/?trackingnumber=' + id;
-                  }
-
-                  text =
-                    '<MarkdownV2>📦 [' +
-                    sendungen[id].source +
-                    '](' +
-                    url +
-                    ') ' +
-                    sendungen[id].name +
-                    '\n' +
-                    sendungen[id].status +
-                    '</MarkdownV2>';
+              } else if (sendInstance.includes('telegram')) {
+                let url = '';
+                if (sendungen[id].source === 'DHL') {
+                  url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=' + id;
                 }
+                if (sendungen[id].source === 'AMZ') {
+                  url = 'https://www.amazon.de/gp/your-account/order-details?orderID=' + id;
+                }
+                if (sendungen[id].source === 'GLS') {
+                  url = 'https://gls-group.eu/DE/de/paketverfolgung?match=' + id;
+                }
+                if (sendungen[id].source === 'DPD') {
+                  url = 'https://tracking.dpd.de/parcelstatus?query=' + id;
+                }
+                if (sendungen[id].source === 'UPS') {
+                  url = 'https://www.ups.com/track?loc=de_DE&tracknum=' + id;
+                }
+                if (sendungen[id].source === 'Hermes') {
+                  url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation/?trackingnumber=' + id;
+                }
+
+                text =
+                  '📦 <a href="' +
+                  url +
+                  '">' +
+                  sendungen[id].source +
+                  '</a>' +
+                  sendungen[id].name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+                  '\n' +
+                  sendungen[id].status.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                await this.sendToAsync(sendInstance, { user: user, text: text, disable_web_page_preview: true, parse_mode: 'HTML' });
+              } else {
                 await this.sendToAsync(sendInstance, { user: user, text: text });
               }
             }
