@@ -1708,11 +1708,13 @@ class Parcel extends utils.Adapter {
         if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.kurzStatus) {
           status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
         }
-        if (sendung.sendungsdetails && sendung.sendungsdetails.liveTrackingVerfuegbar && sendung.sendungsdetails.liveTracking) {
+        if (sendung.sendungsdetails && sendung.sendungsdetails.liveTracking) {
           status = status + ' ' + sendung.sendungsdetails.liveTracking.countdown + ' Stopps';
         }
-        if (status === '') {
-          return;
+        if (sendung.sendungsdetails && sendung.sendungsdetails.zustellung && sendung.sendungsdetails.zustellung.zustellzeitfensterBis) {
+          const bisDate = new Date(sendung.sendungsdetails.zustellung.zustellzeitfensterBis).toLocaleTimeString('de-DE');
+          const vonDate = new Date(sendung.sendungsdetails.zustellung.zustellzeitfensterVon).toLocaleTimeString('de-DE');
+          status = status + ' ' + vonDate + '-' + bisDate;
         }
         const name = sendung.sendungsinfo.sendungsname || 'Unbekannt';
 
@@ -1899,7 +1901,7 @@ class Parcel extends utils.Adapter {
         const sendInstances = this.config.sendToInstance.replace(/ /g, '').split(',');
         const sendUser = this.config.sendToUser.replace(/ /g, '').split(',');
         for (const sendInstance of sendInstances) {
-          const text = '📦 ' + sendungen[id].source + ' ' + sendungen[id].name + '\n' + sendungen[id].status;
+          let text = '📦 ' + sendungen[id].source + ' ' + sendungen[id].name + '\n' + sendungen[id].status;
           if (sendUser.length > 0) {
             for (const user of sendUser) {
               if (sendInstance.includes('pushover')) {
@@ -1914,6 +1916,38 @@ class Parcel extends utils.Adapter {
                   phone: user,
                 });
               } else {
+                if (sendInstance.includes('telegram')) {
+                  let url = '';
+                  if (sendungen[id].source === 'DHL') {
+                    url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=' + id;
+                  }
+                  if (sendungen[id].source === 'AMZ') {
+                    url = 'https://www.amazon.de/gp/your-account/order-details?orderID=' + id;
+                  }
+                  if (sendungen[id].source === 'GLS') {
+                    url = 'https://gls-group.eu/DE/de/paketverfolgung?match=' + id;
+                  }
+                  if (sendungen[id].source === 'DPD') {
+                    url = 'https://tracking.dpd.de/parcelstatus?query=' + id;
+                  }
+                  if (sendungen[id].source === 'UPS') {
+                    url = 'https://www.ups.com/track?loc=de_DE&tracknum=' + id;
+                  }
+                  if (sendungen[id].source === 'Hermes') {
+                    url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation/?trackingnumber=' + id;
+                  }
+
+                  text =
+                    '<MarkdownV2>📦 ![' +
+                    sendungen[id].source +
+                    '](' +
+                    url +
+                    ') ' +
+                    sendungen[id].name +
+                    '\n' +
+                    sendungen[id].status +
+                    '</MarkdownV2>';
+                }
                 await this.sendToAsync(sendInstance, { user: user, text: text });
               }
             }
