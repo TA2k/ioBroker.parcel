@@ -1935,16 +1935,15 @@ class Parcel extends utils.Adapter {
                 if (sendungen[id].source === 'Hermes') {
                   url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation/?trackingnumber=' + id;
                 }
-
-                text =
-                  '📦 <a href="' +
-                  url +
-                  '">' +
-                  sendungen[id].source +
-                  '</a>' +
-                  sendungen[id].name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
-                  '\n' +
-                  sendungen[id].status.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                let name = sendungen[id].name;
+                if (name.replace) {
+                  name = name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                }
+                let status = sendungen[id].status;
+                if (status.replace) {
+                  status = status.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                }
+                text = '📦 <a href="' + url + '">' + sendungen[id].source + '</a> ' + name + '\n' + status;
                 await this.sendToAsync(sendInstance, { user: user, text: text, disable_web_page_preview: true, parse_mode: 'HTML' });
               } else {
                 await this.sendToAsync(sendInstance, { user: user, text: text });
