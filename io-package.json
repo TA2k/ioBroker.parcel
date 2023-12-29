@@ -249,6 +249,18 @@
       "native": {}
     },
     {
+      "_id": "inDeliveryJson",
+      "type": "state",
+      "common": {
+        "role": "json",
+        "name": "inDelivery of all Providers",
+        "type": "string",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
       "_id": "inDeliveryCount",
       "type": "state",
       "common": {

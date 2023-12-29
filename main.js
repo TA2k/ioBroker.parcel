@@ -1664,6 +1664,11 @@ class Parcel extends utils.Adapter {
     this.setState('allProviderObjects', JSON.stringify(this.mergedJsonObject), true);
     this.setState('inDelivery', JSON.stringify(this.inDelivery), true);
     this.setState('inDeliveryCount', this.inDelivery.length, true);
+    const inDeliveryJson = {};
+    for (const sendung of this.inDelivery) {
+      inDeliveryJson[sendung.source] = inDeliveryJson[sendung.source] ? inDeliveryJson[sendung.source] + 1 : 1;
+    }
+    this.setState('inDeliveryCountJson', JSON.stringify(inDeliveryJson), true);
   }
   async cleanupProvider(id, data) {
     if (id === 'dhl' && data.hasOwnProperty('grantToken')) {
