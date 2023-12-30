@@ -249,14 +249,15 @@
       "native": {}
     },
     {
-      "_id": "inDeliveryJson",
+      "_id": "inDeliveryCountJson",
       "type": "state",
       "common": {
         "role": "json",
-        "name": "inDelivery of all Providers",
+        "name": "Number of in Delivery of all Providers",
         "type": "string",
         "read": true,
-        "write": false
+        "write": false,
+        "def": "{}"
       },
       "native": {}
     },
