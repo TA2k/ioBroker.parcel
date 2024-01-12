@@ -237,6 +237,30 @@
       "native": {}
     },
     {
+      "_id": "notDelivered",
+      "type": "state",
+      "common": {
+        "role": "json",
+        "name": "Not yet delivered/Noch nicht zugestellt",
+        "type": "string",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "notDeliveredCount",
+      "type": "state",
+      "common": {
+        "role": "value",
+        "name": "Number of not yet delivered/Anzahl noch nicht zugestellt",
+        "type": "number",
+        "read": true,
+        "write": false
+      },
+      "native": {}
+    },
+    {
       "_id": "inDelivery",
       "type": "state",
       "common": {

@@ -1,229 +1,232 @@
 <html>
-    <head>
-        <!-- Load ioBroker scripts and styles-->
-        <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
-        <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css" />
+  <head>
+    <!-- Load ioBroker scripts and styles-->
+    <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+    <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css" />
 
-        <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
-        <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
-        <script type="text/javascript" src="../../js/translate.js"></script>
-        <script type="text/javascript" src="../../lib/js/materialize.js"></script>
-        <script type="text/javascript" src="../../js/adapter-settings.js"></script>
+    <script type="text/javascript" src="../../js/translate.js"></script>
+    <script type="text/javascript" src="../../lib/js/materialize.js"></script>
+    <script type="text/javascript" src="../../js/adapter-settings.js"></script>
 
-        <!-- Load our own files -->
-        <link rel="stylesheet" type="text/css" href="style.css" />
-        <script type="text/javascript" src="words.js"></script>
+    <!-- Load our own files -->
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script type="text/javascript" src="words.js"></script>
 
-        <script type="text/javascript">
-            // This will be called by the admin adapter when the settings page loads
-            function load(settings, onChange) {
-                // example: select elements with id=key and class=value and insert value
-                if (!settings) return;
-                $(".value").each(function () {
-                    var $key = $(this);
-                    var id = $key.attr("id");
-                    if ($key.attr("type") === "checkbox") {
-                        // do not call onChange direct, because onChange could expect some arguments
-                        $key.prop("checked", settings[id]).on("change", () => onChange());
-                    } else {
-                        // do not call onChange direct, because onChange could expect some arguments
-                        $key.val(settings[id])
-                            .on("change", () => onChange())
-                            .on("keyup", () => onChange());
-                    }
-                });
-                onChange(false);
-                // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
-                if (M) M.updateTextFields();
-            }
+    <script type="text/javascript">
+      // This will be called by the admin adapter when the settings page loads
+      function load(settings, onChange) {
+        // example: select elements with id=key and class=value and insert value
+        if (!settings) return;
+        $('.value').each(function () {
+          var $key = $(this);
+          var id = $key.attr('id');
+          if ($key.attr('type') === 'checkbox') {
+            // do not call onChange direct, because onChange could expect some arguments
+            $key.prop('checked', settings[id]).on('change', () => onChange());
+          } else {
+            // do not call onChange direct, because onChange could expect some arguments
+            $key
+              .val(settings[id])
+              .on('change', () => onChange())
+              .on('keyup', () => onChange());
+          }
+        });
+        onChange(false);
+        // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
+        if (M) M.updateTextFields();
+      }
 
-            // This will be called by the admin adapter when the user presses the save button
-            function save(callback) {
-                // example: select elements with class=value and build settings object
-                var obj = {};
-                $(".value").each(function () {
-                    var $this = $(this);
-                    if ($this.attr("type") === "checkbox") {
-                        obj[$this.attr("id")] = $this.prop("checked");
-                    } else if ($this.attr("type") === "number") {
-                        obj[$this.attr("id")] = parseFloat($this.val());
-                    } else {
-                        obj[$this.attr("id")] = $this.val();
-                    }
-                });
-                callback(obj);
-            }
-        </script>
-    </head>
+      // This will be called by the admin adapter when the user presses the save button
+      function save(callback) {
+        // example: select elements with class=value and build settings object
+        var obj = {};
+        $('.value').each(function () {
+          var $this = $(this);
+          if ($this.attr('type') === 'checkbox') {
+            obj[$this.attr('id')] = $this.prop('checked');
+          } else if ($this.attr('type') === 'number') {
+            obj[$this.attr('id')] = parseFloat($this.val());
+          } else {
+            obj[$this.attr('id')] = $this.val();
+          }
+        });
+        callback(obj);
+      }
+    </script>
+  </head>
 
-    <body>
-        <div class="m adapter-container">
-            <div class="row">
-                <div class="col s12 m4 l2">
-                    <img src="parcel.png" class="logo" />
-                </div>
-            </div>
-
-            <!-- Put your content here -->
-            <div class="row">
-                <div class="col"><h5>Allgemein</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="number" class="value" id="interval" />
-                    <label for="interval" class="translate">Update interval in minutes (Unter 10min kann bei DHL zu einer Benachrichtigung führen)</label>
-                </div>
-                <div class="col s6 input-field">
-                    <div>
-                        <input type="checkbox" class="value" id="sendToActive" />
-                        <label for="sendToActive" class="translate">Benachrichtigung bei Änderungen senden</label>
-                    </div>
-                    <div>
-                        <input type="text" class="value" id="sendToInstance" />
-                        <label for="sendToInstance" class="translate">Instanz zum senden verwenden (Kommagetrennt für mehrere)</label>
-                    </div>
-                    <div>
-                        <input type="text" class="value" id="sendToUser" />
-                        <label for="sendToUser" class="translate">User an den gesendet werden soll (Kommagetrennt für mehrere)</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" class="value" id="noFirstStartSend" />
-                        <label for="noFirstStartSend" class="translate">Benachrichtigung beim Adapterstart unterdrücken</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col"><h5>DHL</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="dhlusername" />
-                    <label for="dhlusername" class="translate">App Email</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="password" class="value" id="dhlpassword" />
-                    <label for="dhlpassword" class="translate">App Password</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="dhlMfa" />
-                    <label for="dhlMfa" class="translate">SMS/Mail Pin nach erstem Start</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col"><h5>Amazon</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="amzusername" />
-                    <label for="amzusername" class="translate">Amazon Email</label>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="password" class="value" id="amzpassword" />
-                    <label for="amzpassword" class="translate">Amazon Password</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="amzotp" />
-                    <label for="amzotp" class="translate">Amazon OTP Token vor dem Login eingeben, falls 2FA aktiviert ist</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col"><h5>DPD</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="dpdusername" />
-                    <label for="dpdusername" class="translate">App Email</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="password" class="value" id="dpdpassword" />
-                    <label for="dpdpassword" class="translate">App Password</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col"><h5>GLS</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="glsusername" />
-                    <label for="glsusername" class="translate">App Email</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="password" class="value" id="glspassword" />
-                    <label for="glspassword" class="translate">App Password</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col"><h5>Hermes</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="hermesusername" />
-                    <label for="hermesusername" class="translate">App Username</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="password" class="value" id="hermespassword" />
-                    <label for="hermespassword" class="translate">App Password</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col"><h5>UPS</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="upsusername" />
-                    <label for="upsusername" class="translate">App Username</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="password" class="value" id="upspassword" />
-                    <label for="upspassword" class="translate">App Password</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col"><h5>17Track Normal User</h5></div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="t17username" />
-                    <label for="t17username" class="translate">App Email</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="password" class="value" id="t17password" />
-                    <label for="t17password" class="translate">App Password</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <div><h5>17Track</h5></div>
-                    <a href="https://api.17track.net/en/admin/settings" target="_blank">Register HERE to receive a API Key</a>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s6 input-field">
-                    <input type="text" class="value" id="17trackKey" />
-                    <label for="17trackKey" class="translate">17Track API Key</label>
-                </div>
-            </div>
+  <body>
+    <div class="m adapter-container">
+      <div class="row">
+        <div class="col s12 m4 l2">
+          <img src="parcel.png" class="logo" />
         </div>
-    </body>
+      </div>
+
+      <!-- Put your content here -->
+      <div class="row">
+        <div class="col"><h5>Allgemein</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="number" class="value" id="interval" />
+          <label for="interval" class="translate"
+            >Update interval in minutes (Unter 10min kann bei DHL zu einer Benachrichtigung führen)</label
+          >
+        </div>
+        <div class="col s6 input-field">
+          <div>
+            <input type="checkbox" class="value" id="sendToActive" />
+            <label for="sendToActive" class="translate">Benachrichtigung bei Änderungen senden</label>
+          </div>
+          <div>
+            <input type="text" class="value" id="sendToInstance" />
+            <label for="sendToInstance" class="translate">Instanz zum senden verwenden (Kommagetrennt für mehrere)</label>
+          </div>
+          <div>
+            <input type="text" class="value" id="sendToUser" />
+            <label for="sendToUser" class="translate">User an den gesendet werden soll (Kommagetrennt für mehrere)</label>
+          </div>
+          <div>
+            <input type="checkbox" class="value" id="noFirstStartSend" />
+            <label for="noFirstStartSend" class="translate">Benachrichtigung beim Adapterstart unterdrücken</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col"><h5>DHL</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="dhlusername" />
+          <label for="dhlusername" class="translate">App Email</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="password" class="value" id="dhlpassword" />
+          <label for="dhlpassword" class="translate">App Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="dhlMfa" />
+          <label for="dhlMfa" class="translate">SMS/Mail Pin nach erstem Start</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><h5>Amazon</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="amzusername" />
+          <label for="amzusername" class="translate">Amazon Email</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="password" class="value" id="amzpassword" />
+          <label for="amzpassword" class="translate">Amazon Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="amzotp" />
+          <label for="amzotp" class="translate">Amazon OTP Token vor dem Login eingeben. 2FA Aktivierung ist Empfohlen.</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><h5>DPD</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="dpdusername" />
+          <label for="dpdusername" class="translate">App Email</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="password" class="value" id="dpdpassword" />
+          <label for="dpdpassword" class="translate">App Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><h5>GLS</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="glsusername" />
+          <label for="glsusername" class="translate">App Email</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="password" class="value" id="glspassword" />
+          <label for="glspassword" class="translate">App Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><h5>Hermes</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="hermesusername" />
+          <label for="hermesusername" class="translate">App Username</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="password" class="value" id="hermespassword" />
+          <label for="hermespassword" class="translate">App Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><h5>UPS</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="upsusername" />
+          <label for="upsusername" class="translate">App Username</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="password" class="value" id="upspassword" />
+          <label for="upspassword" class="translate">App Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><h5>17Track Normal User</h5></div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="t17username" />
+          <label for="t17username" class="translate">App Email</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="password" class="value" id="t17password" />
+          <label for="t17password" class="translate">App Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div><h5>17Track</h5></div>
+          <a href="https://api.17track.net/en/admin/settings" target="_blank">Register HERE to receive a API Key</a>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s6 input-field">
+          <input type="text" class="value" id="17trackKey" />
+          <label for="17trackKey" class="translate">17Track API Key</label>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
