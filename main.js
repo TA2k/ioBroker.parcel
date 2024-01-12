@@ -49,6 +49,7 @@ class Parcel extends utils.Adapter {
     this.sessions = {};
     this.mergedJson = [];
     this.inDelivery = [];
+    this.notDelivered = [];
     this.mergedJsonObject = {};
     this.images = {};
     this.alreadySentMessages = {};
@@ -1388,6 +1389,7 @@ class Parcel extends utils.Adapter {
     this.mergedJson = [];
     this.mergedJsonObject = {};
     this.inDelivery = [];
+    this.notDelivered = [];
     if (this.sessions['17track']) {
       try {
         const trackList = await this.getStateAsync('17t.trackList');
@@ -1663,7 +1665,9 @@ class Parcel extends utils.Adapter {
     this.setState('allProviderJson', JSON.stringify(this.mergedJson), true);
     this.setState('allProviderObjects', JSON.stringify(this.mergedJsonObject), true);
     this.setState('inDelivery', JSON.stringify(this.inDelivery), true);
+    this.setState('notDelivered', JSON.stringify(this.notDelivered), true);
     this.setState('inDeliveryCount', this.inDelivery.length, true);
+    this.setState('notDeliveredCount', this.notDelivered.length, true);
     const inDeliveryJson = {};
     for (const sendung of this.inDelivery) {
       inDeliveryJson[sendung.source] = inDeliveryJson[sendung.source] ? inDeliveryJson[sendung.source] + 1 : 1;
@@ -1730,6 +1734,9 @@ class Parcel extends utils.Adapter {
           sendungsObject.inDelivery = true;
           this.inDelivery.push(sendungsObject);
         }
+        if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+          this.notDelivered.push(sendungsObject);
+        }
         sendungsObject.direction = sendung.sendungsinfo.sendungsrichtung;
         this.mergedJsonObject[sendung.id] = sendungsObject;
         return sendungsObject;
@@ -1751,6 +1758,9 @@ class Parcel extends utils.Adapter {
           sendungsObject.inDelivery = true;
           this.inDelivery.push(sendungsObject);
         }
+        if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+          this.notDelivered.push(sendungsObject);
+        }
         this.mergedJsonObject[sendung.id] = sendungsObject;
         return sendungsObject;
       });
@@ -1769,6 +1779,9 @@ class Parcel extends utils.Adapter {
         if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
           sendungsObject.inDelivery = true;
           this.inDelivery.push(sendungsObject);
+        }
+        if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+          this.notDelivered.push(sendungsObject);
         }
         this.mergedJsonObject[sendung.id] = sendungsObject;
 
@@ -1792,11 +1805,14 @@ class Parcel extends utils.Adapter {
           };
 
           sendungsObject.delivery_status = this.deliveryStatusCheck(sendung, id, sendungsObject);
+          this.mergedJsonObject[sendung.id] = sendungsObject;
           if (sendungsObject.delivery_status === this.delivery_status.OUT_FOR_DELIVERY) {
             sendungsObject.inDelivery = true;
             this.inDelivery.push(sendungsObject);
           }
-          this.mergedJsonObject[sendung.id] = sendungsObject;
+          if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+            this.notDelivered.push(sendungsObject);
+          }
 
           return sendungsObject;
         });
@@ -1821,6 +1837,9 @@ class Parcel extends utils.Adapter {
           sendungsObject.inDelivery = true;
           this.inDelivery.push(sendungsObject);
         }
+        if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+          this.notDelivered.push(sendungsObject);
+        }
         this.mergedJsonObject[sendung.id] = sendungsObject;
 
         return sendungsObject;
@@ -1842,6 +1861,9 @@ class Parcel extends utils.Adapter {
           sendungsObject.inDelivery = true;
           this.inDelivery.push(sendungsObject);
         }
+        if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+          this.notDelivered.push(sendungsObject);
+        }
         this.mergedJsonObject[sendung.id] = sendungsObject;
 
         return sendungsObject;
@@ -1862,7 +1884,9 @@ class Parcel extends utils.Adapter {
             sendungsObject.inDelivery = true;
             this.inDelivery.push(sendungsObject);
           }
-
+          if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+            this.notDelivered.push(sendungsObject);
+          }
           this.mergedJsonObject[sendung.id] = sendungsObject;
         }
         return sendungsObject;
@@ -1887,7 +1911,9 @@ class Parcel extends utils.Adapter {
               sendungsObject.inDelivery = true;
               this.inDelivery.push(sendungsObject);
             }
-
+            if (sendungsObject.delivery_status !== this.delivery_status.DELIVERED) {
+              this.notDelivered.push(sendungsObject);
+            }
             this.mergedJsonObject[sendung.id] = sendungsObject;
           }
           return sendungsObject;
