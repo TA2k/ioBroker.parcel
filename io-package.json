@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.2.6",
+    "version": "0.2.7",
     "news": {
+      "0.2.7": {
+        "en": "Fix for UPS Login",
+        "de": "Fix für UPS Login"
+      },
       "0.2.6": {
         "en": "Improve DHL Status and add link to shipment in the telegram notification",
         "de": "Verbesserung des DHL Status und Link zur Sendung in der Telegram Benachrichtigung hinzugefügt"
