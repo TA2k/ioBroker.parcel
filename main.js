@@ -1718,7 +1718,7 @@ class Parcel extends utils.Adapter {
           status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
         }
         if (sendung.sendungsdetails && sendung.sendungsdetails.liveTracking) {
-          status = status + ' ' + sendung.sendungsdetails.liveTracking.countdown + ' Stopps';
+          status = status + ' ' + sendung.sendungsdetails.liveTracking.countdown || 0 + ' Stopps';
         }
         if (sendung.sendungsdetails && sendung.sendungsdetails.zustellung && sendung.sendungsdetails.zustellung.zustellzeitfensterBis) {
           const bisDate = new Date(sendung.sendungsdetails.zustellung.zustellzeitfensterBis).toLocaleTimeString('de-DE');
@@ -2322,6 +2322,12 @@ class Parcel extends utils.Adapter {
             this.log.debug(res.data);
             return;
           }
+          if (status.includes('Erstattung veranlasst') && stateObject == {}) {
+            this.log.debug('No detail status found for ' + order.url);
+            this.log.debug(res.data);
+            return;
+          }
+
           return {
             id: document.querySelector('.pt-delivery-card-trackingId')
               ? document.querySelector('.pt-delivery-card-trackingId').textContent.replace('Trackingnummer ', '')
