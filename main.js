@@ -2322,7 +2322,7 @@ class Parcel extends utils.Adapter {
             this.log.debug(res.data);
             return;
           }
-          if (status.includes('Erstattung veranlasst') && stateObject == {}) {
+          if (status.includes('Erstattung') && Object.keys(stateObject).length === 0) {
             this.log.debug('No detail status found for ' + order.url);
             this.log.debug(res.data);
             return;
