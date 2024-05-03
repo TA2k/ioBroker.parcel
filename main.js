@@ -1675,6 +1675,7 @@ class Parcel extends utils.Adapter {
     this.setState('inDeliveryCountJson', JSON.stringify(inDeliveryJson), true);
   }
   async cleanupProvider(id, data) {
+    //eslint-disable-next-line
     if (id === 'dhl' && data.hasOwnProperty('grantToken')) {
       await this.delObjectAsync('dhl.briefe', { recursive: true });
       await this.setObjectNotExistsAsync('dhl.briefe.json', {
@@ -1961,7 +1962,7 @@ class Parcel extends utils.Adapter {
                 });
               } else if (sendInstance.includes('telegram')) {
                 let url = '';
-                let trackingId = sendungen[id].tracking || id;
+                const trackingId = sendungen[id].tracking || id;
                 if (sendungen[id].source === 'DHL') {
                   url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=' + trackingId;
                 }
@@ -2327,14 +2328,22 @@ class Parcel extends utils.Adapter {
             this.log.debug(res.data);
             return;
           }
+          const id = document.querySelector('.pt-delivery-card-trackingId')
+            ? document.querySelector('.pt-delivery-card-trackingId').textContent.replace('Trackingnummer ', '')
+            : '';
+
+          const name = document.querySelector('.carrierRelatedInfo-mfn-providerTitle')
+            ? document.querySelector('.carrierRelatedInfo-mfn-providerTitle').textContent.replace(/\\n */g, '')
+            : '';
+          if (id === '' && Object.keys(stateObject).length === 0) {
+            this.log.debug('No detail status found for ' + order.url);
+            this.log.debug(res.data);
+            return;
+          }
 
           return {
-            id: document.querySelector('.pt-delivery-card-trackingId')
-              ? document.querySelector('.pt-delivery-card-trackingId').textContent.replace('Trackingnummer ', '')
-              : '',
-            name: document.querySelector('.carrierRelatedInfo-mfn-providerTitle')
-              ? document.querySelector('.carrierRelatedInfo-mfn-providerTitle').textContent.replace(/\\n */g, '')
-              : '',
+            id: id,
+            name: name,
             status: status,
             detailedState: stateObject,
           };
