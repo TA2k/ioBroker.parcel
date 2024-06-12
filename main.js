@@ -1719,7 +1719,11 @@ class Parcel extends utils.Adapter {
           status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
         }
         if (sendung.sendungsdetails && sendung.sendungsdetails.liveTracking) {
-          status = status + ' ' + sendung.sendungsdetails.liveTracking.countdown || 0 + ' Stopps';
+          let stopps = 0;
+          if (sendung.sendungsdetails.liveTracking && sendung.sendungsdetails.liveTracking.countdown) {
+            stopps = sendung.sendungsdetails.liveTracking.countdown;
+          }
+          status = status + ' ' + stopps + ' Stopps';
         }
         if (sendung.sendungsdetails && sendung.sendungsdetails.zustellung && sendung.sendungsdetails.zustellung.zustellzeitfensterBis) {
           const bisDate = new Date(sendung.sendungsdetails.zustellung.zustellzeitfensterBis).toLocaleTimeString('de-DE');
