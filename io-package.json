@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.2.7",
+    "version": "0.2.8-beta.0",
     "news": {
+      "0.2.8-beta.0": {
+        "en": "improve amazon login",
+        "de": "amazon login verbessern",
+        "ru": "улучшить логин amazon",
+        "pt": "melhorar o login amazon",
+        "nl": "amazon login verbeteren",
+        "fr": "améliorer la connexion amazon",
+        "it": "migliorare amazon login",
+        "es": "mejorar amazon login",
+        "pl": "poprawić logowanie amazon",
+        "uk": "поліпшити логін amazon",
+        "zh-cn": "改进amazon 登录"
+      },
       "0.2.7": {
         "en": "Fix for UPS Login",
         "de": "Fix für UPS Login"
@@ -26,60 +39,6 @@
       "0.1.5": {
         "en": "Improve failed Amazon Login",
         "de": "Verbesserter Amazon Login im Fehlerfall"
-      },
-      "0.1.2": {
-        "en": "Fix Amazon Status",
-        "de": "Amazon Status gefixt"
-      },
-      "0.1.1": {
-        "en": "Fix State creating warnings",
-        "de": "Warnung beim erstellen von Objekten behoben"
-      },
-      "0.1.0": {
-        "en": "Fix Hermes login"
-      },
-      "0.0.32": {
-        "en": "Fix Amazon relogin"
-      },
-      "0.0.30": {
-        "en": "Fix Hermes Login"
-      },
-      "0.0.28": {
-        "en": "Fix Amazon Login"
-      },
-      "0.0.27": {
-        "en": "Fix DHL Refresh token",
-        "de": "DHL Refresh token gefixt"
-      },
-      "0.0.26": {
-        "en": "Fix DHL Login",
-        "de": "DHL Login gefixt"
-      },
-      "0.0.25": {
-        "en": "Fix new Amazon UI parsing",
-        "de": "Neues Amazon UI parsing gefixt"
-      },
-      "0.0.23": {
-        "en": "Disable Pictures of Briefankündigung",
-        "de": "Bilder der Briefankündigung deaktiviert"
-      },
-      "0.0.22": {
-        "en": "Fix Amazon Login"
-      },
-      "0.0.21": {
-        "en": "Fix Brief images and pushover user"
-      },
-      "0.0.20": {
-        "en": "Fix GLS Parcel"
-      },
-      "0.0.18": {
-        "en": "Fix UPS/GLS login"
-      },
-      "0.0.15": {
-        "en": "Fix DPD states and remove canvas dependency"
-      },
-      "0.0.13": {
-        "en": "Fix Amazon delivery state, add telegram user"
       }
     },
     "title": "Parcel tracking",
@@ -107,7 +66,9 @@
       "pl": "Śledzenie przesyłek",
       "zh-cn": "包裹追踪"
     },
-    "authors": ["TA2k <tombox2020@gmail.com>"],
+    "authors": [
+      "TA2k <tombox2020@gmail.com>"
+    ],
     "keywords": [
       "parcel",
       "tracking",

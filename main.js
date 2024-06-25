@@ -928,7 +928,7 @@ class Parcel extends utils.Adapter {
           return;
         }
         if (res.data.indexOf('auth-select-device-form"') !== -1) {
-          this.log.debug('SMS code or call form found');
+          this.log.info('SMS code or call form found. If you do not receive a SMS then login to Amazon and trigger the SMS code');
           const form = this.extractHidden(res.data);
           await this.requestClient({
             method: 'post',
