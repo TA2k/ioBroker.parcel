@@ -884,7 +884,7 @@ class Parcel extends utils.Adapter {
                 });
                 return;
               }
-              this.log.error('MFA: Login to Amazon failed, please login manually to Amazon');
+              this.log.error('MFA: Login to Amazon failed. Enter correct MFA Code or login manually to Amazon');
               this.setState('info.connection', false, true);
             })
             .catch(async (error) => {
