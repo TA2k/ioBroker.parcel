@@ -932,14 +932,14 @@ class Parcel extends utils.Adapter {
           const form = this.extractHidden(res.data);
           await this.requestClient({
             method: 'post',
-            url: 'https://www.amazon.de/ap/signin',
+            url: 'https://www.amazon.de/ap/mfa/new-otp?ie=UTF8',
             headers: {
               accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
               'content-type': 'application/x-www-form-urlencoded',
               origin: 'https://www.amazon.de',
               'accept-language': 'de-de',
               'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-              referer: 'https://www.amazon.de/ap/signin',
+              referer: 'https://www.amazon.de/ap/mfa/new-otp?ie=UTF8',
             },
             data: form,
           })
@@ -953,6 +953,7 @@ class Parcel extends utils.Adapter {
                 this.log.error(JSON.stringify(error.response.data));
               }
             });
+          return;
         }
 
         this.log.error('Unknown Error: Login to Amazon failed, please login to Amazon and check your credentials');
