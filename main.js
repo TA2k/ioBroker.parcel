@@ -928,6 +928,7 @@ class Parcel extends utils.Adapter {
           return;
         }
         this.log.error('Unknown Error: Login to Amazon failed, please login to Amazon and check your credentials');
+        this.log.debug(res.data);
         this.setState('info.connection', false, true);
         return;
       })
