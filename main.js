@@ -810,6 +810,11 @@ class Parcel extends utils.Adapter {
         .then(async (res) => {
           this.log.silly(JSON.stringify(res.data));
           this.log.debug('Username successfully posted');
+          const form = this.extractHidden(res.data);
+          if (Object.keys(form).length <= 3) {
+            this.log.error('Password form to short');
+            this.log.error(res.data);
+          }
           return res.data;
         })
         .catch((error) => {
@@ -828,6 +833,7 @@ class Parcel extends utils.Adapter {
     delete form['='];
     delete form['undefined'];
     this.log.debug('Post form : ' + JSON.stringify(form));
+
     form.rememberMe = 'true';
     form.password = this.config.amzpassword;
     this.log.debug('Post with password');
