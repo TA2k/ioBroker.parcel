@@ -808,7 +808,8 @@ class Parcel extends utils.Adapter {
         data: qs.stringify(form),
       })
         .then(async (res) => {
-          this.log.debug(JSON.stringify(res.data));
+          this.log.silly(JSON.stringify(res.data));
+          this.log.debug('Username successfully posted');
           return res.data;
         })
         .catch((error) => {
@@ -824,8 +825,12 @@ class Parcel extends utils.Adapter {
         });
       form = this.extractHidden(body);
     }
-    form.password = this.config.amzpassword;
+    delete form['='];
+    delete form['undefined'];
+    this.log.debug('Post form : ' + JSON.stringify(form));
     form.rememberMe = 'true';
+    form.password = this.config.amzpassword;
+    this.log.debug('Post with password');
     await this.requestClient({
       method: 'post',
       url: 'https://www.amazon.de/ap/signin',
@@ -837,10 +842,11 @@ class Parcel extends utils.Adapter {
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
         referer: 'https://www.amazon.de/ap/signin',
       },
-      data: qs.stringify(form),
+      data: form,
     })
       .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
+        this.log.silly(JSON.stringify(res.data));
+        this.log.debug('Password successfully posted');
         if (res.data.indexOf('js-yo-main-content') !== -1) {
           this.log.info('Relogin to Amazon successful');
           this.sessions['amz'] = true;
@@ -869,7 +875,8 @@ class Parcel extends utils.Adapter {
             data: qs.stringify(form),
           })
             .then(async (res) => {
-              this.log.debug(JSON.stringify(res.data));
+              this.log.silly(JSON.stringify(res.data));
+              this.log.debug('MFA successfully posted');
               if (res.data.indexOf('js-yo-main-content') !== -1) {
                 this.log.info('Login to Amazon successful');
                 this.sessions['amz'] = true;
@@ -884,7 +891,9 @@ class Parcel extends utils.Adapter {
                 });
                 return;
               }
-              this.log.error('MFA: Login to Amazon failed. Enter correct MFA Code or login manually to Amazon');
+              this.log.error(
+                'MFA: Login to Amazon failed. Enter correct MFA Code from SMS or App. Or check you account and login manually to Amazon',
+              );
               this.setState('info.connection', false, true);
             })
             .catch(async (error) => {
