@@ -927,6 +927,34 @@ class Parcel extends utils.Adapter {
           this.log.error('Zurücksetzen des Passworts erforderlich');
           return;
         }
+        if (res.data.indexOf('auth-select-device-form"') !== -1) {
+          this.log.debug('SMS code or call form found');
+          const form = this.extractHidden(res.data);
+          await this.requestClient({
+            method: 'post',
+            url: 'https://www.amazon.de/ap/signin',
+            headers: {
+              accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'content-type': 'application/x-www-form-urlencoded',
+              origin: 'https://www.amazon.de',
+              'accept-language': 'de-de',
+              'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+              referer: 'https://www.amazon.de/ap/signin',
+            },
+            data: form,
+          })
+            .then(async (res) => {
+              this.log.silly(JSON.stringify(res.data));
+              this.log.debug('SMS code or call form successfully posted');
+            })
+            .catch(async (error) => {
+              this.log.error('Failed to post SMS code or call form');
+              if (error.response) {
+                this.log.error(JSON.stringify(error.response.data));
+              }
+            });
+        }
+
         this.log.error('Unknown Error: Login to Amazon failed, please login to Amazon and check your credentials');
         this.log.debug(res.data);
         this.setState('info.connection', false, true);
