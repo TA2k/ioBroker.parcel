@@ -802,7 +802,8 @@ class Parcel extends utils.Adapter {
           'content-type': 'application/x-www-form-urlencoded',
           origin: 'https://www.amazon.de',
           'accept-language': 'de-de',
-          'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+          'user-agent':
+            'Mozilla/5.0 (iPhone; CPU OS 16_7.7 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/16.7.7 Mobile/10A5355d Safari/8536.25',
           referer: 'https://www.amazon.de/ap/signin',
         },
         data: qs.stringify(form),
@@ -875,7 +876,8 @@ class Parcel extends utils.Adapter {
               'content-type': 'application/x-www-form-urlencoded',
               origin: 'https://www.amazon.de',
               'accept-language': 'de-de',
-              'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+              'user-agent':
+                'Mozilla/5.0 (iPhone; CPU OS 16_7.7 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/16.7.7 Mobile/10A5355d Safari/8536.25',
               referer: 'https://www.amazon.de/ap/signin',
             },
             data: qs.stringify(form),
@@ -961,9 +963,12 @@ class Parcel extends utils.Adapter {
             });
           return;
         }
-
+        if (res.data.indexOf('Löse das Rätsel, um dein Konto zu schützen') !== -1) {
+          this.log.info('Captcha detected. Please login to Amazon and solve the captcha');
+          return;
+        }
         this.log.error('Unknown Error: Login to Amazon failed, please login to Amazon and check your credentials');
-        this.log.debug(res.data);
+        this.log.info(res.data);
         this.setState('info.connection', false, true);
         return;
       })
