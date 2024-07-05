@@ -88,6 +88,10 @@ class Parcel extends utils.Adapter {
       withCredentials: true,
       httpsAgent: new HttpsCookieAgent({ cookies: { jar: this.cookieJar } }),
     });
+    if (this.config.amzusername && this.config.amzpassword) {
+      this.log.info('Login to Amazon');
+      await this.loginAmz();
+    }
 
     if (this.config.dhlusername && this.config.dhlpassword) {
       this.log.info('Login to DHL');
@@ -111,10 +115,6 @@ class Parcel extends utils.Adapter {
       this.sessions['17track'] = this.config['17trackKey'];
       this.login17TApi();
       this.setState('info.connection', true, true);
-    }
-    if (this.config.amzusername && this.config.amzpassword) {
-      this.log.info('Login to Amazon');
-      await this.loginAmz();
     }
 
     if (this.config.glsusername && this.config.glspassword) {
