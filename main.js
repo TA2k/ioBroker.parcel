@@ -7,16 +7,6 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 
-//disable canvas because of missing rebuild
-const Module = require('module');
-const originalRequire = Module.prototype.require;
-Module.prototype.require = function () {
-  if (arguments[0] === 'canvas') {
-    return { createCanvas: null, createImageData: null, loadImage: null };
-  }
-  return originalRequire.apply(this, arguments);
-};
-
 const utils = require('@iobroker/adapter-core');
 const axios = require('axios').default;
 const qs = require('qs');
@@ -771,7 +761,7 @@ class Parcel extends utils.Adapter {
     let body = await this.requestClient({
       method: 'get',
       maxBodyLength: Infinity,
-      url: 'https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.oa2.client_id=device:42334146314239333737364334463941393135443746313136363446434238302341334e5748585451344542435a53&openid.oa2.code_challenge=ig2YgHP3AoncuKG0ks5pgr1HUhzwvlST-tuIY2Chi2M&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code',
+      url: 'https://www.amazon.de/ap/signin?_encoding=UTF8&accountStatusPolicy=P1&openid.assoc_handle=deflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.de%2Fgp%2Fcss%2Forder-history%3Fie%3DUTF8%26ref_%3Dnav_orders_first&pageId=webcs-yourorder&showRmrMe=1',
       headers: {
         accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'accept-charset': 'utf-8',
