@@ -2740,6 +2740,7 @@ class Parcel extends utils.Adapter {
       this.refreshTokenInterval && clearInterval(this.refreshTokenInterval);
       callback();
     } catch (e) {
+      this.log.error('Error onUnload: ' + e);
       callback();
     }
   }
