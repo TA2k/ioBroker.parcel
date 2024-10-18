@@ -183,7 +183,8 @@ class Parcel extends utils.Adapter {
       url: 'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize',
       params: {
         redirect_uri: 'dhllogin://de.deutschepost.dhl/login',
-        state: 'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
+        state:
+          'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
         client_id: '83471082-5c13-4fce-8dcb-19d2a3fca413',
         response_type: 'code',
         scope: 'openid offline_access',
@@ -303,7 +304,8 @@ class Parcel extends utils.Adapter {
         redirect_uri: 'dhllogin://de.deutschepost.dhl/login',
         response_type: 'code',
         scope: 'openid',
-        state: 'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
+        state:
+          'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
         ui_locales: 'de-DE",',
       },
       headers: {
@@ -351,7 +353,8 @@ class Parcel extends utils.Adapter {
         redirect_uri: 'dhllogin://de.deutschepost.dhl/login',
         response_type: 'code',
         scope: 'openid',
-        state: 'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
+        state:
+          'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
         ui_locales: 'de-DE',
       },
       headers: {
@@ -609,7 +612,8 @@ class Parcel extends utils.Adapter {
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"macOS"',
         'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36',
+        'user-agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36',
         accept:
           'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'sec-fetch-site': 'same-site',
@@ -653,7 +657,8 @@ class Parcel extends utils.Adapter {
           accept: 'application/json, text/plain, */*',
           'content-type': 'application/x-www-form-urlencoded',
           'sec-ch-ua-mobile': '?0',
-          'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36',
+          'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.20 Safari/537.36',
           'sec-ch-ua-platform': '"macOS"',
           origin: 'https://login.aliexpress.com',
           'sec-fetch-site': 'same-site',
@@ -683,7 +688,9 @@ class Parcel extends utils.Adapter {
       })
         .then(async (res) => {
           //  this.log.debug(JSON.stringify(res.data));
-          res.data.indexOf('Session has expired') !== -1 ? this.log.error('Session has expired') : this.log.info('Login to Aliexpress successful');
+          res.data.indexOf('Session has expired') !== -1
+            ? this.log.error('Session has expired')
+            : this.log.info('Login to Aliexpress successful');
         })
         .catch(async (error) => {
           error.response && this.log.error(JSON.stringify(error.response.data));
@@ -782,7 +789,7 @@ class Parcel extends utils.Adapter {
       .catch((error) => {
         this.log.error('Amazon first login step failed');
         this.log.error(
-          'https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.oa2.client_id=device:42334146314239333737364334463941393135443746313136363446434238302341334e5748585451344542435a53&openid.oa2.code_challenge=ig2YgHP3AoncuKG0ks5pgr1HUhzwvlST-tuIY2Chi2M&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code'
+          'https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.oa2.client_id=device:42334146314239333737364334463941393135443746313136363446434238302341334e5748585451344542435a53&openid.oa2.code_challenge=ig2YgHP3AoncuKG0ks5pgr1HUhzwvlST-tuIY2Chi2M&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code',
         );
         this.log.error(error);
         if (error.response) {
@@ -862,7 +869,7 @@ class Parcel extends utils.Adapter {
             this.log.error(JSON.stringify(error.response.data));
           }
           this.log.info(
-            'Delete amazon cookie please restart the adapter to trigger relogin. If this is not working please manualy delete parcel.0.auth.cookie'
+            'Delete amazon cookie please restart the adapter to trigger relogin. If this is not working please manualy delete parcel.0.auth.cookie',
           );
           delete this.cookieJar.store.idx['amazon.de'];
         });
@@ -919,7 +926,8 @@ class Parcel extends utils.Adapter {
               'accept-language': 'de-DE,de;q=0.9',
               'sec-fetch-mode': 'navigate',
               origin: 'https://www.amazon.de',
-              'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+              'user-agent':
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
               referer: 'https://' + res.request.host + res.request.path,
               'sec-fetch-dest': 'document',
             },
@@ -943,7 +951,7 @@ class Parcel extends utils.Adapter {
                 return;
               }
               this.log.error(
-                'MFA: Login to Amazon failed. Enter correct MFA Code from SMS or App. Or check you account and login manually to Amazon'
+                'MFA: Login to Amazon failed. Enter correct MFA Code from SMS or App. Or check you account and login manually to Amazon',
               );
               this.setState('info.connection', false, true);
             })
@@ -962,11 +970,11 @@ class Parcel extends utils.Adapter {
           this.log.error('Login to Amazon failed, please login to Amazon manually and check the login');
           if (res.data.indexOf('captcha-placeholder') !== -1) {
             this.log.warn(
-              'Captcha required. Please login into your account to check the state of the account. If this is not wokring please pause the adapter for 24h.'
+              'Captcha required. Please login into your account to check the state of the account. If this is not wokring please pause the adapter for 24h.',
             );
           }
           this.log.info(
-            'Amazon cookie are removed. Please restart the adapter to trigger a relogin. If this is not working please manually delete parcel.0.auth.cookie'
+            'Amazon cookie are removed. Please restart the adapter to trigger a relogin. If this is not working please manually delete parcel.0.auth.cookie',
           );
           delete this.cookieJar.store.idx['amazon.de'];
           this.log.info('Start relogin');
@@ -1038,7 +1046,8 @@ class Parcel extends utils.Adapter {
       url: 'https://www.dpd.com/de/de/mydpd-anmelden-und-registrieren/',
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.66 Safari/537.36',
+        'user-agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.66 Safari/537.36',
         accept:
           'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'accept-language': 'de,en;q=0.9',
@@ -1691,6 +1700,7 @@ class Parcel extends utils.Adapter {
               } catch (error) {
                 this.log.warn('Hermes response incomplete cannot parse result');
                 this.log.debug(res.data);
+                this.log.debug(error);
                 data = { sendungen: [] };
               }
             }
@@ -2332,7 +2342,8 @@ class Parcel extends utils.Adapter {
           'sec-fetch-site': 'same-origin',
           'sec-fetch-user': '?1',
           'upgrade-insecure-requests': '1',
-          'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+          'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
           'viewport-width': '1264',
         },
       })
@@ -2487,7 +2498,8 @@ class Parcel extends utils.Adapter {
         'Sec-Fetch-Site': 'none',
         'Sec-Fetch-User': '?1',
         'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
         'device-memory': '8',
         downlink: '10',
         dpr: '2',
@@ -2520,10 +2532,12 @@ class Parcel extends utils.Adapter {
 
         for (const order of orders) {
           const descHandle = order.querySelector(
-            '.a-fixed-right-grid-col.a-col-left .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal'
+            '.a-fixed-right-grid-col.a-col-left .a-fixed-left-grid-col.a-col-right div:first-child .a-link-normal',
           );
           const desc = descHandle ? descHandle.textContent.replace(/\n */g, '') : '';
-          let url = order.querySelector('.track-package-button a') ? order.querySelector('.track-package-button a').getAttribute('href') : '';
+          let url = order.querySelector('.track-package-button a')
+            ? order.querySelector('.track-package-button a').getAttribute('href')
+            : '';
           if (!url) {
             const allLinks = order.querySelectorAll('.a-button-inner a');
             for (const link of allLinks) {
