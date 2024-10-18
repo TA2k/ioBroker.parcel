@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.2.8-beta.0",
+    "version": "0.2.8",
     "news": {
+      "0.2.8": {
+        "en": "fix amazon login",
+        "de": "fix amazon login",
+        "ru": "исправить логин амазон",
+        "pt": "corrigir amazon login",
+        "nl": "fix amazon login",
+        "fr": "correction de la connexion amazon",
+        "it": "fix amazon login",
+        "es": "fijar amazon login",
+        "pl": "naprawić logowanie amazon",
+        "uk": "виправити amazon увійти",
+        "zh-cn": "修补amazon 登录"
+      },
       "0.2.8-beta.0": {
         "en": "improve amazon login",
         "de": "amazon login verbessern",
@@ -35,10 +48,6 @@
       "0.1.6": {
         "en": "Fix DHL and UPS",
         "de": "DHL und UPS gefixt"
-      },
-      "0.1.5": {
-        "en": "Improve failed Amazon Login",
-        "de": "Verbesserter Amazon Login im Fehlerfall"
       }
     },
     "title": "Parcel tracking",
