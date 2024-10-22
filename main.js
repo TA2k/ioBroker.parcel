@@ -786,7 +786,7 @@ class Parcel extends utils.Adapter {
           this.log.error(JSON.stringify(error.response.data));
         }
       });
-    if (body.indexOf('untrusted-app-sign-in-continue-button-announce') !== -1) {
+    if (body && body.indexOf('untrusted-app-sign-in-continue-button-announce') !== -1) {
       this.log.info('Amazon untrustet app warning detected');
       const form = this.extractHidden(body);
       delete form['sessionChallengeAck'];
