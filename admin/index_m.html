@@ -119,6 +119,33 @@
         </div>
       </div>
       <div class="row">
+        <div class="col s6 input-field" id="captchaResponse">
+          If login is not working alternate login method is available
+          <p></p>
+          1. Open the Url below and login with your account
+          <p></p>
+          2. Open Developer Console F12 or Option + Command + I
+          <p></p>
+          3. You see a failed redirect in the Console copy the dhllogin:// url
+          <p></p>
+          <img src="copyurl.png" style="width: 30rem" />
+          <p></p>
+          4. Paste the url in the input field below
+
+          <p></p>
+          <p></p>
+          <a
+            href="https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize?redirect_uri=dhllogin://de.deutschepost.dhl/login&state=eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9&client_id=83471082-5c13-4fce-8dcb-19d2a3fca413&response_type=code&scope=openid%20offline_access&claims=%7B%22id_token%22:%7B%22email%22:null,%22post_number%22:null,%22twofa%22:null,%22service_mask%22:null,%22deactivate_account%22:null,%22last_login%22:null,%22customer_type%22:null,%22display_name%22:null,%22data_confirmation_required%22:null%7D%7D&nonce=&login_hint=&prompt=login&ui_locales=de-DE&code_challenge=MAhrhXXZP-Owy-R7ruyB7Fn-Z8ODW6qxCoHg4uXELCw&code_challenge_method=S256"
+            target="_blank"
+            style="color: red !important"
+            >DHL Login Url CLICK HERE</a
+          >
+          <p></p>
+          <input type="text" class="value" id="dhlCode" placeholder="dhllogin://de.deutschepost.dhl/login?code=Jqbzy3wbJ..." />
+          <label for="dhlCode" class="translate">dhllogin Url</label>
+        </div>
+      </div>
+      <div class="row">
         <div class="col"><h5>Amazon</h5></div>
       </div>
       <div class="row">

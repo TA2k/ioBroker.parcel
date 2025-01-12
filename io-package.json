@@ -75,9 +75,7 @@
       "pl": "Śledzenie przesyłek",
       "zh-cn": "包裹追踪"
     },
-    "authors": [
-      "TA2k <tombox2020@gmail.com>"
-    ],
+    "authors": ["TA2k <tombox2020@gmail.com>"],
     "keywords": [
       "parcel",
       "tracking",
@@ -168,6 +166,7 @@
     "dpdpassword": "",
     "dhlusername": "",
     "dhlpassword": "",
+    "dhlCode": "",
     "dhlMfa": "",
     "17trackKey": "",
     "sendToActive": false,
