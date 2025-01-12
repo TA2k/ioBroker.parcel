@@ -164,6 +164,7 @@ class Parcel extends utils.Adapter {
     //   return;
     // }
     //https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize?redirect_uri=dhllogin://de.deutschepost.dhl/login&state=eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9&client_id=83471082-5c13-4fce-8dcb-19d2a3fca413&response_type=code&scope=openid%20offline_access&claims=%7B%22id_token%22:%7B%22email%22:null,%22post_number%22:null,%22twofa%22:null,%22service_mask%22:null,%22deactivate_account%22:null,%22last_login%22:null,%22customer_type%22:null,%22display_name%22:null,%22data_confirmation_required%22:null%7D%7D&nonce=&login_hint=&prompt=login&ui_locales=de-DE&code_challenge=MAhrhXXZP-Owy-R7ruyB7Fn-Z8ODW6qxCoHg4uXELCw&code_challenge_method=S256
+    //eslint-disable-next-line
     let [code_verifier, codeChallenge] = this.getCodeChallenge();
     let codeUrl = '';
     const transactionId = this.randomString(40);
@@ -402,7 +403,7 @@ class Parcel extends utils.Adapter {
       }
     }
     if (this.config.dhlCode && this.config.dhlCode.startsWith('dhllogin://')) {
-      codeUrl = qs.parse(this.config.dhlCode.split(?)[1]);
+      codeUrl = qs.parse(this.config.dhlCode.split('?')[1]);
       code_verifier = 'zmVs5AKfGvv45a9aUvuOid9a_erOirp7XL1sn9kWT_o';
     }
     await this.requestClient({
