@@ -2728,13 +2728,19 @@ class Parcel extends utils.Adapter {
    * Is called when adapter shuts down - callback has to be called under any circumstances!
    * @param {() => void} callback
    */
-  onUnload(callback) {
+  async onUnload(callback) {
     try {
       this.setState('info.connection', false, true);
       this.reLoginTimeout && clearTimeout(this.reLoginTimeout);
       this.refreshTokenTimeout && clearTimeout(this.refreshTokenTimeout);
       this.updateInterval && clearInterval(this.updateInterval);
       this.refreshTokenInterval && clearInterval(this.refreshTokenInterval);
+      //get adapter settings and set captcha to null
+      if (this.config.dhlCode) {
+        const adapterSettings = await this.getForeignObjectAsync('system.adapter.' + this.namespace);
+        adapterSettings.native.dhlCode = null;
+        await this.setForeignObjectAsync('system.adapter.' + this.namespace, adapterSettings);
+      }
       callback();
     } catch (e) {
       this.log.error('Error onUnload: ' + e);
