@@ -443,6 +443,18 @@ class Parcel extends utils.Adapter {
         this.setState('info.connection', true, true);
         this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
         await this.createDHLStates();
+        await this.extendObject('auth.dhlSession', {
+          type: 'state',
+          common: {
+            name: 'DHL Session',
+            type: 'string',
+            role: 'json',
+            read: true,
+            write: false,
+          },
+          native: {},
+        });
+        this.setState('auth.dhlSession', JSON.stringify(res.data), true);
         return true;
       })
       .catch((error) => {
@@ -587,19 +599,7 @@ class Parcel extends utils.Adapter {
           this.log.info('Login to DHL successful');
           this.sessions['dhl'] = res.data;
           this.setState('info.connection', true, true);
-          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
-          await this.extendObject('auth.dhlSession', {
-            type: 'state',
-            common: {
-              name: 'DHL Session',
-              type: 'string',
-              role: 'json',
-              read: true,
-              write: false,
-            },
-            native: {},
-          });
-          this.setState('auth.dhlSession', JSON.stringify(res.data), true);
+
           await this.createDHLStates();
         })
         .catch(async (error) => {
