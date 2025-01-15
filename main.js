@@ -1547,9 +1547,13 @@ class Parcel extends utils.Adapter {
           return [];
         })
         .catch((error) => {
-          this.log.error('Failed to get https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app');
-          this.log.error(error);
-          error.response && this.log.error(JSON.stringify(error.response.data));
+          if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+            this.log.info('DHL is not available. Maybe the DHL service down or overloaded at the moment');
+          } else {
+            this.log.error('Failed to get https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app');
+            this.log.error(error);
+            error.response && this.log.error(JSON.stringify(error.response.data));
+          }
           return [];
         });
     }
