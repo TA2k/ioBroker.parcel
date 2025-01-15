@@ -2618,7 +2618,7 @@ class Parcel extends utils.Adapter {
             await this.cookieJar.setCookie('dhli=' + res.data.id_token + '; path=/; domain=dhl.de', 'https:/dhl.de');
             await this.cookieJar.setCookie('dhli=' + res.data.id_token + '; path=/; domain=www.dhl.de', 'https:/www.dhl.de');
             this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
-            this.setState('auth.dhl', JSON.stringify(res.data), true);
+            this.setState('auth.dhlSession', JSON.stringify(res.data), true);
             this.setState('info.connection', true, true);
           })
           .catch((error) => {
