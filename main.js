@@ -85,7 +85,15 @@ class Parcel extends utils.Adapter {
 
     if (this.config.dhlusername && this.config.dhlpassword) {
       this.log.info('Login to DHL');
-      await this.loginDhlNew();
+      const dhlSessionState = await this.getStateAsync('auth.dhlSession');
+      if (dhlSessionState && dhlSessionState.val) {
+        this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
+        this.sessions['dhl'] = JSON.parse(dhlSessionState.val);
+        await this.refreshToken();
+        await this.createDHLStates();
+      } else {
+        await this.loginDhlNew();
+      }
     }
 
     if (this.config.dpdusername && this.config.dpdpassword) {
@@ -580,6 +588,18 @@ class Parcel extends utils.Adapter {
           this.sessions['dhl'] = res.data;
           this.setState('info.connection', true, true);
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          await this.extendObject('auth.dhlSession', {
+            type: 'state',
+            common: {
+              name: 'DHL Session',
+              type: 'string',
+              role: 'json',
+              read: true,
+              write: false,
+            },
+            native: {},
+          });
+          this.setState('auth.dhlSession', JSON.stringify(res.data), true);
           await this.createDHLStates();
         })
         .catch(async (error) => {
@@ -2594,6 +2614,7 @@ class Parcel extends utils.Adapter {
             await this.cookieJar.setCookie('dhli=' + res.data.id_token + '; path=/; domain=dhl.de', 'https:/dhl.de');
             await this.cookieJar.setCookie('dhli=' + res.data.id_token + '; path=/; domain=www.dhl.de', 'https:/www.dhl.de');
             this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+            this.setState('auth.dhl', JSON.stringify(res.data), true);
             this.setState('info.connection', true, true);
           })
           .catch((error) => {
