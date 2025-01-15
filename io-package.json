@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.2.8",
+    "version": "0.2.9",
     "news": {
+      "0.2.9": {
+        "en": "add alternative way for dhl login\nmove dhl connections error to info level",
+        "de": "alternative möglichkeit für dhl login\ndhl verbindungsfehler auf info level verschoben",
+        "ru": "добавить альтернативный способ dhl login\nперенести ошибку подключений dhl на уровень информации",
+        "pt": "adicionar maneira alternativa para dhl login\nmover erro de conexões dhl para nível de informação",
+        "nl": "alternatieve manier toevoegen voor dhl login\ndhl-verbindingsfout naar infoniveau verplaatsen",
+        "fr": "ajouter une autre façon pour la connexion dhl\ndéplacer l'erreur de connexions dhl au niveau info",
+        "it": "aggiungere modo alternativo per il login dhl\nspostare l'errore di connessioni dhl a livello info",
+        "es": "añadir la forma alternativa para dhl login\nmovimiento dhl conexiones error a nivel de información",
+        "pl": "dodaj alternatywny sposób logowania dhl\nprzenieść błąd połączeń dhl do poziomu informacji",
+        "uk": "додати альтернативний спосіб для входу в систему\nперемістити помилки з'єднанням dhl на інформаційний рівень",
+        "zh-cn": "添加 dhl 登录的替代方式\n将 dhl 连接错误移动到信息级别"
+      },
       "0.2.8": {
         "en": "fix amazon login",
         "de": "fix amazon login",
@@ -44,10 +57,6 @@
       "0.2.1": {
         "en": "Fix for Briefankündigung",
         "de": "Briefankündigung wieder aktiviert"
-      },
-      "0.1.6": {
-        "en": "Fix DHL and UPS",
-        "de": "DHL und UPS gefixt"
       }
     },
     "title": "Parcel tracking",
