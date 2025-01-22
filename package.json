@@ -41,8 +41,8 @@
     "@alcalzone/release-script-plugin-manual-review": "^3.7.0",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
-    "@iobroker/testing": "^5.0.0",
-    "@types/node": "^22.10.6",
+    "@iobroker/testing": "^5.0.2",
+    "@types/node": "^22.10.7",
     "eslint": "^9.18.0",
     "globals": "^15.14.0",
     "typescript": "~5.7.3"

@@ -1778,9 +1778,13 @@ class Parcel extends utils.Adapter {
                 this.ignoredPath.push(element.path);
               }
             }
-            this.log.error(element.url);
-            this.log.error(error);
-            error.response && this.log.error(JSON.stringify(error.response.data));
+            if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+              this.log.info(id + ' is not available. Maybe the service down or overloaded at the moment');
+            } else {
+              this.log.error(element.url);
+              this.log.error(error);
+              error.response && this.log.error(JSON.stringify(error.response.data));
+            }
           });
       }
     }
