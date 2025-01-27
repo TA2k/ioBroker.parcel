@@ -76,7 +76,8 @@ class Parcel extends utils.Adapter {
     }
     this.requestClient = axios.create({
       withCredentials: true,
-      httpsAgent: new HttpsCookieAgent({ cookies: { jar: this.cookieJar } }),
+
+      httpsAgent: new HttpsCookieAgent({ cookies: { jar: this.cookieJar }, rejectUnauthorized: false }),
     });
     if (this.config.amzusername && this.config.amzpassword) {
       this.log.info('Login to Amazon');
