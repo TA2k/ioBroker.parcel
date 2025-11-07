@@ -119,6 +119,7 @@
     "extIcon": "https://raw.githubusercontent.com/TA2k/ioBroker.parcel/master/admin/parcel.png",
     "readme": "https://github.com/TA2k/ioBroker.parcel/blob/master/README.md",
     "loglevel": "info",
+    "tier": 2,
     "mode": "daemon",
     "type": "misc-data",
     "compact": true,
