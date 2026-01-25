@@ -9,6 +9,7 @@
   "homepage": "https://github.com/TA2k/ioBroker.parcel",
   "license": "MIT",
   "keywords": [
+    "ioBroker",
     "parcel",
     "tracking",
     "dhl",
