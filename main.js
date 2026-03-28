@@ -10,16 +10,16 @@
 const utils = require('@iobroker/adapter-core');
 const axios = require('axios').default;
 const qs = require('qs');
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const Json2iob = require('json2iob');
 const getPwd = require('./lib/rsaKey');
 const tough = require('tough-cookie');
 const { HttpsCookieAgent } = require('http-cookie-agent/http');
 const { JSDOM } = require('jsdom');
-const fs = require('fs');
+const fs = require('node:fs');
 const { v4: uuidv4 } = require('uuid');
-const { sep } = require('path');
-const { tmpdir } = require('os');
+const { sep } = require('node:path');
+const { tmpdir } = require('node:os');
 
 const dhlDecrypt = require('./lib/dhldecrypt');
 class Parcel extends utils.Adapter {
