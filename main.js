@@ -17,11 +17,11 @@ const tough = require('tough-cookie');
 const { HttpsCookieAgent } = require('http-cookie-agent/http');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
 const { sep } = require('path');
 const { tmpdir } = require('os');
 
 const dhlDecrypt = require('./lib/dhldecrypt');
+const { loginDhlNew: dhlLoginNew } = require('./lib/dhlLogin');
 class Parcel extends utils.Adapter {
   /**
    * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -84,17 +84,15 @@ class Parcel extends utils.Adapter {
       await this.loginAmz();
     }
 
-    if (this.config.dhlusername && this.config.dhlpassword) {
-      this.log.info('Login to DHL');
-      const dhlSessionState = await this.getStateAsync('auth.dhlSession');
-      if (dhlSessionState && dhlSessionState.val) {
-        this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
-        this.sessions['dhl'] = JSON.parse(dhlSessionState.val);
-        await this.refreshToken();
-        await this.createDHLStates();
-      } else {
-        await this.loginDhlNew();
-      }
+    const dhlSessionState = await this.getStateAsync('auth.dhlSession');
+    if (dhlSessionState && dhlSessionState.val) {
+      this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
+      this.sessions['dhl'] = JSON.parse(dhlSessionState.val);
+      await this.refreshToken();
+      await this.createDHLStates();
+    } else if (this.config.dhlCode && this.config.dhlCode.startsWith('dhllogin://')) {
+      this.log.info('Login to DHL via dhllogin:// code');
+      await this.loginDhlNew();
     }
 
     if (this.config.dpdusername && this.config.dpdpassword) {
@@ -148,478 +146,32 @@ class Parcel extends utils.Adapter {
     }
   }
   async loginDhlNew() {
-    // const validCookies = await this.requestClient({
-    //   method: "get",
-    //   url: "https://www.dhl.de/int-stammdaten/public/customerMasterData",
-    //   headers: {
-    //     accept: "application/json",
-    //     "content-type": "application/json",
-    //     "x-api-key": "a0d5b9049ba8918871e6e20bd5c49974",
-    //     "accept-language": "de-de",
-    //     "user-agent": "DHLPaket_PROD/1367 CFNetwork/1240.0.4 Darwin/20.6.0",
-    //   },
-    // })
-    //   .then((res) => {
-    //     this.log.debug(res.data);
-    //     return true;
-    //   })
-    //   .catch((err) => {
-    //     return false;
-    //   });
-    // if (validCookies) {
-    //   this.log.info("Valid dhl cookies found");
-
-    //   this.setState("info.connection", true, true);
-    //   return;
-    // }
-    //https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize?redirect_uri=dhllogin://de.deutschepost.dhl/login&state=eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9&client_id=83471082-5c13-4fce-8dcb-19d2a3fca413&response_type=code&scope=openid%20offline_access&claims=%7B%22id_token%22:%7B%22email%22:null,%22post_number%22:null,%22twofa%22:null,%22service_mask%22:null,%22deactivate_account%22:null,%22last_login%22:null,%22customer_type%22:null,%22display_name%22:null,%22data_confirmation_required%22:null%7D%7D&nonce=&login_hint=&prompt=login&ui_locales=de-DE&code_challenge=MAhrhXXZP-Owy-R7ruyB7Fn-Z8ODW6qxCoHg4uXELCw&code_challenge_method=S256
-    //eslint-disable-next-line
-    let [code_verifier, codeChallenge] = this.getCodeChallenge();
-    let codeUrl = '';
-    const transactionId = this.randomString(40);
-    if (!this.config.dhlCode || !this.config.dhlCode.startsWith('dhllogin://')) {
-      const initUrl = await this.requestClient({
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize',
-        params: {
-          redirect_uri: 'dhllogin://de.deutschepost.dhl/login',
-          state:
-            'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
-          client_id: '83471082-5c13-4fce-8dcb-19d2a3fca413',
-          response_type: 'code',
-          scope: 'openid offline_access',
-          claims:
-            '{"id_token":{"email":null,"post_number":null,"twofa":null,"service_mask":null,"deactivate_account":null,"last_login":null,"customer_type":null,"display_name":null}}',
-          nonce: '',
-          login_hint: '',
-          prompt: 'login',
-          ui_locales: 'de-DE',
-          code_challenge: 'dDp31yHNMAGZeMSXeoOK66WOZOtkZjqYzpdZnfbWZfQ',
-          code_challenge_method: 'S256"',
-        },
-        headers: {
-          Host: 'login.dhl.de',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
-          'Accept-Language': 'de-de',
-          Connection: 'keep-alive',
-        },
-      })
-        .then(async (res) => {
-          // this.log.debug(res.data);
-          return res.request.path;
-        })
-        .catch((error) => {
-          this.log.error(error);
-          error.response && this.log.error(JSON.stringify(error.response.data));
-        });
-      const initParams = qs.parse(initUrl.split('?')[1]);
-      const signin = await this.requestClient({
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: 'https://login-api.dhl.de/widget/traditional_signin.jsonp',
-        headers: {
-          Host: 'login-api.dhl.de',
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Origin: 'https://login.dhl.de',
-          Connection: 'keep-alive',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
-          Referer: 'https://login.dhl.de/',
-          'Accept-Language': 'de-de',
-        },
-        data: {
-          utf8: '✓',
-          capture_screen: 'signIn',
-          js_version: 'd445bf4',
-          capture_transactionId: transactionId,
-          form: 'signInForm',
-          flow: 'ciam_flow_001',
-          client_id: 'f8s9584t9f9kz5wg9agkp259hc924uq9',
-          redirect_uri: 'https://login.dhl.de' + initUrl,
-          response_type: 'token',
-          flow_version: '20230309140056615616',
-          settings_version: '',
-          locale: 'de-DE',
-          recaptchaVersion: '2',
-          emailOrPostNumber: this.config.dhlusername,
-          currentPassword: this.config.dhlpassword,
-        },
-      })
-        .then(async (res) => {
-          this.log.debug(res.data);
-          return true;
-        })
-        .catch((error) => {
-          this.log.error(error);
-          error.response && this.log.error(JSON.stringify(error.response.data));
-        });
-      if (!signin) {
-        this.log.error('DHL Signin failed');
-        return;
-      }
-      const preSession = await this.requestClient({
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'https://login-api.dhl.de/widget/get_result.jsonp?transactionId=' + transactionId + '&cache=' + Date.now(),
-        headers: {
-          Host: 'login-api.dhl.de',
-          Connection: 'keep-alive',
-          Accept: '*/*',
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
-          'Accept-Language': 'de-de',
-          Referer: 'https://login.dhl.de/',
-        },
-      })
-        .then(async (res) => {
-          this.log.debug(res.data);
-          return JSON.parse(res.data.split(')(')[1].split(');')[0]);
-        })
-        .catch((error) => {
-          this.log.error(error);
-          error.response && this.log.error(JSON.stringify(error.response.data));
-        });
-      if (!preSession || !preSession.result) {
-        this.log.error('DHL PreSession failed. Please check username password');
-        return;
-      }
-      const accessToken2 = await this.requestClient({
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: 'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/auth-ui/token-url',
-        params: {
-          __aic_csrf: initParams.__aic_csrf,
-          claims:
-            '{"id_token":{"customer_type":null,"deactivate_account":null,"display_name":null,"email":null,"last_login":null,"post_number":null,"service_mask":null,"twofa":null}}',
-          client_id: '83471082-5c13-4fce-8dcb-19d2a3fca413',
-          code_challenge: codeChallenge,
-          code_challenge_method: 'S256',
-          login_hint: '',
-          nonce: '',
-          prompt: 'login',
-          redirect_uri: 'dhllogin://de.deutschepost.dhl/login',
-          response_type: 'code',
-          scope: 'openid',
-          state:
-            'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
-          ui_locales: 'de-DE",',
-        },
-        headers: {
-          Host: 'login.dhl.de',
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Origin: 'https://login.dhl.de',
-          Connection: 'keep-alive',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
-          'Accept-Language': 'de-de',
-        },
-        data: {
-          screen: 'signIn',
-          authenticated: 'True',
-          registering: 'False',
-          accessToken: preSession.result.accessToken,
-          _csrf_token: this.cookieJar.store.idx['login.dhl.de']['/']._csrf_token.value,
-        },
-      })
-        .then(async (res) => {
-          // this.log.debug(res.data);
-
-          return res.data.split("existingToken: '")[1].split("'")[0];
-        })
-        .catch((error) => {
-          this.log.error(error);
-          error.response && this.log.error(JSON.stringify(error.response.data));
-        });
-      const idtoken = await this.requestClient({
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: 'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/auth-ui/token-url',
-        maxRedirects: 0,
-        params: {
-          __aic_csrf: initParams.__aic_csrf,
-          claims:
-            '{"id_token":{"customer_type":null,"deactivate_account":null,"display_name":null,"email":null,"last_login":null,"post_number":null,"service_mask":null,"twofa":null}}',
-          client_id: '83471082-5c13-4fce-8dcb-19d2a3fca413',
-          code_challenge: codeChallenge,
-          code_challenge_method: 'S256',
-          login_hint: '',
-          nonce: '',
-          prompt: 'login',
-          redirect_uri: 'dhllogin://de.deutschepost.dhl/login',
-          response_type: 'code',
-          scope: 'openid',
-          state:
-            'eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9',
-          ui_locales: 'de-DE',
-        },
-        headers: {
-          Host: 'login.dhl.de',
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Origin: 'https://login.dhl.de',
-          Connection: 'keep-alive',
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1',
-          'Accept-Language': 'de-de',
-        },
-        data: {
-          screen: 'loginSuccess',
-          accessToken: accessToken2,
-          _csrf_token: this.cookieJar.store.idx['login.dhl.de']['/']._csrf_token.value,
-        },
-      })
-        .then(async (res) => {
-          this.log.debug(res.data);
-          return res.data;
-        })
-        .catch((error) => {
-          if (error.response && error.response.status === 302) {
-            return error.response.headers.location.split('id_token_hint=')[1].split('&')[0];
-          }
-          this.log.error(error);
-          error.response && this.log.error(JSON.stringify(error.response.data));
-        });
-      codeUrl = await this.requestClient({
-        method: 'get',
-        maxBodyLength: Infinity,
-        url:
-          'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/authorize?claims={"id_token":{"customer_type":null,"deactivate_account":null,"display_name":null,"email":null,"last_login":null,"post_number":null,"service_mask":null,"twofa":null}}&client_id=83471082-5c13-4fce-8dcb-19d2a3fca413&code_challenge=' +
-          codeChallenge +
-          '&code_challenge_method=S256&prompt=none&redirect_uri=dhllogin://de.deutschepost.dhl/login&response_type=code&scope=openid&state=eyJycyI6dHJ1ZSwicnYiOmZhbHNlLCJmaWQiOiJhcHAtbG9naW4tbWVoci1mb290ZXIiLCJoaWQiOiJhcHAtbG9naW4tbWVoci1oZWFkZXIiLCJycCI6ZmFsc2V9&ui_locales=de-DE&id_token_hint=' +
-          idtoken,
-      })
-        .then(async (res) => {
-          this.log.debug(JSON.stringify(res.data));
-        })
-        .catch((error) => {
-          if (error.message.includes('Unsupported protocol')) {
-            return qs.parse(error.request._options.query);
-          }
-          this.log.error(error);
-          if (error.response) {
-            this.log.error(JSON.stringify(error.response.data));
-          }
-        });
-      if (!codeUrl) {
-        this.log.error('DHL codeUrl failed');
-        return;
-      }
-    }
-    if (this.config.dhlCode && this.config.dhlCode.startsWith('dhllogin://')) {
-      codeUrl = qs.parse(this.config.dhlCode.split('?')[1]);
-      code_verifier = 'zmVs5AKfGvv45a9aUvuOid9a_erOirp7XL1sn9kWT_o';
-    }
-    await this.requestClient({
-      method: 'post',
-      url: 'https://login.dhl.de/af5f9bb6-27ad-4af4-9445-008e7a5cddb8/login/token',
-      headers: {
-        Host: 'login.dhl.de',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'application/json, text/plain, */*',
-        Origin: 'https://login.dhl.de',
-        Connection: 'keep-alive',
-        Authorization: 'Basic ODM0NzEwODItNWMxMy00ZmNlLThkY2ItMTlkMmEzZmNhNDEzOg==',
-        'User-Agent': 'DHLPaket_PROD/1367 CFNetwork/1240.0.4 Darwin/20.6.0',
-        'Accept-Language': 'de-de',
-      },
-      data: {
-        redirect_uri: 'dhllogin://de.deutschepost.dhl/login',
-        grant_type: 'authorization_code',
-        code_verifier: code_verifier,
-        code: codeUrl.code,
-      },
-    })
-      .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
-        this.log.info('Login to DHL successful');
-        this.sessions['dhl'] = res.data;
-        await this.cookieJar.setCookie('dhli=' + res.data.id_token + '; path=/; domain=dhl.de', 'https:/dhl.de');
-        await this.cookieJar.setCookie('dhli=' + res.data.id_token + '; path=/; domain=www.dhl.de', 'https:/www.dhl.de');
-        this.setState('info.connection', true, true);
-        this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
-        await this.createDHLStates();
-        await this.extendObject('auth.dhlSession', {
-          type: 'state',
-          common: {
-            name: 'DHL Session',
-            type: 'string',
-            role: 'json',
-            read: true,
-            write: false,
-          },
-          native: {},
-        });
-        this.setState('auth.dhlSession', JSON.stringify(res.data), true);
-        return true;
-      })
-      .catch((error) => {
-        this.log.error(error);
-        if (error.response) {
-          this.log.error(JSON.stringify(error.response.data));
-        }
-      });
-  }
-  async loginDHL() {
-    const mfaTokenState = await this.getStateAsync('auth.dhlMfaToken');
-    await this.requestClient({
-      method: 'get',
-      url: 'https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643057331%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg',
-      headers: {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-        'accept-language': 'de-de',
-      },
-    })
-      .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
-      })
-      .catch((error) => {
-        this.log.error(error);
-        if (error.response) {
-          this.log.error(JSON.stringify(error.response.data));
-        }
-      });
-
-    const validCookies = await this.requestClient({
-      method: 'post',
-      url: 'https://www.dhl.de/int-erkennen/refresh',
-      headers: {
-        Host: 'www.dhl.de',
-        'content-type': 'application/json',
-        accept: '*/*',
-        'x-requested-with': 'XMLHttpRequest',
-        'accept-language': 'de-de',
-        origin: 'https://www.dhl.de',
-        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-        referer:
-          'https://www.dhl.de/int-webapp/spa/prod/ver4-SPA-VERFOLGEN.html?adobe_mc=TS%3D1643039135%7CMCORGID%3D3505782352FCE66F0A490D4C%40AdobeOrg',
-      },
-      data: JSON.stringify({
-        force: false,
-        meta: '',
-      }),
-    })
-      .then(async (res) => {
-        this.log.debug(JSON.stringify(res.data));
-        if (res.data && res.data.meta) {
-          this.log.info('Login to DHL successful');
-          this.sessions['dhl'] = res.data;
-          this.setState('info.connection', true, true);
-          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
-          await this.createDHLStates();
-          return true;
-        }
-        return false;
-      })
-      .catch((error) => {
-        this.log.error(error);
-        if (error.response) {
-          this.log.error(JSON.stringify(error.response.data));
-        }
-      });
-    if (validCookies) {
+    const sessionData = await dhlLoginNew({
+      requestClient: this.requestClient.bind(this),
+      dhlCode: this.config.dhlCode,
+      log: this.log,
+    });
+    if (!sessionData) {
       return;
     }
-    const mfaToken = mfaTokenState && mfaTokenState.val;
-    if (!mfaToken || !this.config.dhlMfa) {
-      this.log.info('Login to DHL');
-      await this.requestClient({
-        method: 'post',
-        url: 'https://www.dhl.de/int-erkennen/login',
-        headers: {
-          Host: 'www.dhl.de',
-          'content-type': 'application/json',
-          accept: '*/*',
-          'x-requested-with': 'XMLHttpRequest',
-          'accept-language': 'de-de',
-          origin: 'https://www.dhl.de',
-          'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-        },
-
-        data: JSON.stringify({
-          id: this.config.dhlusername,
-          password: this.config.dhlpassword,
-          authenticationLevel: 3,
-          authenticationMethod: ['pwd'],
-          rememberMe: true,
-          language: 'de',
-          context: 'app',
-          meta: '',
-        }),
-      })
-        .then(async (res) => {
-          this.log.debug(JSON.stringify(res.data));
-
-          this.setState('auth.dhlMfaToken', res.data.intermediateMfaToken, true);
-          this.log.warn('Please enter ' + res.data.secondFactorChannel + ' code in instance settings and press save');
-        })
-        .catch((error) => {
-          this.log.error(error);
-          if (error.response) {
-            if (error.response.status === 409) {
-              this.log.error('Please enter code in instance settings and press save or wait 30min and let the code expire');
-
-              this.setState('auth.dhlMfaToken', error.response.data.intermediateMfaToken, true);
-            }
-            this.log.error(JSON.stringify(error.response.data));
-          }
-        });
-    } else {
-      this.log.info('Login to DHL with MFA token');
-      this.log.debug('MFA: ' + this.config.dhlMfa);
-      await this.requestClient({
-        method: 'post',
-        url: 'https://www.dhl.de/int-erkennen/2fa',
-        headers: {
-          Host: 'www.dhl.de',
-          'content-type': 'application/json',
-          accept: '*/*',
-          'x-requested-with': 'XMLHttpRequest',
-          'accept-language': 'de-de',
-          origin: 'https://www.dhl.de',
-          'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-        },
-
-        data: JSON.stringify({
-          value: this.config.dhlMfa,
-          remember2fa: true,
-          language: 'de',
-          context: 'app',
-          meta: '',
-          intermediateMfaToken: mfaToken,
-        }),
-      })
-        .then(async (res) => {
-          this.log.debug(JSON.stringify(res.data));
-          this.log.info('Login to DHL successful');
-          this.sessions['dhl'] = res.data;
-          this.setState('info.connection', true, true);
-
-          await this.createDHLStates();
-        })
-        .catch(async (error) => {
-          this.log.error(error);
-          if (error.response) {
-            this.setState('info.connection', false, true);
-            this.log.error(JSON.stringify(error.response.data));
-            const adapterConfig = 'system.adapter.' + this.name + '.' + this.instance;
-            this.log.error('MFA incorrect');
-            this.getForeignObject(adapterConfig, (error, obj) => {
-              if (obj && obj.native && obj.native.dhlMfa) {
-                obj.native.dhlMfa = '';
-                this.setForeignObject(adapterConfig, obj);
-              }
-            });
-            return;
-          }
-        });
-    }
+    this.sessions['dhl'] = sessionData;
+    await this.cookieJar.setCookie('dhli=' + sessionData.id_token + '; path=/; domain=dhl.de', 'https:/dhl.de');
+    await this.cookieJar.setCookie('dhli=' + sessionData.id_token + '; path=/; domain=www.dhl.de', 'https:/www.dhl.de');
+    this.setState('info.connection', true, true);
+    this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+    await this.createDHLStates();
+    await this.extendObject('auth.dhlSession', {
+      type: 'state',
+      common: {
+        name: 'DHL Session',
+        type: 'string',
+        role: 'json',
+        read: true,
+        write: false,
+      },
+      native: {},
+    });
+    this.setState('auth.dhlSession', JSON.stringify(sessionData), true);
   }
   async loginAli() {
     const loginData = await this.requestClient({
@@ -786,6 +338,58 @@ class Parcel extends utils.Adapter {
       },
       native: {},
     });
+
+    // Check if we have a pending verification code to submit
+    const verificationState = await this.getStateAsync('auth.amzVerification');
+    if (verificationState && verificationState.val && this.config.amzotp) {
+      this.log.info('Found pending Amazon verification. Submitting code...');
+      try {
+        const verification = JSON.parse(verificationState.val);
+        const form = verification.form;
+        form['code'] = this.config.amzotp;
+        form['action'] = 'code';
+
+        const verifyResult = await this.requestClient({
+          method: 'post',
+          url: verification.url,
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded',
+            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            origin: 'https://www.amazon.de',
+            'accept-language': 'de-DE,de;q=0.9',
+            'user-agent':
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+            referer: verification.url,
+          },
+          data: qs.stringify(form),
+        });
+
+        await this.setStateAsync('auth.amzVerification', '', true);
+
+        if (verifyResult.data && verifyResult.data.indexOf('js-yo-main-content') !== -1) {
+          this.log.info('Amazon verification successful');
+          this.sessions['amz'] = true;
+          this.setState('info.connection', true, true);
+          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          return;
+        }
+        if (verifyResult.data && verifyResult.data.indexOf('order') !== -1) {
+          this.log.info('Amazon verification successful');
+          this.sessions['amz'] = true;
+          this.setState('info.connection', true, true);
+          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          return;
+        }
+        this.log.error('Amazon verification code was not accepted. Please restart and try again.');
+        this.log.debug(verifyResult.data);
+      } catch (error) {
+        this.log.error('Failed to submit Amazon verification code');
+        this.log.error(error);
+        await this.setStateAsync('auth.amzVerification', '', true);
+      }
+      return;
+    }
+
     let body = await this.requestClient({
       method: 'get',
       maxBodyLength: Infinity,
@@ -850,12 +454,13 @@ class Parcel extends utils.Adapter {
         });
     }
     let form = this.extractHidden(body);
+    let postUrl = this.extractFormAction(body) || 'https://www.amazon.de/ap/signin';
     if (form.email !== this.config.amzusername) {
       form.email = this.config.amzusername;
       body = await this.requestClient({
         method: 'post',
         maxBodyLength: Infinity,
-        url: 'https://www.amazon.de/ap/signin',
+        url: postUrl,
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
           accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -864,8 +469,7 @@ class Parcel extends utils.Adapter {
           'sec-fetch-mode': 'navigate',
           origin: 'https://www.amazon.de',
           'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-          referer:
-            'https://www.amazon.de/ap/signin?openid.return_to=https://www.amazon.de/ap/maplanding&openid.oa2.code_challenge_method=S256&openid.assoc_handle=amzn_mshop_ios_v2_de&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&pageId=amzn_mshop_ios_v2_de&openid.ns.oa2=http://www.amazon.com/ap/ext/oauth/2&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.mode=checkid_setup&openid.oa2.client_id=device:42334146314239333737364334463941393135443746313136363446434238302341334e5748585451344542435a53&openid.oa2.code_challenge=ig2YgHP3AoncuKG0ks5pgr1HUhzwvlST-tuIY2Chi2M&openid.ns.pape=http://specs.openid.net/extensions/pape/1.0&openid.oa2.scope=device_auth_access&openid.ns=http://specs.openid.net/auth/2.0&openid.pape.max_auth_age=0&openid.oa2.response_type=code',
+          referer: postUrl,
           'sec-fetch-dest': 'document',
         },
         data: qs.stringify(form),
@@ -881,17 +485,15 @@ class Parcel extends utils.Adapter {
           return res.data;
         })
         .catch((error) => {
-          this.log.error('Failed to post with username load https://www.amazon.de/ap/signin');
+          this.log.error('Failed to post username');
           this.log.error(error);
           if (error.response) {
             this.log.error(JSON.stringify(error.response.data));
           }
-          this.log.info(
-            'Delete amazon cookie please restart the adapter to trigger relogin. If this is not working please manualy delete parcel.0.auth.cookie',
-          );
           delete this.cookieJar.store.idx['amazon.de'];
         });
       form = this.extractHidden(body);
+      postUrl = this.extractFormAction(body) || postUrl;
     }
     delete form['='];
     delete form['undefined'];
@@ -902,14 +504,14 @@ class Parcel extends utils.Adapter {
     this.log.debug('Post with password');
     await this.requestClient({
       method: 'post',
-      url: 'https://www.amazon.de/ap/signin',
+      url: postUrl,
       headers: {
         accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'content-type': 'application/x-www-form-urlencoded',
         origin: 'https://www.amazon.de',
         'accept-language': 'de-de',
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-        referer: 'https://www.amazon.de/ap/signin',
+        referer: postUrl,
       },
       data: form,
     })
@@ -991,12 +593,11 @@ class Parcel extends utils.Adapter {
               'Captcha required. Please login into your account to check the state of the account. If this is not wokring please pause the adapter for 24h.',
             );
           }
-          this.log.info(
-            'Amazon cookie are removed. Please restart the adapter to trigger a relogin. If this is not working please manually delete parcel.0.auth.cookie',
+          this.log.error(
+            'Login to Amazon failed. Please check credentials and restart the adapter.',
           );
           delete this.cookieJar.store.idx['amazon.de'];
-          this.log.info('Start relogin');
-          await this.loginAmz();
+          this.setState('info.connection', false, true);
 
           return;
         }
@@ -1004,32 +605,52 @@ class Parcel extends utils.Adapter {
           this.log.error('Zurücksetzen des Passworts erforderlich');
           return;
         }
+        if (res.data.indexOf('transactionapproval') !== -1 || res.data.indexOf('Enter verification code') !== -1 || res.data.indexOf('Bestätigungscode eingeben') !== -1 || res.data.indexOf('verification-code-form') !== -1) {
+          this.log.info('Amazon SMS verification required. A code was sent to your phone.');
+          this.log.info('Please enter the code in the adapter settings (OTP field) and restart the adapter.');
+          const form = this.extractHidden(res.data);
+          delete form['undefined'];
+          // extractHidden collects all forms - 'action' gets overwritten to 'resend' by later forms
+          form['action'] = 'code';
+          delete form['resendContactType'];
+          delete form['timerMessage'];
+          delete form['timerComplete'];
+          // The verification form posts to /ap/cvf/verify (relative "verify" from the CVF page)
+          const verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+          const verification = {
+            url: verifyUrl,
+            form: form,
+          };
+          await this.setObjectNotExistsAsync('auth.amzVerification', {
+            type: 'state',
+            common: { name: 'Amazon Verification Data', write: false, read: true, type: 'string', role: 'json' },
+            native: {},
+          });
+          await this.setStateAsync('auth.amzVerification', JSON.stringify(verification), true);
+          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          return;
+        }
         if (res.data.indexOf('auth-select-device-form"') !== -1) {
           this.log.info('SMS code or call form found. If you do not receive a SMS then login to Amazon and trigger the SMS code');
           const form = this.extractHidden(res.data);
-          await this.requestClient({
-            method: 'post',
-            url: 'https://www.amazon.de/ap/mfa/new-otp?ie=UTF8',
-            headers: {
-              accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-              'content-type': 'application/x-www-form-urlencoded',
-              origin: 'https://www.amazon.de',
-              'accept-language': 'de-de',
-              'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-              referer: 'https://www.amazon.de/ap/mfa/new-otp?ie=UTF8',
-            },
-            data: form,
-          })
-            .then(async (res) => {
-              this.log.silly(JSON.stringify(res.data));
-              this.log.debug('SMS code or call form successfully posted');
-            })
-            .catch(async (error) => {
-              this.log.error('Failed to post SMS code or call form');
-              if (error.response) {
-                this.log.error(JSON.stringify(error.response.data));
-              }
-            });
+          delete form['undefined'];
+          form['action'] = 'code';
+          delete form['resendContactType'];
+          delete form['timerMessage'];
+          delete form['timerComplete'];
+          const verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+          const verification = {
+            url: verifyUrl,
+            form: form,
+          };
+          await this.setObjectNotExistsAsync('auth.amzVerification', {
+            type: 'state',
+            common: { name: 'Amazon Verification Data', write: false, read: true, type: 'string', role: 'json' },
+            native: {},
+          });
+          await this.setStateAsync('auth.amzVerification', JSON.stringify(verification), true);
+          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          this.log.info('Please enter the SMS code in the adapter settings (OTP field) and restart the adapter.');
           return;
         }
         if (res.data.indexOf('Löse das Rätsel, um dein Konto zu schützen') !== -1) {
@@ -1656,7 +1277,7 @@ class Parcel extends utils.Adapter {
             AccessLicenseNumber: '3DE112BAD1F163E0',
             AuthenticationToken: this.upsAuthToken,
             addresstoken: this.upsAddressToken,
-            transID: uuidv4().substring(0, 25),
+            transID: crypto.randomUUID().substring(0, 25),
             transactionSrc: 'MOBILE',
             'Content-Type': 'application/json',
           },
@@ -2547,7 +2168,6 @@ class Parcel extends utils.Adapter {
 
         if (res.data.includes('auth-workflow')) {
           this.log.debug('Amazon Login required');
-
           this.log.debug(res.data);
           await this.loginAmz();
           return;
@@ -2630,13 +2250,7 @@ class Parcel extends utils.Adapter {
             this.log.error('refresh token failed');
             this.log.error(error);
             error.response && this.log.error(JSON.stringify(error.response.data));
-            this.log.error('Start relogin in 1min');
-            if (!this.reLoginTimeout) {
-              this.reLoginTimeout = setTimeout(() => {
-                this.reLoginTimeout = null;
-                this.loginDHL();
-              }, 1000 * 60 * 1);
-            }
+            this.log.error('Refresh token expired. Please enter a new dhllogin:// code in adapter settings.');
           });
       }
       if (id === 'dpd') {
@@ -2716,6 +2330,15 @@ class Parcel extends utils.Adapter {
     }
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+  extractFormAction(body) {
+    const match = body.match(/<form[^>]*name=["']signIn["'][^>]*action=["']([^"']*)["']/i);
+    if (!match) return null;
+    let action = match[1].replace(/&amp;/g, '&');
+    if (action.startsWith('/')) {
+      action = 'https://www.amazon.de' + action;
+    }
+    return action;
+  }
   extractHidden(body) {
     const returnObject = {};
     const matches = this.matchAll(/<input (?=[^>]* name=["']([^'"]*)|)(?=[^>]* value=["']([^'"]*)|)/g, body);
@@ -2733,26 +2356,6 @@ class Parcel extends utils.Adapter {
     }
 
     return matches;
-  }
-  randomString(length) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-  }
-  getCodeChallenge() {
-    let hash = '';
-    let result = '';
-    const chars = '0123456789abcdef';
-    result = '';
-    for (let i = 64; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-    hash = crypto.createHash('sha256').update(result).digest('base64');
-    hash = hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    return [result, hash];
   }
   /**
    * Is called when adapter shuts down - callback has to be called under any circumstances!
@@ -2920,7 +2523,7 @@ class Parcel extends utils.Adapter {
               if (this.config.noFirstStartSend && this.firstStart) {
                 return;
               }
-              const uuid = uuidv4();
+              const uuid = crypto.randomUUID();
               fs.writeFileSync(`${this.tmpDir}${sep}${uuid}.jpg`, imageBuffer.toString('base64'), 'base64');
               const sendInstances = this.config.sendToInstance.replace(/ /g, '').split(',');
               const sendUser = this.config.sendToUser.replace(/ /g, '').split(',');
