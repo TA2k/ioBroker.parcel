@@ -691,6 +691,11 @@ class Parcel extends utils.Adapter {
         }
         this.log.error('Unknown Error: Login to Amazon failed, please login to Amazon and check your credentials');
         this.log.info(res.data);
+        try {
+          delete this.cookieJar.store.idx['amazon.de'];
+          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          this.log.info('Amazon Cookies gelöscht. Bitte Adapter neu starten.');
+        } catch (e) { /* ignore */ }
         this.setState('info.connection', false, true);
         return;
       })
@@ -2403,10 +2408,17 @@ class Parcel extends utils.Adapter {
       this.updateInterval && clearInterval(this.updateInterval);
       this.refreshTokenInterval && clearInterval(this.refreshTokenInterval);
       //get adapter settings and set captcha to null
-      if (this.config.dhlCode && this.dhlLoginSuccess) {
+      if ((this.config.dhlCode && this.dhlLoginSuccess) || this.config.amzotp) {
         const adapterSettings = await this.getForeignObjectAsync('system.adapter.' + this.namespace);
-        adapterSettings.native.dhlCode = null;
-        await this.setForeignObjectAsync('system.adapter.' + this.namespace, adapterSettings);
+        if (adapterSettings) {
+          if (this.config.dhlCode && this.dhlLoginSuccess) {
+            adapterSettings.native.dhlCode = null;
+          }
+          if (this.config.amzotp) {
+            adapterSettings.native.amzotp = '';
+          }
+          await this.setForeignObjectAsync('system.adapter.' + this.namespace, adapterSettings);
+        }
       }
       callback();
     } catch (e) {
