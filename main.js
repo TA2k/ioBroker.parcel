@@ -341,6 +341,11 @@ class Parcel extends utils.Adapter {
         this.log.error('Failed to submit Amazon verification code');
         this.log.error(error);
         await this.setStateAsync('auth.amzVerification', '', true);
+        try {
+          delete this.cookieJar.store.idx['amazon.de'];
+          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          this.log.info('Amazon Cookies gelöscht. Bitte Adapter neu starten.');
+        } catch (e) { /* ignore */ }
       }
       return;
     }
