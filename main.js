@@ -436,7 +436,8 @@ class Parcel extends utils.Adapter {
     let postUrl = this.extractFormAction(body) || amzResponseUrl || 'https://www.amazon.de/ap/signin';
 
     // Handle Unified Claim Collection page (new Amazon login flow)
-    // This IS the email entry page, not a pre-step. Extract the correct form action and continue with normal flow.
+    // This page has both email+password but with different hidden fields.
+    // We need to add email to the form since extractHidden doesn't capture visible inputs.
     if (form.appAction === 'SIGNIN_CLAIM_COLLECT' || (body && body.indexOf('FullPageUnifiedClaimCollect') !== -1)) {
       this.log.info('Amazon Unified Claim Collection page detected');
       // Extract any form action (not just name="signIn")
@@ -446,6 +447,8 @@ class Parcel extends utils.Adapter {
         if (actionUrl.startsWith('/')) actionUrl = 'https://www.amazon.de' + actionUrl;
         postUrl = actionUrl;
       }
+      // Add email since the visible input is not captured by extractHidden
+      form.email = this.config.amzusername;
       this.log.debug('Unified Claim Collection form action: ' + postUrl);
     }
 
