@@ -135,6 +135,7 @@ class Parcel extends utils.Adapter {
     this.subscribeStates('*');
 
     if (Object.keys(this.sessions).length > 0) {
+      this.log.info('Starting updateProvider with sessions: ' + JSON.stringify(Object.keys(this.sessions)));
       await this.updateProvider();
       this.updateInterval = setInterval(async () => {
         this.firstStart = false;
@@ -1253,6 +1254,7 @@ class Parcel extends utils.Adapter {
       });
   }
   async updateProvider() {
+    this.log.debug('updateProvider started. Sessions: ' + JSON.stringify(Object.keys(this.sessions)));
     let data17Track = {};
     let dataDhl = [];
     this.mergedJson = [];
