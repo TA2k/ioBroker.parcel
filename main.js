@@ -348,6 +348,7 @@ class Parcel extends utils.Adapter {
         await this.setStateAsync('auth.amzVerification', '', true);
         try {
           delete this.cookieJar.store.idx['amazon.de'];
+            delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
           this.log.info('Amazon Cookies gelöscht. Bitte Adapter neu starten.');
         } catch (e) { /* ignore */ }
@@ -360,6 +361,7 @@ class Parcel extends utils.Adapter {
       this.log.info('Amazon Cookies werden gelöscht (Option in Einstellungen)');
       try {
         delete this.cookieJar.store.idx['amazon.de'];
+            delete this.cookieJar.store.idx['www.amazon.de'];
         this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
       } catch (e) { /* ignore */ }
     }
@@ -469,6 +471,7 @@ class Parcel extends utils.Adapter {
           }
           try {
             delete this.cookieJar.store.idx['amazon.de'];
+            delete this.cookieJar.store.idx['www.amazon.de'];
             this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
             this.log.info('Amazon Cookies gelöscht nach Login-Fehler. Bitte Adapter neu starten.');
           } catch (e) { /* ignore */ }
@@ -578,6 +581,7 @@ class Parcel extends utils.Adapter {
             'Login to Amazon failed. Please check credentials and restart the adapter.',
           );
           delete this.cookieJar.store.idx['amazon.de'];
+            delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('info.connection', false, true);
 
           return;
@@ -716,6 +720,7 @@ class Parcel extends utils.Adapter {
         this.log.info(res.data);
         try {
           delete this.cookieJar.store.idx['amazon.de'];
+            delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
           this.log.info('Amazon Cookies gelöscht. Bitte Adapter neu starten.');
         } catch (e) { /* ignore */ }
@@ -731,6 +736,7 @@ class Parcel extends utils.Adapter {
         this.log.error(error);
         try {
           delete this.cookieJar.store.idx['amazon.de'];
+            delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
           this.log.info('Amazon Cookies gelöscht nach Login-Fehler. Bitte Adapter neu starten.');
         } catch (e) { /* ignore */ }
