@@ -455,7 +455,10 @@ class Parcel extends utils.Adapter {
     }
     let form = this.extractHidden(body);
     let postUrl = this.extractFormAction(body) || 'https://www.amazon.de/ap/signin';
-    if (form.email !== this.config.amzusername) {
+    // ax/claim: email-only page (2-step). ap/signin: email+password on same page.
+    // Detect by checking if body contains a visible password input field
+    const isTwoStep = body.indexOf('type="password"') === -1;
+    if (isTwoStep && form.email !== this.config.amzusername) {
       form.email = this.config.amzusername;
       body = await this.requestClient({
         method: 'post',
@@ -590,7 +593,7 @@ class Parcel extends utils.Adapter {
           this.log.error('Login to Amazon failed, please login to Amazon manually and check the login');
           if (res.data.indexOf('captcha-placeholder') !== -1) {
             this.log.warn(
-              'Captcha required. Please login into your account to check the state of the account. If this is not wokring please pause the adapter for 24h.',
+              'Amazon Captcha erkannt. Bitte öffne https://www.amazon.de im Browser auf dem gleichen Gerät/IP, melde dich ab und wieder an um das Captcha zu lösen. Danach den Adapter neu starten.',
             );
           }
           this.log.error(
@@ -653,8 +656,9 @@ class Parcel extends utils.Adapter {
           this.log.info('Please enter the SMS code in the adapter settings (OTP field) and restart the adapter.');
           return;
         }
-        if (res.data.indexOf('Löse das Rätsel, um dein Konto zu schützen') !== -1) {
-          this.log.info('Captcha detected. Please login to Amazon and solve the captcha');
+        if (res.data.indexOf('captcha') !== -1 || res.data.indexOf('Löse das Rätsel, um dein Konto zu schützen') !== -1 || res.data.indexOf('cvf_captcha') !== -1) {
+          this.log.warn('Amazon Captcha erkannt. Bitte öffne https://www.amazon.de im Browser auf dem gleichen Gerät/IP, melde dich ab und wieder an um das Captcha zu lösen. Danach den Adapter neu starten.');
+          this.setState('info.connection', false, true);
           return;
         }
         this.log.error('Unknown Error: Login to Amazon failed, please login to Amazon and check your credentials');
