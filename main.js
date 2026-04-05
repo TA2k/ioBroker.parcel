@@ -92,7 +92,9 @@ class Parcel extends utils.Adapter {
       if (dhlSessionState && dhlSessionState.val) {
         this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
         this.sessions['dhl'] = JSON.parse(String(dhlSessionState.val));
+        this.log.debug('DHL refresh_token: ' + (this.sessions['dhl'].refresh_token || 'MISSING').substring(0, 10) + '...');
         await this.refreshToken();
+        this.log.debug('DHL session after refreshToken: ' + (this.sessions['dhl'] ? 'exists' : 'DELETED'));
         await this.createDHLStates();
       }
     }
@@ -1277,6 +1279,9 @@ class Parcel extends utils.Adapter {
       }
     }
     if (this.sessions['dhl']) {
+      this.log.debug('DHL: fetching packages with dhli cookie...');
+      const dhlCookies = this.cookieJar.getCookieStringSync('https://www.dhl.de');
+      this.log.debug('DHL cookies for www.dhl.de: ' + (dhlCookies || 'NONE'));
       dataDhl = await this.requestClient({
         method: 'get',
         url: 'https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app',
