@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.2.10",
+    "version": "0.3.0",
     "news": {
+      "0.3.0": {
+        "en": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
+        "de": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
+        "ru": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
+        "pt": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
+        "nl": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
+        "fr": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Connexion Fix und Captcha-Erkennung mit Hinweis",
+        "it": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
+        "es": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Acceder Fijar und Captcha-Erkennung mit Hinweis",
+        "pl": "DHL: Neuer Login über Browser- Code (dhllogin: / /)\nAmazon: Login Fix und Captcha- Erkennung mit Hinweis",
+        "uk": "DHL: Нейєр Логін über Browser-Code (dhllogin://)\nУкраїнська Русский English",
+        "zh-cn": "DHL: Neuer Login über 浏览器-代码 (dhllogin://)\n亚马逊:登录 修复 und Captcha- Erkennung mit Hinweis 系统"
+      },
       "0.2.10": {
         "en": "add alternative way for dhl login\nmove dhl connections error to info level",
         "de": "alternative möglichkeit für dhl anmelden\ndhl-verbindungen fehler auf info-ebene verschieben",
@@ -62,10 +75,6 @@
       "0.2.6": {
         "en": "Improve DHL Status and add link to shipment in the telegram notification",
         "de": "Verbesserung des DHL Status und Link zur Sendung in der Telegram Benachrichtigung hinzugefügt"
-      },
-      "0.2.2": {
-        "en": "Improvment for Amazon Login and fix for Briefaanündigung Image",
-        "de": "Verbesserung für Amazon Login und Fix für Briefankündigung Image State"
       }
     },
     "title": "Parcel tracking",
