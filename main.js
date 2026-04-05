@@ -437,7 +437,7 @@ class Parcel extends utils.Adapter {
 
     // Handle Unified Claim Collection page (new Amazon login flow)
     // This page has both email+password but with different hidden fields.
-    // We need to add email to the form since extractHidden doesn't capture visible inputs.
+    // Strip Unified-specific fields and keep only standard OpenID/auth fields.
     if (form.appAction === 'SIGNIN_CLAIM_COLLECT' || (body && body.indexOf('FullPageUnifiedClaimCollect') !== -1)) {
       this.log.info('Amazon Unified Claim Collection page detected');
       // Extract any form action (not just name="signIn")
@@ -447,9 +447,22 @@ class Parcel extends utils.Adapter {
         if (actionUrl.startsWith('/')) actionUrl = 'https://www.amazon.de' + actionUrl;
         postUrl = actionUrl;
       }
+      // Remove Unified-specific fields that confuse the login
+      delete form['appAction'];
+      delete form['subPageType'];
+      delete form['claimCollectionWorkflow'];
+      delete form['metadata1'];
+      delete form['isServerSideRouting'];
+      delete form['unifiedAuthTreatment'];
+      delete form['webAuthnGetArbForAutofill'];
+      delete form['webAuthnGetParametersForAutofill'];
+      delete form['webAuthnChallengeIdForAutofill'];
+      delete form['signalUnknownCredentialUnifiedAuthWeblabActive'];
+      delete form['ue_back'];
       // Add email since the visible input is not captured by extractHidden
       form.email = this.config.amzusername;
       this.log.debug('Unified Claim Collection form action: ' + postUrl);
+      this.log.debug('Unified Claim Collection cleaned form: ' + JSON.stringify(form));
     }
 
     // ax/claim: email-only page (2-step). ap/signin: email+password on same page.
