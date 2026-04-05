@@ -92,9 +92,7 @@ class Parcel extends utils.Adapter {
       if (dhlSessionState && dhlSessionState.val) {
         this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
         this.sessions['dhl'] = JSON.parse(String(dhlSessionState.val));
-        this.log.debug('DHL refresh_token: ' + (this.sessions['dhl'].refresh_token || 'MISSING').substring(0, 10) + '...');
         await this.refreshToken();
-        this.log.debug('DHL session after refreshToken: ' + (this.sessions['dhl'] ? 'exists' : 'DELETED'));
         await this.createDHLStates();
       }
     }
@@ -137,7 +135,7 @@ class Parcel extends utils.Adapter {
     this.subscribeStates('*');
 
     if (Object.keys(this.sessions).length > 0) {
-      this.log.info('Starting updateProvider with sessions: ' + JSON.stringify(Object.keys(this.sessions)));
+      this.log.debug('Starting updateProvider with sessions: ' + JSON.stringify(Object.keys(this.sessions)));
       await this.updateProvider();
       this.updateInterval = setInterval(async () => {
         this.firstStart = false;
@@ -1279,9 +1277,18 @@ class Parcel extends utils.Adapter {
       }
     }
     if (this.sessions['dhl']) {
-      this.log.debug('DHL: fetching packages with dhli cookie...');
-      const dhlCookies = this.cookieJar.getCookieStringSync('https://www.dhl.de');
-      this.log.debug('DHL cookies for www.dhl.de: ' + (dhlCookies || 'NONE'));
+      // Remove stale Akamai bot-detection cookies that cause ECONNRESET/ETIMEDOUT
+      for (const domain of ['dhl.de', 'www.dhl.de']) {
+        if (this.cookieJar.store.idx[domain]) {
+          for (const path of Object.keys(this.cookieJar.store.idx[domain])) {
+            for (const name of Object.keys(this.cookieJar.store.idx[domain][path])) {
+              if (name === '_abck' || name === 'ak_bmsc' || name === 'bm_sz') {
+                delete this.cookieJar.store.idx[domain][path][name];
+              }
+            }
+          }
+        }
+      }
       dataDhl = await this.requestClient({
         method: 'get',
         url: 'https://www.dhl.de/int-verfolgen/data/search?noRedirect=true&language=de&cid=app',
@@ -1291,16 +1298,15 @@ class Parcel extends utils.Adapter {
           'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
           'accept-language': 'de-de',
         },
+        timeout: 15000,
       })
 
         .then(async (res) => {
           this.log.debug(JSON.stringify(res.data));
           if (res.data && res.data.sendungen) {
-            return res.data.sendungen.map((sendung) => {
-              if (sendung.sendungsinfo.sendungsliste !== 'ARCHIVIERT') {
-                return sendung.id;
-              }
-            });
+            return res.data.sendungen
+              .filter((sendung) => sendung.sendungsinfo.sendungsliste !== 'ARCHIVIERT')
+              .map((sendung) => sendung.id);
           }
           return [];
         })
@@ -1436,8 +1442,8 @@ class Parcel extends utils.Adapter {
           method: element.method ? element.method : 'get',
           url: element.url,
           headers: element.header,
-
           data: element.data,
+          timeout: element.url.includes('dhl.de') ? 15000 : undefined,
         })
           .then(async (res) => {
             this.log.debug(JSON.stringify(res.data));
@@ -1600,8 +1606,8 @@ class Parcel extends utils.Adapter {
       const sendungsArray = data.sendungen.map((sendung) => {
         let status = '';
 
-        if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && sendung.sendungsdetails.sendungsverlauf.kurzStatus) {
-          status = sendung.sendungsdetails.sendungsverlauf.kurzStatus;
+        if (sendung.sendungsdetails && sendung.sendungsdetails.sendungsverlauf && (sendung.sendungsdetails.sendungsverlauf.kurzStatus || sendung.sendungsdetails.sendungsverlauf.status)) {
+          status = sendung.sendungsdetails.sendungsverlauf.kurzStatus || sendung.sendungsdetails.sendungsverlauf.status;
         }
         if (sendung.sendungsdetails && sendung.sendungsdetails.liveTracking) {
           let stopps = 0;
