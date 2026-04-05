@@ -84,15 +84,17 @@ class Parcel extends utils.Adapter {
       await this.loginAmz();
     }
 
-    const dhlSessionState = await this.getStateAsync('auth.dhlSession');
-    if (dhlSessionState && dhlSessionState.val) {
-      this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
-      this.sessions['dhl'] = JSON.parse(dhlSessionState.val);
-      await this.refreshToken();
-      await this.createDHLStates();
-    } else if (this.config.dhlCode && this.config.dhlCode.startsWith('dhllogin://')) {
-      this.log.info('Login to DHL via dhllogin:// code');
+    if (this.config.dhlCode && this.config.dhlCode.startsWith('dhllogin://')) {
+      this.log.info('Login to DHL via new dhllogin:// code');
       await this.loginDhlNew();
+    } else {
+      const dhlSessionState = await this.getStateAsync('auth.dhlSession');
+      if (dhlSessionState && dhlSessionState.val) {
+        this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
+        this.sessions['dhl'] = JSON.parse(String(dhlSessionState.val));
+        await this.refreshToken();
+        await this.createDHLStates();
+      }
     }
 
     if (this.config.dpdusername && this.config.dpdpassword) {
