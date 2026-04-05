@@ -467,7 +467,11 @@ class Parcel extends utils.Adapter {
           if (error.response) {
             this.log.error(JSON.stringify(error.response.data));
           }
-          delete this.cookieJar.store.idx['amazon.de'];
+          try {
+            delete this.cookieJar.store.idx['amazon.de'];
+            this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+            this.log.info('Amazon Cookies gelöscht nach Login-Fehler. Bitte Adapter neu starten.');
+          } catch (e) { /* ignore */ }
         });
       form = this.extractHidden(body);
       postUrl = this.extractFormAction(body) || postUrl;
@@ -724,8 +728,12 @@ class Parcel extends utils.Adapter {
           this.setState('info.connection', false, true);
           this.log.error(JSON.stringify(error.response.data));
         }
-
         this.log.error(error);
+        try {
+          delete this.cookieJar.store.idx['amazon.de'];
+          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+          this.log.info('Amazon Cookies gelöscht nach Login-Fehler. Bitte Adapter neu starten.');
+        } catch (e) { /* ignore */ }
       });
   }
   async loginDPD(silent) {
