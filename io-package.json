@@ -142,7 +142,6 @@
     ]
   },
   "encryptedNative": [
-    "dhlpassword",
     "amzpassword",
     "dpdpassword",
     "t17password",
@@ -153,7 +152,6 @@
     "glspassword"
   ],
   "protectedNative": [
-    "dhlpassword",
     "amzpassword",
     "dpdpassword",
     "t17password",
@@ -184,10 +182,7 @@
     "t17password": "",
     "dpdusername": "",
     "dpdpassword": "",
-    "dhlusername": "",
-    "dhlpassword": "",
     "dhlCode": "",
-    "dhlMfa": "",
     "17trackKey": "",
     "sendToActive": false,
     "noFirstStartSend": false,
@@ -297,18 +292,6 @@
       "type": "channel",
       "common": {
         "name": "Auth Information"
-      },
-      "native": {}
-    },
-    {
-      "_id": "auth.dhlMfaToken",
-      "type": "state",
-      "common": {
-        "role": "state",
-        "name": "DHL Mfa Token",
-        "type": "string",
-        "read": true,
-        "write": false
       },
       "native": {}
     },

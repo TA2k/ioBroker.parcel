@@ -269,55 +269,7 @@ class Parcel extends utils.Adapter {
           this.log.error(error);
         });
     } else {
-      this.log.info('Login to AliExpress with MFA token');
-      this.log.debug('MFA: ' + this.config.dhlMfa);
-      const mfaToken = '';
-      await this.requestClient({
-        method: 'post',
-        url: 'https://www.dhl.de/int-erkennen/2fa',
-        headers: {
-          Host: 'www.dhl.de',
-          'content-type': 'application/json',
-          accept: '*/*',
-          'x-requested-with': 'XMLHttpRequest',
-          'accept-language': 'de-de',
-          origin: 'https://www.dhl.de',
-          'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
-        },
-
-        data: JSON.stringify({
-          value: this.config.dhlMfa,
-          remember2fa: true,
-          language: 'de',
-          context: 'app',
-          meta: '',
-          intermediateMfaToken: mfaToken,
-        }),
-      })
-        .then(async (res) => {
-          this.log.debug(JSON.stringify(res.data));
-          this.log.info('Login to DHL successful');
-          this.sessions['dhl'] = res.data;
-          this.setState('info.connection', true, true);
-          this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
-          await this.createDHLStates();
-        })
-        .catch(async (error) => {
-          this.log.error(error);
-          if (error.response) {
-            this.setState('info.connection', false, true);
-            this.log.error(JSON.stringify(error.response.data));
-            const adapterConfig = 'system.adapter.' + this.name + '.' + this.instance;
-            this.log.error('MFA incorrect');
-            this.getForeignObject(adapterConfig, (error, obj) => {
-              if (obj && obj.native && obj.native.dhlMfa) {
-                obj.native.dhlMfa = '';
-                this.setForeignObject(adapterConfig, obj);
-              }
-            });
-            return;
-          }
-        });
+      this.log.warn('AliExpress MFA login is not supported');
     }
   }
 
@@ -656,6 +608,54 @@ class Parcel extends utils.Adapter {
           await this.setStateAsync('auth.amzVerification', JSON.stringify(verification), true);
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
           this.log.info('Please enter the SMS code in the adapter settings (OTP field) and restart the adapter.');
+          return;
+        }
+        if (res.data.indexOf('isRedirectForWhatsapp') !== -1 || res.data.indexOf('cvf/approval') !== -1) {
+          this.log.info('Amazon WhatsApp-Verifizierung erkannt. Versuche WhatsApp-Code anzufordern...');
+          // Extract the form action URL for WhatsApp redirect
+          const whatsappMatch = res.data.match(/action="([^"]*isRedirectForWhatsapp[^"]*)"/);
+          if (whatsappMatch) {
+            let whatsappUrl = whatsappMatch[1].replace(/&amp;/g, '&');
+            if (whatsappUrl.startsWith('/')) {
+              whatsappUrl = 'https://www.amazon.de' + whatsappUrl;
+            }
+            const whatsappRes = await this.requestClient({
+              method: 'post',
+              url: whatsappUrl,
+              headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                origin: 'https://www.amazon.de',
+                'accept-language': 'de-de',
+                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+              },
+              data: '',
+            }).catch((error) => {
+              this.log.error('WhatsApp redirect failed: ' + error.message);
+              return null;
+            });
+            if (whatsappRes && whatsappRes.data) {
+              // After WhatsApp redirect we should get a verification code form
+              const form = this.extractHidden(whatsappRes.data);
+              delete form['undefined'];
+              form['action'] = 'code';
+              delete form['resendContactType'];
+              delete form['timerMessage'];
+              delete form['timerComplete'];
+              const verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+              const verification = { url: verifyUrl, form: form };
+              await this.setObjectNotExistsAsync('auth.amzVerification', {
+                type: 'state',
+                common: { name: 'Amazon Verification Data', write: false, read: true, type: 'string', role: 'json' },
+                native: {},
+              });
+              await this.setStateAsync('auth.amzVerification', JSON.stringify(verification), true);
+              this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+              this.log.info('Amazon WhatsApp-Code wurde angefordert. Bitte den Code in den Adaptereinstellungen (OTP Feld) eingeben und den Adapter neu starten.');
+            }
+          } else {
+            this.log.warn('Amazon WhatsApp-Verifizierung erkannt, aber kein Formular gefunden. Bitte manuell bei Amazon einloggen.');
+          }
           return;
         }
         if (res.data.indexOf('captcha') !== -1 || res.data.indexOf('Löse das Rätsel, um dein Konto zu schützen') !== -1 || res.data.indexOf('cvf_captcha') !== -1) {
