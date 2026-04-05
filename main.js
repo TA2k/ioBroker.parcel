@@ -436,8 +436,7 @@ class Parcel extends utils.Adapter {
     let postUrl = this.extractFormAction(body) || amzResponseUrl || 'https://www.amazon.de/ap/signin';
 
     // Handle Unified Claim Collection page (new Amazon login flow)
-    // This page has both email+password but with different hidden fields.
-    // Strip Unified-specific fields and keep only standard OpenID/auth fields.
+    // Keep ALL fields, add email, POST to get password page, then continue with password POST.
     if (form.appAction === 'SIGNIN_CLAIM_COLLECT' || (body && body.indexOf('FullPageUnifiedClaimCollect') !== -1)) {
       this.log.info('Amazon Unified Claim Collection page detected');
       // Extract any form action (not just name="signIn")
@@ -447,22 +446,48 @@ class Parcel extends utils.Adapter {
         if (actionUrl.startsWith('/')) actionUrl = 'https://www.amazon.de' + actionUrl;
         postUrl = actionUrl;
       }
-      // Remove Unified-specific fields that confuse the login
-      delete form['appAction'];
-      delete form['subPageType'];
-      delete form['claimCollectionWorkflow'];
-      delete form['metadata1'];
-      delete form['isServerSideRouting'];
-      delete form['unifiedAuthTreatment'];
+      // Remove only webAuthn and ue_back, keep everything else
       delete form['webAuthnGetArbForAutofill'];
       delete form['webAuthnGetParametersForAutofill'];
       delete form['webAuthnChallengeIdForAutofill'];
-      delete form['signalUnknownCredentialUnifiedAuthWeblabActive'];
       delete form['ue_back'];
-      // Add email since the visible input is not captured by extractHidden
+      delete form['undefined'];
       form.email = this.config.amzusername;
-      this.log.debug('Unified Claim Collection form action: ' + postUrl);
-      this.log.debug('Unified Claim Collection cleaned form: ' + JSON.stringify(form));
+      this.log.debug('Unified Claim Collection POST to: ' + postUrl);
+
+      body = await this.requestClient({
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: postUrl,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'sec-fetch-site': 'same-origin',
+          'accept-language': 'de-DE,de;q=0.9',
+          'sec-fetch-mode': 'navigate',
+          origin: 'https://www.amazon.de',
+          'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+          referer: postUrl,
+        },
+        data: qs.stringify(form),
+      })
+        .then(async (res) => {
+          amzResponseUrl = res.request?.res?.responseUrl || res.request?.responseURL || amzResponseUrl;
+          this.log.debug('Unified email POST successful. Response URL: ' + amzResponseUrl);
+          return res.data;
+        })
+        .catch((error) => {
+          this.log.error('Unified email POST failed');
+          this.log.error(error);
+          if (error.response) {
+            this.log.error(JSON.stringify(error.response.data));
+          }
+          return null;
+        });
+      if (!body) return;
+      form = this.extractHidden(body);
+      postUrl = this.extractFormAction(body) || amzResponseUrl || postUrl;
+      this.log.debug('After Unified email POST - postUrl: ' + postUrl);
     }
 
     // ax/claim: email-only page (2-step). ap/signin: email+password on same page.
