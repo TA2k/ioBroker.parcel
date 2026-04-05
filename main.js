@@ -573,8 +573,14 @@ class Parcel extends utils.Adapter {
           delete form['resendContactType'];
           delete form['timerMessage'];
           delete form['timerComplete'];
-          // The verification form posts to /ap/cvf/verify (relative "verify" from the CVF page)
-          const verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+          // Extract actual form action from response page
+          const cvfActionMatch = res.data.match(/<form[^>]*action=["']([^"']*)["']/i);
+          let verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+          if (cvfActionMatch) {
+            verifyUrl = cvfActionMatch[1].replace(/&amp;/g, '&');
+            if (verifyUrl.startsWith('/')) verifyUrl = 'https://www.amazon.de' + verifyUrl;
+          }
+          this.log.debug('CVF verify URL: ' + verifyUrl);
           const verification = {
             url: verifyUrl,
             form: form,
@@ -596,7 +602,13 @@ class Parcel extends utils.Adapter {
           delete form['resendContactType'];
           delete form['timerMessage'];
           delete form['timerComplete'];
-          const verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+          const selectActionMatch = res.data.match(/<form[^>]*action=["']([^"']*)["']/i);
+          let verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+          if (selectActionMatch) {
+            verifyUrl = selectActionMatch[1].replace(/&amp;/g, '&');
+            if (verifyUrl.startsWith('/')) verifyUrl = 'https://www.amazon.de' + verifyUrl;
+          }
+          this.log.debug('Select device verify URL: ' + verifyUrl);
           const verification = {
             url: verifyUrl,
             form: form,
@@ -636,6 +648,7 @@ class Parcel extends utils.Adapter {
               return null;
             });
             if (whatsappRes && whatsappRes.data) {
+              this.log.debug('WhatsApp response: ' + whatsappRes.data.substring(0, 2000));
               // After WhatsApp redirect we should get a verification code form
               const form = this.extractHidden(whatsappRes.data);
               delete form['undefined'];
@@ -643,7 +656,19 @@ class Parcel extends utils.Adapter {
               delete form['resendContactType'];
               delete form['timerMessage'];
               delete form['timerComplete'];
-              const verifyUrl = 'https://www.amazon.de/ap/cvf/verify';
+              // Extract actual form action URL from response
+              const formActionMatch = whatsappRes.data.match(/<form[^>]*action=["']([^"']*)["']/i);
+              let verifyUrl;
+              if (formActionMatch) {
+                verifyUrl = formActionMatch[1].replace(/&amp;/g, '&');
+                if (verifyUrl.startsWith('/')) {
+                  verifyUrl = 'https://www.amazon.de' + verifyUrl;
+                }
+              } else {
+                // Fallback: use response URL or approval URL
+                verifyUrl = whatsappRes.request?.res?.responseUrl || 'https://www.amazon.de/ap/cvf/verify';
+              }
+              this.log.info('Verify URL: ' + verifyUrl);
               const verification = { url: verifyUrl, form: form };
               await this.setObjectNotExistsAsync('auth.amzVerification', {
                 type: 'state',
