@@ -303,6 +303,8 @@ class Parcel extends utils.Adapter {
         const form = verification.form;
         form['code'] = this.config.amzotp;
         form['action'] = 'code';
+        this.log.debug('Verify URL: ' + verification.url);
+        this.log.debug('Verify form: ' + JSON.stringify(form));
 
         const verifyResult = await this.requestClient({
           method: 'post',
