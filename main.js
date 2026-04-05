@@ -174,6 +174,7 @@ class Parcel extends utils.Adapter {
       native: {},
     });
     this.setState('auth.dhlSession', JSON.stringify(sessionData), true);
+    this.dhlLoginSuccess = true;
   }
   async loginAli() {
     const loginData = await this.requestClient({
@@ -2256,7 +2257,9 @@ class Parcel extends utils.Adapter {
             this.log.error('refresh token failed');
             this.log.error(error);
             error.response && this.log.error(JSON.stringify(error.response.data));
-            this.log.error('Refresh token expired. Please enter a new dhllogin:// code in adapter settings.');
+            this.log.error('Refresh token expired. Bitte einen neuen dhllogin:// Code in den Adaptereinstellungen eingeben.');
+            delete this.sessions['dhl'];
+            this.setState('auth.dhlSession', '', true);
           });
       }
       if (id === 'dpd') {
@@ -2375,7 +2378,7 @@ class Parcel extends utils.Adapter {
       this.updateInterval && clearInterval(this.updateInterval);
       this.refreshTokenInterval && clearInterval(this.refreshTokenInterval);
       //get adapter settings and set captcha to null
-      if (this.config.dhlCode) {
+      if (this.config.dhlCode && this.dhlLoginSuccess) {
         const adapterSettings = await this.getForeignObjectAsync('system.adapter.' + this.namespace);
         adapterSettings.native.dhlCode = null;
         await this.setForeignObjectAsync('system.adapter.' + this.namespace, adapterSettings);
