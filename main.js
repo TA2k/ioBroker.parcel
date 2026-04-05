@@ -355,6 +355,11 @@ class Parcel extends utils.Adapter {
       return;
     }
 
+    // Clear old Amazon cookies before fresh login to avoid stale session issues
+    try {
+      delete this.cookieJar.store.idx['amazon.de'];
+    } catch (e) { /* ignore */ }
+
     let body = await this.requestClient({
       method: 'get',
       maxBodyLength: Infinity,
