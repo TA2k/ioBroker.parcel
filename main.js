@@ -355,10 +355,14 @@ class Parcel extends utils.Adapter {
       return;
     }
 
-    // Clear old Amazon cookies before fresh login to avoid stale session issues
-    try {
-      delete this.cookieJar.store.idx['amazon.de'];
-    } catch (e) { /* ignore */ }
+    // Clear old Amazon cookies if user requested it (login problems)
+    if (this.config.amzResetCookies) {
+      this.log.info('Amazon Cookies werden gelöscht (Option in Einstellungen)');
+      try {
+        delete this.cookieJar.store.idx['amazon.de'];
+        this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
+      } catch (e) { /* ignore */ }
+    }
 
     let body = await this.requestClient({
       method: 'get',
@@ -2423,7 +2427,7 @@ class Parcel extends utils.Adapter {
       this.updateInterval && clearInterval(this.updateInterval);
       this.refreshTokenInterval && clearInterval(this.refreshTokenInterval);
       //get adapter settings and set captcha to null
-      if ((this.config.dhlCode && this.dhlLoginSuccess) || this.config.amzotp) {
+      if ((this.config.dhlCode && this.dhlLoginSuccess) || this.config.amzotp || this.config.amzResetCookies) {
         const adapterSettings = await this.getForeignObjectAsync('system.adapter.' + this.namespace);
         if (adapterSettings) {
           if (this.config.dhlCode && this.dhlLoginSuccess) {
@@ -2431,6 +2435,9 @@ class Parcel extends utils.Adapter {
           }
           if (this.config.amzotp) {
             adapterSettings.native.amzotp = '';
+          }
+          if (this.config.amzResetCookies) {
+            adapterSettings.native.amzResetCookies = false;
           }
           await this.setForeignObjectAsync('system.adapter.' + this.namespace, adapterSettings);
         }

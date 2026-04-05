@@ -178,6 +178,7 @@
     "postatusername": "",
     "postatpassword": "",
     "amzotp": "",
+    "amzResetCookies": false,
     "t17username": "",
     "t17password": "",
     "dpdusername": "",
