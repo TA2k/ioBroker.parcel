@@ -342,6 +342,9 @@ class Parcel extends utils.Adapter {
       } catch (error) {
         this.log.error('Failed to submit Amazon verification code');
         this.log.error(error);
+        if (error.response) {
+          this.log.debug('Verification error response: ' + (typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data)));
+        }
         await this.setStateAsync('auth.amzVerification', '', true);
         try {
           delete this.cookieJar.store.idx['amazon.de'];
