@@ -431,6 +431,46 @@ class Parcel extends utils.Adapter {
     }
     let form = this.extractHidden(body);
     let postUrl = this.extractFormAction(body) || 'https://www.amazon.de/ap/signin';
+
+    // Handle Unified Claim Collection page (new Amazon login flow)
+    if (form.appAction === 'SIGNIN_CLAIM_COLLECT' || (body && body.indexOf('FullPageUnifiedClaimCollect') !== -1)) {
+      this.log.info('Amazon Unified Claim Collection page detected - submitting to get actual login page');
+      delete form['undefined'];
+      delete form['ue_back'];
+      body = await this.requestClient({
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: postUrl,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'sec-fetch-site': 'same-origin',
+          'accept-language': 'de-DE,de;q=0.9',
+          'sec-fetch-mode': 'navigate',
+          origin: 'https://www.amazon.de',
+          'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+          referer: postUrl,
+        },
+        data: qs.stringify(form),
+      })
+        .then(async (res) => {
+          this.log.debug('Unified Claim Collection submitted successfully');
+          return res.data;
+        })
+        .catch((error) => {
+          this.log.error('Failed to submit Unified Claim Collection');
+          this.log.error(error);
+          if (error.response) {
+            this.log.error(JSON.stringify(error.response.data));
+          }
+          return null;
+        });
+      if (!body) return;
+      form = this.extractHidden(body);
+      postUrl = this.extractFormAction(body) || postUrl;
+      this.log.debug('After Unified Claim Collection form: ' + JSON.stringify(form));
+    }
+
     // ax/claim: email-only page (2-step). ap/signin: email+password on same page.
     // Detect by checking if body contains a visible password input field
     const isTwoStep = body.indexOf('type="password"') === -1;
