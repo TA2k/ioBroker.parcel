@@ -79,29 +79,31 @@ class Parcel extends utils.Adapter {
 
       httpsAgent: new HttpsCookieAgent({ cookies: { jar: this.cookieJar }, rejectUnauthorized: false }),
     });
-    if (this.config.amzusername && this.config.amzpassword) {
+    if (this.config.amzActive !== false && this.config.amzusername && this.config.amzpassword) {
       this.log.info('Login to Amazon');
       await this.loginAmz();
     }
 
-    if (this.config.dhlCode && this.config.dhlCode.startsWith('dhllogin://')) {
-      this.log.info('Login to DHL via new dhllogin:// code');
-      await this.loginDhlNew();
-    } else {
-      const dhlSessionState = await this.getStateAsync('auth.dhlSession');
-      if (dhlSessionState && dhlSessionState.val) {
-        this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
-        this.sessions['dhl'] = JSON.parse(String(dhlSessionState.val));
-        await this.refreshToken();
-        await this.createDHLStates();
+    if (this.config.dhlActive !== false) {
+      if (this.config.dhlCode && this.config.dhlCode.startsWith('dhllogin://')) {
+        this.log.info('Login to DHL via new dhllogin:// code');
+        await this.loginDhlNew();
+      } else {
+        const dhlSessionState = await this.getStateAsync('auth.dhlSession');
+        if (dhlSessionState && dhlSessionState.val) {
+          this.log.info('Use existing DHL session. If this fails please delete auth.dhlSession');
+          this.sessions['dhl'] = JSON.parse(String(dhlSessionState.val));
+          await this.refreshToken();
+          await this.createDHLStates();
+        }
       }
     }
 
-    if (this.config.dpdusername && this.config.dpdpassword) {
+    if (this.config.dpdActive !== false && this.config.dpdusername && this.config.dpdpassword) {
       this.log.info('Login to DPD');
       await this.loginDPD();
     }
-    if (this.config.t17username && this.config.t17password) {
+    if (this.config.t17Active !== false && this.config.t17username && this.config.t17password) {
       this.log.info('Login to T17 User');
       await this.login17T();
     }
@@ -110,21 +112,21 @@ class Parcel extends utils.Adapter {
       await this.loginAli();
     }
 
-    if (this.config['17trackKey']) {
+    if (this.config.t17ApiActive !== false && this.config['17trackKey']) {
       this.sessions['17track'] = this.config['17trackKey'];
       this.login17TApi();
       this.setState('info.connection', true, true);
     }
 
-    if (this.config.glsusername && this.config.glspassword) {
+    if (this.config.glsActive !== false && this.config.glsusername && this.config.glspassword) {
       this.log.info('Login to GLS');
       await this.loginGLS();
     }
-    if (this.config.upsusername && this.config.upspassword) {
+    if (this.config.upsActive !== false && this.config.upsusername && this.config.upspassword) {
       this.log.info('Login to UPS');
       await this.loginUPS();
     }
-    if (this.config.hermesusername && this.config.hermespassword) {
+    if (this.config.hermesActive !== false && this.config.hermesusername && this.config.hermespassword) {
       this.log.info('Login to Hermes');
       await this.loginHermes();
     }
@@ -349,10 +351,10 @@ class Parcel extends utils.Adapter {
         await this.setStateAsync('auth.amzVerification', '', true);
         try {
           delete this.cookieJar.store.idx['amazon.de'];
-            delete this.cookieJar.store.idx['www.amazon.de'];
+          delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
           this.log.info('Amazon Cookies gelöscht. Bitte Adapter neu starten.');
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
       }
       return;
     }
@@ -362,9 +364,9 @@ class Parcel extends utils.Adapter {
       this.log.info('Amazon Cookies werden gelöscht (Option in Einstellungen)');
       try {
         delete this.cookieJar.store.idx['amazon.de'];
-            delete this.cookieJar.store.idx['www.amazon.de'];
+        delete this.cookieJar.store.idx['www.amazon.de'];
         this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
-      } catch (e) { /* ignore */ }
+      } catch { /* ignore */ }
     }
 
     let amzResponseUrl = '';
@@ -534,7 +536,7 @@ class Parcel extends utils.Adapter {
             delete this.cookieJar.store.idx['www.amazon.de'];
             this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
             this.log.info('Amazon Cookies gelöscht nach Login-Fehler. Bitte Adapter neu starten.');
-          } catch (e) { /* ignore */ }
+          } catch { /* ignore */ }
         });
       form = this.extractHidden(body);
       postUrl = this.extractFormAction(body) || postUrl;
@@ -641,7 +643,7 @@ class Parcel extends utils.Adapter {
             'Login to Amazon failed. Please check credentials and restart the adapter.',
           );
           delete this.cookieJar.store.idx['amazon.de'];
-            delete this.cookieJar.store.idx['www.amazon.de'];
+          delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('info.connection', false, true);
 
           return;
@@ -780,10 +782,10 @@ class Parcel extends utils.Adapter {
         this.log.info(res.data);
         try {
           delete this.cookieJar.store.idx['amazon.de'];
-            delete this.cookieJar.store.idx['www.amazon.de'];
+          delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
           this.log.info('Amazon Cookies gelöscht. Bitte Adapter neu starten.');
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
         this.setState('info.connection', false, true);
         return;
       })
@@ -796,10 +798,10 @@ class Parcel extends utils.Adapter {
         this.log.error(error);
         try {
           delete this.cookieJar.store.idx['amazon.de'];
-            delete this.cookieJar.store.idx['www.amazon.de'];
+          delete this.cookieJar.store.idx['www.amazon.de'];
           this.setState('auth.cookie', JSON.stringify(this.cookieJar.toJSON()), true);
           this.log.info('Amazon Cookies gelöscht nach Login-Fehler. Bitte Adapter neu starten.');
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
       });
   }
   async loginDPD(silent) {

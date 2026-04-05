@@ -162,6 +162,14 @@
     "glspassword"
   ],
   "native": {
+    "dhlActive": true,
+    "amzActive": true,
+    "dpdActive": true,
+    "glsActive": true,
+    "upsActive": true,
+    "hermesActive": true,
+    "t17Active": true,
+    "t17ApiActive": true,
     "amzusername": "",
     "amzpassword": "",
     "aliUsername": "",
