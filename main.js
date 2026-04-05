@@ -366,6 +366,7 @@ class Parcel extends utils.Adapter {
       } catch (e) { /* ignore */ }
     }
 
+    let amzResponseUrl = '';
     let body = await this.requestClient({
       method: 'get',
       maxBodyLength: Infinity,
@@ -374,13 +375,15 @@ class Parcel extends utils.Adapter {
         accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'accept-charset': 'utf-8',
         'sec-fetch-site': 'none',
-        'accept-language': 'en-US',
+        'accept-language': 'de-DE,de;q=0.9',
         'cache-control': 'no-store',
         'sec-fetch-mode': 'navigate',
         'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_7_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
       },
     })
       .then(async (res) => {
+        amzResponseUrl = res.request?.res?.responseUrl || res.request?.responseURL || '';
+        this.log.debug('Amazon signin response URL: ' + amzResponseUrl);
         this.log.debug(JSON.stringify(res.data));
         return res.data;
       })
@@ -430,11 +433,19 @@ class Parcel extends utils.Adapter {
         });
     }
     let form = this.extractHidden(body);
-    let postUrl = this.extractFormAction(body) || 'https://www.amazon.de/ap/signin';
+    let postUrl = this.extractFormAction(body) || amzResponseUrl || 'https://www.amazon.de/ap/signin';
 
     // Handle Unified Claim Collection page (new Amazon login flow)
     if (form.appAction === 'SIGNIN_CLAIM_COLLECT' || (body && body.indexOf('FullPageUnifiedClaimCollect') !== -1)) {
       this.log.info('Amazon Unified Claim Collection page detected - submitting to get actual login page');
+      // Extract any form action (not just name="signIn")
+      const anyFormAction = body.match(/<form[^>]*action=["']([^"']*)["']/i);
+      if (anyFormAction) {
+        let actionUrl = anyFormAction[1].replace(/&amp;/g, '&');
+        if (actionUrl.startsWith('/')) actionUrl = 'https://www.amazon.de' + actionUrl;
+        postUrl = actionUrl;
+      }
+      this.log.debug('Unified Claim Collection POST URL: ' + postUrl);
       delete form['undefined'];
       delete form['ue_back'];
       body = await this.requestClient({
@@ -454,7 +465,8 @@ class Parcel extends utils.Adapter {
         data: qs.stringify(form),
       })
         .then(async (res) => {
-          this.log.debug('Unified Claim Collection submitted successfully');
+          amzResponseUrl = res.request?.res?.responseUrl || res.request?.responseURL || amzResponseUrl;
+          this.log.debug('Unified Claim Collection submitted successfully. Response URL: ' + amzResponseUrl);
           return res.data;
         })
         .catch((error) => {
@@ -467,7 +479,7 @@ class Parcel extends utils.Adapter {
         });
       if (!body) return;
       form = this.extractHidden(body);
-      postUrl = this.extractFormAction(body) || postUrl;
+      postUrl = this.extractFormAction(body) || amzResponseUrl || postUrl;
       this.log.debug('After Unified Claim Collection form: ' + JSON.stringify(form));
     }
 
