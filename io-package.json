@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcel",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "news": {
-      "0.3.0": {
+      "0.3.1": {
         "en": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
         "de": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
         "ru": "DHL: Neuer Login über Browser-Code (dhllogin://)\nAmazon: Login Fix und Captcha-Erkennung mit Hinweis",
