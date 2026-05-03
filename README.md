@@ -96,6 +96,8 @@ Den Datenpunkt parcel.0.dhl.briefe....image ein "String img src" element als Obj
 
 - (TA2k) initial release
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 
 MIT License
