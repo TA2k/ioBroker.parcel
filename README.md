@@ -62,6 +62,10 @@ Den Datenpunkt parcel.0.dhl.briefe....image ein "String img src" element als Obj
 <https://forum.iobroker.net/topic/51795/test-adapter-parcel-paketverfolgung-dhl-v0-0-1>
 
 ## Changelog
+
+### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
+
 ### 0.3.0 (2026-04-05)
 
 - DHL: Neuer Login über Browser-Code (dhllogin://)
