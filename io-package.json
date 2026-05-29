@@ -133,7 +133,6 @@
     "compact": true,
     "connectionType": "cloud",
     "dataSource": "poll",
-    "materialize": true,
     "plugins": {
       "sentry": {
         "dsn": "https://6296452769de44959c1809642564a7e3@sentry.iobroker.net/171"
@@ -141,14 +140,17 @@
     },
     "dependencies": [
       {
-        "js-controller": ">=3.2.0"
+        "js-controller": ">=6.0.11"
       }
     ],
     "globalDependencies": [
       {
         "admin": ">=4.0.9"
       }
-    ]
+    ],
+    "adminUI": {
+      "config": "materialize"
+    }
   },
   "encryptedNative": [
     "amzpassword",
