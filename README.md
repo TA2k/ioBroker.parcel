@@ -35,6 +35,13 @@ This adapter uses Sentry libraries to automatically report exceptions and code e
 
 Enter username and password
 
+**17TRACK API:**
+
+Write a tracking number as text to `parcel.0.17t.register` with **ack / acknowledged disabled**.
+Keep leading zeros and use one number per write. The adapter logs the request and the API's
+acceptance or rejection (including its error code and message). Only an accepted request
+is acknowledged by the adapter. API registrations use the account associated with the configured API key.
+
 **Telegram notification for parcels and letters**
 
 Enable in instance settings and enter e.g. `telegram.0`
