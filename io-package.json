@@ -211,6 +211,7 @@
     "dhlCode": "",
     "17trackKey": "",
     "sendToActive": false,
+    "t17QuotaNotification": false,
     "noFirstStartSend": false,
     "sendToInstance": "telegram.0",
     "sendToUser": "",

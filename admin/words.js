@@ -3,6 +3,19 @@
 'use strict';
 
 systemDictionary = {
+  '17TRACK quota notification': {
+    en: 'Telegram warning when fewer than 20 17TRACK shipments remain',
+    de: 'Telegram-Warnung bei weniger als 20 verbleibenden 17TRACK-Sendungen',
+    ru: 'Предупреждение Telegram при остатке менее 20 отправлений 17TRACK',
+    pt: 'Aviso no Telegram quando restarem menos de 20 envios 17TRACK',
+    nl: 'Telegramwaarschuwing bij minder dan 20 resterende 17TRACK-zendingen',
+    fr: 'Alerte Telegram lorsque le quota 17TRACK est inférieur à 20 envois',
+    it: 'Avviso Telegram con meno di 20 spedizioni 17TRACK disponibili',
+    es: 'Aviso por Telegram cuando queden menos de 20 envíos 17TRACK',
+    pl: 'Ostrzeżenie Telegram przy mniej niż 20 pozostałych przesyłkach 17TRACK',
+    uk: 'Попередження Telegram, коли залишилося менш ніж 20 відправлень 17TRACK',
+    'zh-cn': '17TRACK剩余运单额度少于20时发送Telegram提醒',
+  },
   'parcel adapter settings': {
     en: 'Adapter settings for parcel',
     de: 'Adaptereinstellungen für parcel',

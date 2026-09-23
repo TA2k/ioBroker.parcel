@@ -27,6 +27,7 @@ function fixture(handler) {
     log: { debug() {}, info() {}, warn() {}, error() {} },
     logAxiosError: (_label, error) => { throw error; },
     sleep: async () => {},
+    update17TQuota: async () => {},
     requestClient: async (options) => {
       const command = options.url.split('/').pop();
       const data = JSON.parse(options.data);
@@ -190,5 +191,138 @@ describe('17TRACK API shipments', () => {
     const result = await adapter.fetch17TParcels();
     assert.equal(result.accepted.length, 39);
     assert.deepEqual(plain(result.rejected), [{ number: 'TRACK39' }, { number: 'TRACK40' }]);
+  });
+});
+
+function quotaFixture(remaining = 19) {
+  const context = fixture(() => ({ data: { code: 0, data: { quota_remain: remaining } } }));
+  const { adapter, states } = context;
+  delete adapter.update17TQuota;
+  adapter.config.t17QuotaNotification = true;
+  adapter.config.sendToInstance = 'telegram.0';
+  adapter.config.sendToUser = '';
+  adapter.getStateAsync = async (id) => states[id] === undefined ? null : { val: states[id] };
+  const messages = [];
+  const errors = [];
+  adapter.sendToAsync = async (instance, payload) => { messages.push({ instance, payload }); };
+  adapter.logAxiosError = (_label, error) => errors.push(error.message);
+  return { ...context, messages, errors };
+}
+
+describe('17TRACK quota', () => {
+  it('creates read-only numeric quota and persistent notification states', async () => {
+    const { adapter } = quotaFixture();
+    const objects = {};
+    adapter.setObjectNotExistsAsync = async (id, object) => { objects[id] = object; };
+    await adapter.login17TApi();
+    assert.equal(objects['17t.quotaRemaining'].common.type, 'number');
+    assert.equal(objects['17t.quotaRemaining'].common.write, false);
+    assert.equal(objects['17t.quotaWarningSent'].common.type, 'boolean');
+  });
+
+  it('requests getquota with the API key and saves the remaining quota even with alerts disabled', async () => {
+    const { adapter, states, messages } = quotaFixture();
+    adapter.config.t17QuotaNotification = false;
+    adapter.requestClient = async (options) => {
+      assert.equal(options.url, 'https://api.17track.net/track/v2.4/getquota');
+      assert.equal(options.method, 'post');
+      assert.equal(options.headers['17token'], 'test-key');
+      assert.equal(options.data, '[]');
+      return { data: { code: 0, data: { quota_remain: 12 } } };
+    };
+    await adapter.update17TQuota();
+    assert.equal(states['17t.quotaRemaining'], 12);
+    assert.equal(messages.length, 0);
+  });
+
+  it('warns below 20 only once, including after a restart, and rearms at 20', async () => {
+    const { adapter, states, messages } = quotaFixture();
+    await adapter.update17TQuota();
+    await adapter.update17TQuota();
+    assert.equal(messages.length, 1);
+    assert.ok(messages[0].payload.text.includes('19'));
+    assert.equal(states['17t.quotaWarningSent'], true);
+    const restarted = quotaFixture(18);
+    restarted.states['17t.quotaWarningSent'] = states['17t.quotaWarningSent'];
+    await restarted.adapter.update17TQuota();
+    assert.equal(restarted.messages.length, 0);
+    adapter.requestClient = async () => ({ data: { code: 0, data: { quota_remain: 20 } } });
+    await adapter.update17TQuota();
+    assert.equal(messages.length, 1);
+    assert.equal(states['17t.quotaWarningSent'], false);
+    adapter.requestClient = async () => ({ data: { code: 0, data: { quota_remain: 0 } } });
+    await adapter.update17TQuota();
+    assert.equal(states['17t.quotaRemaining'], 0);
+    assert.equal(messages.length, 2);
+  });
+
+  it('uses only configured Telegram instances and recipients without requiring shipment alerts', async () => {
+    const { adapter, messages } = quotaFixture();
+    adapter.config.sendToActive = false;
+    adapter.config.sendToInstance = 'telegram.0, pushover.0, telegram.1, telegram.0';
+    adapter.config.sendToUser = ' Alice, Bob, Alice, ';
+    await adapter.update17TQuota();
+    assert.deepEqual(messages.map(({ instance, payload }) => [instance, payload.user]), [
+      ['telegram.0', 'Alice'], ['telegram.0', 'Bob'], ['telegram.1', 'Alice'], ['telegram.1', 'Bob'],
+    ]);
+  });
+
+  it('does not mark alerts sent when no Telegram instance is configured', async () => {
+    const { adapter, states, messages } = quotaFixture();
+    adapter.config.sendToInstance = 'pushover.0';
+    await adapter.update17TQuota();
+    assert.equal(messages.length, 0);
+    assert.equal(states['17t.quotaWarningSent'], undefined);
+  });
+
+  it('retries notifications after Telegram reports an error', async () => {
+    const { adapter, states, errors } = quotaFixture();
+    adapter.sendToAsync = async () => ({ error: 'not connected' });
+    await adapter.update17TQuota();
+    assert.equal(states['17t.quotaWarningSent'], undefined);
+    assert.equal(errors.length, 1);
+    adapter.sendToAsync = async () => ({});
+    await adapter.update17TQuota();
+    assert.equal(states['17t.quotaWarningSent'], true);
+  });
+
+  it('preserves the last quota on malformed, failed or unavailable API responses', async () => {
+    const { adapter, states, messages, errors } = quotaFixture();
+    states['17t.quotaRemaining'] = 42;
+    for (const data of [null, { code: -1, data: { quota_remain: 0 } },
+      { code: 0, data: {} }, { code: 0, data: { quota_remain: -1 } }, { code: 0, data: { quota_remain: '19' } }]) {
+      adapter.requestClient = async () => ({ data });
+      await adapter.update17TQuota();
+    }
+    adapter.requestClient = async () => { throw new Error('timeout'); };
+    await adapter.update17TQuota();
+    assert.equal(states['17t.quotaRemaining'], 42);
+    assert.equal(messages.length, 0);
+    assert.equal(errors.length, 6);
+  });
+
+  it('continues shipment updates after a quota request fails', async () => {
+    const { adapter, states, errors } = quotaFixture();
+    adapter.requestClient = async (options) => {
+      if (options.url.endsWith('/getquota')) throw new Error('quota unavailable');
+      return response([]);
+    };
+    await adapter.updateProvider();
+    assert.equal(states['17t.trackList'], '[]');
+    assert.equal(states.allProviderJson, '[]');
+    assert.equal(errors.length, 1);
+  });
+
+  it('refreshes quota after accepted registration', async () => {
+    const { adapter, calls } = quotaFixture();
+    adapter.requestClient = async (options) => {
+      const command = options.url.split('/').pop();
+      calls.push(command);
+      if (command === 'register') return response([{ number: 'NEWTRACK' }]);
+      if (command === 'getquota') return { data: { code: 0, data: { quota_remain: 100 } } };
+      return response([]);
+    };
+    await adapter.onStateChange('parcel.0.17t.register', { val: 'NEWTRACK', ack: false });
+    assert.deepEqual(calls, ['register', 'getquota', 'gettracklist']);
   });
 });

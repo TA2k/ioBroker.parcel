@@ -1411,6 +1411,16 @@ class Parcel extends utils.Adapter {
       },
       native: {},
     });
+    await this.setObjectNotExistsAsync('17t.quotaRemaining', {
+      type: 'state',
+      common: { name: 'Remaining 17TRACK shipment registrations', type: 'number', role: 'value', read: true, write: false, min: 0 },
+      native: {},
+    });
+    await this.setObjectNotExistsAsync('17t.quotaWarningSent', {
+      type: 'state',
+      common: { name: '17TRACK low quota notification sent', type: 'boolean', role: 'indicator', read: true, write: false },
+      native: {},
+    });
     await this.setObjectNotExistsAsync('17t.register', {
       type: 'state',
       common: {
@@ -1444,6 +1454,53 @@ class Parcel extends utils.Adapter {
       },
       native: {},
     });
+  }
+  async update17TQuota() {
+    if (this.quota17TUpdating) return;
+    this.quota17TUpdating = true;
+    try {
+      await this.sleep(350);
+      // Quota has a different response shape from the shipment endpoints.
+      const res = await this.requestClient({
+        method: 'post',
+        url: 'https://api.17track.net/track/v2.4/getquota',
+        headers: { '17token': this.config['17trackKey'], 'Content-Type': 'application/json' },
+        data: '[]',
+        timeout: 30000,
+      });
+      const remaining = res.data?.data?.quota_remain;
+      if (res.data?.code !== 0 || !Number.isInteger(remaining) || remaining < 0) {
+        throw new Error('Invalid 17TRACK getquota response: ' + JSON.stringify(res.data));
+      }
+      await this.setStateAsync('17t.quotaRemaining', remaining, true);
+      const notified = await this.getStateAsync('17t.quotaWarningSent');
+      if (remaining >= 20) {
+        if (notified?.val !== false) await this.setStateAsync('17t.quotaWarningSent', false, true);
+        return;
+      }
+      if (!this.config.t17QuotaNotification || notified?.val === true) return;
+      const instances = [...new Set((this.config.sendToInstance || '').split(',').map((value) => value.trim()))]
+        .filter((value) => /^telegram\.\d+$/.test(value));
+      if (!instances.length) {
+        this.log.warn('17TRACK quota notification enabled, but no Telegram instance is configured');
+        return;
+      }
+      const users = [...new Set((this.config.sendToUser || '').split(',').map((value) => value.trim()).filter(Boolean))];
+      const text = '⚠️ 17TRACK: Es können nur noch ' + remaining + ' Sendungen registriert werden (Kontingent unter 20).';
+      for (const instance of instances) {
+        for (const user of users.length ? users : ['']) {
+          const result = await this.sendToAsync(instance, user ? { user, text } : { text });
+          if (result && typeof result === 'object' && 'error' in result && result.error) {
+            throw new Error('Telegram quota notification failed: ' + JSON.stringify(result.error));
+          }
+        }
+      }
+      await this.setStateAsync('17t.quotaWarningSent', true, true);
+    } catch (error) {
+      this.logAxiosError('17Track/quota', error);
+    } finally {
+      this.quota17TUpdating = false;
+    }
   }
   async request17TApi(command, data) {
     // Stay below the API limit of three requests per second.
@@ -1568,6 +1625,7 @@ class Parcel extends utils.Adapter {
     this.mergedJsonObject = {};
     this.inDelivery = [];
     this.notDelivered = [];
+    if (this.sessions['17track']) await this.update17TQuota();
     if (this.sessions['dhl']) {
       // Remove stale Akamai bot-detection cookies that cause ECONNRESET/ETIMEDOUT
       for (const domain of ['dhl.de', 'www.dhl.de']) {
@@ -2880,6 +2938,7 @@ class Parcel extends utils.Adapter {
             }
             this.log.info('17TRACK ' + command + ': accepted tracking number ' + number);
             await this.setStateAsync(id, state.val, true);
+            await this.update17TQuota();
             await this.refresh17TTrackList();
           } catch (error) {
             this.logAxiosError('17Track/' + command, error);
