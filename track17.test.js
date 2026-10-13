@@ -326,3 +326,68 @@ describe('17TRACK quota', () => {
     assert.deepEqual(calls, ['register', 'getquota', 'gettracklist']);
   });
 });
+
+function statusFixture() {
+  const context = fixture(() => response([]));
+  delete context.adapter.deliveryStatusCheck;
+  context.adapter.delivery_status = {
+    ERROR: -1, UNKNOWN: 5, REGISTERED: 10, IN_PREPARATION: 20,
+    IN_TRANSIT: 30, OUT_FOR_DELIVERY: 40, DELIVERED: 1,
+  };
+  return context;
+}
+
+describe('17TRACK delivery status', () => {
+  for (const e of [40, '40']) {
+    it('recognizes delivered API status ' + JSON.stringify(e) + ' before stale event text', () => {
+      const { adapter } = statusFixture();
+      assert.equal(adapter.deliveryStatusCheck({ track: { e, z0: { z: 'Out for delivery' } } }, '17track'), 1);
+      assert.equal(adapter.deliveryStatusCheck({ track: { e } }, '17track'), 1);
+    });
+  }
+
+  for (const text of ['Delivered', ' ZUGESTELLT ', 'Your parcel has been delivered',
+    'Delivered successfully', 'Parcel delivered', 'Shipment delivered', 'Die Sendung wurde zugestellt']) {
+    it('recognizes delivered text: ' + text, () => {
+      const { adapter } = statusFixture();
+      assert.equal(adapter.deliveryStatusCheck({ track: { z0: { z: text } } }, '17track'), 1);
+    });
+  }
+
+  for (const text of ['Out for delivery', 'Loaded onto the delivery vehicle']) {
+    it('recognizes delivery in progress: ' + text, () => {
+      const { adapter } = statusFixture();
+      assert.equal(adapter.deliveryStatusCheck({ track: { e: 10, z0: { z: text } } }, '17track'), 40);
+    });
+  }
+
+  it('does not mark unsuccessful or unknown deliveries as delivered', () => {
+    const { adapter } = statusFixture();
+    for (const text of ['Undelivered', 'Not delivered', 'Delivery attempt failed', 'In transit', '']) {
+      const sendung = { track: { e: 35, z0: { z: text } } };
+      assert.equal(adapter.deliveryStatusCheck(sendung, '17track', { status: text }), 5);
+    }
+    assert.equal(adapter.deliveryStatusCheck({ track: {} }, '17track'), 5);
+    assert.equal(adapter.deliveryStatusCheck({}, '17track'), 5);
+  });
+
+  it('removes delivered shipments from notDelivered on the next refresh and updates counts', async () => {
+    const { adapter, states } = statusFixture();
+    let delivered = false;
+    adapter.fetch17TParcels = async () => ({ accepted: [
+      { number: 'FIRST', track: { e: delivered ? 40 : 10, z0: { z: delivered ? 'Delivered' : 'In transit' } } },
+      { number: 'SECOND', track: { e: 10, z0: { z: 'Out for delivery' } } },
+      { number: 'THIRD', track: { z0: { z: delivered ? 'Delivered' : 'In transit' } } },
+    ] });
+    await adapter.updateProvider();
+    assert.equal(states.notDeliveredCount, 3);
+    delivered = true;
+    await adapter.updateProvider();
+    assert.deepEqual(JSON.parse(states.notDelivered).map((shipment) => shipment.id), ['SECOND']);
+    assert.equal(states.notDeliveredCount, 1);
+    assert.equal(states.inDeliveryCount, 1);
+    assert.equal(JSON.parse(states.allProviderObjects).FIRST.delivery_status, 1);
+    assert.equal(JSON.parse(states.allProviderObjects).THIRD.delivery_status, 1);
+    assert.equal(JSON.parse(states.allProviderJson).length, 3);
+  });
+});
