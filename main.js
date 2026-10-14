@@ -2401,6 +2401,30 @@ class Parcel extends utils.Adapter {
             return amz_status[sendung.detailedState.shortStatus];
           }
         }
+        if (id === '17track' && sendung.track) {
+          // 17TRACK API v1: track.e is the package status; 40 means delivered.
+          if (Number(sendung.track.e) === 40) {
+            return this.delivery_status.DELIVERED;
+          }
+          const status = String(sendung.track.z0?.z || '').trim().toLowerCase();
+          if (
+            status === 'delivered' ||
+            status === 'zugestellt' ||
+            status.includes('has been delivered') ||
+            status.includes('delivered successfully') ||
+            status.includes('parcel delivered') ||
+            status.includes('shipment delivered') ||
+            status.includes('wurde zugestellt')
+          ) {
+            return this.delivery_status.DELIVERED;
+          }
+          if (
+            status.includes('out for delivery') ||
+            status.includes('loaded onto the delivery vehicle')
+          ) {
+            return this.delivery_status.OUT_FOR_DELIVERY;
+          }
+        }
       }
       if (sendungsObject) {
         if (this.inDeliveryCheck(sendungsObject)) {
